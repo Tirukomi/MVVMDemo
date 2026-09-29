@@ -118,15 +118,15 @@ UVerticalBox* UGothamScreen::BuildMenuFrame(const FText& Section, const FText& T
 	BlurSlot->SetVerticalAlignment(VAlign_Fill);
 	Blur->SetContent(WidgetTree->ConstructWidget<UGothamScrim>());
 
-	UBorder* Margin = WidgetTree->ConstructWidget<UBorder>();
-	Margin->SetBrushColor(FLinearColor::Transparent);
-	Margin->SetPadding(FMargin(96.f, 64.f, 96.f, 48.f));
-	UOverlaySlot* MarginSlot = Root->AddChildToOverlay(Margin);
+	UBorder* MarginBox = WidgetTree->ConstructWidget<UBorder>();
+	MarginBox->SetBrushColor(FLinearColor::Transparent);
+	MarginBox->SetPadding(FMargin(96.f, 64.f, 96.f, 48.f));
+	UOverlaySlot* MarginSlot = Root->AddChildToOverlay(MarginBox);
 	MarginSlot->SetHorizontalAlignment(HAlign_Fill);
 	MarginSlot->SetVerticalAlignment(VAlign_Fill);
 
 	FrameBox = WidgetTree->ConstructWidget<UVerticalBox>();
-	Margin->SetContent(FrameBox);
+	MarginBox->SetContent(FrameBox);
 	SlideTarget = FrameBox;
 
 	FrameBox->AddChildToVerticalBox(MakeText(Section, EGothamTextStyle::Label, EGothamColorToken::Accent));
