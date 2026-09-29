@@ -12,7 +12,6 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
-#include "UI/GothamWidgetTick.h"
 #include "UI/Slate/SGothamPanel.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "ViewModels/ClueViewModels.h"
@@ -89,7 +88,10 @@ void UClueEntryWidget::NativeOnItemSelectionChanged(bool bIsSelected)
 
 void UClueEntryWidget::NativeConstruct()
 {
-	GothamUI::DisableTick(this);
+	// Deliberately NOT GothamUI::DisableTick: list views force their entry rows to tick after generating them
+	// (UListViewBase::HandleGenerateRow calls SetCanTick(true) so selection works). An entry flagged Never would then
+	// trip UUserWidget::NativeTick's "mismatching tick states" ensure. The tick itself is empty and bounded by the
+	// tiles on screen.
 	Super::NativeConstruct();
 }
 

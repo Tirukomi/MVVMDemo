@@ -16,8 +16,9 @@ Follows Epic's Unreal coding standard, plus these project rules.
 5. All user-facing text is `FText` from a string table (`LOCTEXT` for code-only labels).
 6. No Tick in widgets unless justified in a comment; prefer events, timers and animations. C++-only widgets tick by
    default (no Blueprint class), so call `GothamUI::DisableTick(this)` in `NativeConstruct` (widgets deriving
-   `UGothamSettingsAwareWidget` / `UGothamScreen` already do). Custom Slate widgets animate with an active timer that
-   unregisters when settled.
+   `UGothamSettingsAwareWidget` / `UGothamScreen` already do). Exception: list / tile view entry widgets. The list
+   forces their rows to tick (`UListViewBase::HandleGenerateRow`), and an entry flagged Never trips UMG's
+   "mismatching tick states" ensure. Custom Slate widgets animate with an active timer that unregisters when settled.
 7. C++ base classes for every screen; Blueprint/UMG only for layout, styling and animation.
 
 ## Style

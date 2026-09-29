@@ -17,7 +17,7 @@ namespace GothamUI
 	 */
 	inline void DisableTick(UUserWidget* Widget)
 	{
-		if (!Widget || Widget->GetDesiredTickFrequency() == EWidgetTickFrequency::Never)
+		if (!Widget)
 		{
 			return;
 		}
@@ -29,20 +29,31 @@ namespace GothamUI
 			return;
 		}
 #endif
-		FProperty* Property = UUserWidget::StaticClass()->FindPropertyByName(TEXT("TickFrequency"));
-		void* Value = Property ? Property->ContainerPtrToValuePtr<void>(Widget) : nullptr;
-		if (!Value)
+		if (Widget->GetDesiredTickFrequency() != EWidgetTickFrequency::Never)
 		{
-			return;
+			FProperty* Property = UUserWidget::StaticClass()->FindPropertyByName(TEXT("TickFrequency"));
+			void* Value = Property ? Property->ContainerPtrToValuePtr<void>(Widget) : nullptr;
+			if (!Value)
+			{
+				return;
+			}
+			if (FEnumProperty* Enum = CastField<FEnumProperty>(Property))
+			{
+				Enum->GetUnderlyingProperty()->SetIntPropertyValue(Value, static_cast<int64>(EWidgetTickFrequency::Never));
+			}
+			else if (FNumericProperty* Numeric = CastField<FNumericProperty>(Property))
+			{
+				Numeric->SetIntPropertyValue(Value, static_cast<int64>(EWidgetTickFrequency::Never));
+			}
 		}
-		if (FEnumProperty* Enum = CastField<FEnumProperty>(Property))
-		{
-			Enum->GetUnderlyingProperty()->SetIntPropertyValue(Value, static_cast<int64>(EWidgetTickFrequency::Never));
-		}
-		else if (FNumericProperty* Numeric = CastField<FNumericProperty>(Property))
-		{
-			Numeric->SetIntPropertyValue(Value, static_cast<int64>(EWidgetTickFrequency::Never));
-		}
+		// Always bring the Slate side in line, even if the flag was already Never (pooled widgets are reconstructed
+		// with a new SObjectWidget). UpdateCanTick does nothing without a world or before the SObjectWidget is
+		// registered, and an SObjectWidget left ticking while the flag says Never trips UUserWidget::NativeTick's
+		// ensure ("mismatching tick states"), so also switch the cached Slate widget off directly.
 		Widget->UpdateCanTick();
+		if (const TSharedPtr<SWidget> Slate = Widget->GetCachedWidget())
+		{
+			Slate->SetCanTick(false);
+		}
 	}
 }
