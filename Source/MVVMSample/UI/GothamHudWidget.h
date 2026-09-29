@@ -7,6 +7,7 @@
 #include "UI/Screens/GothamScreen.h"
 #include "GothamHudWidget.generated.h"
 
+class UClueMarkerLayer;
 class UComboWidget;
 class UDamageVignette;
 class UDetectiveOverlayWidget;
@@ -41,12 +42,16 @@ private:
 	/** Flash to full, then settle at the low-health level (or zero) over half a second. */
 	void FlashVignette();
 	void UpdateVignetteRest();
+	void ApplyMarkerColors();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UDamageVignette> Vignette;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UDetectiveOverlayWidget> DetectiveOverlay;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UClueMarkerLayer> ClueMarkers;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHealthBarWidget> HealthBar;
@@ -67,6 +72,7 @@ private:
 	TObjectPtr<UPlayerVitalsViewModel> VitalsVM;
 
 	FTSTicker::FDelegateHandle FlashHandle;
+	FDelegateHandle SettingsHandle;
 	float FlashElapsed = 0.f;
 	int32 LastDamageCount = 0;
 };

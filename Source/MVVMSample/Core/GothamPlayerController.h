@@ -46,6 +46,7 @@ private:
 	void OnGadgetWheel();
 	void OnDetective();
 	void OnScan();
+	void OnScanReleased();
 	void OnClueLog();
 	void RunDevAids(class UGothamUISubsystem* UI);
 	void ApplyInputContext(EGothamInputContext Context);

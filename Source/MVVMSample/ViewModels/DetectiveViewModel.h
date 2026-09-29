@@ -20,6 +20,11 @@ public:
 	/** True while anything of the effect should be on screen (active or still fading out). */
 	bool GetIsVisible() const { return bIsVisible; }
 
+	/** Hold-to-analyse state: which clue is being analysed (NAME_None for none) and how far along. */
+	void SetAnalysis(FName InClueId, float InProgress);
+	FName GetAnalysisTargetId() const { return AnalysisTargetId; }
+	float GetAnalysisProgress() const { return AnalysisProgress; }
+
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetIsActive, meta = (AllowPrivateAccess = "true"))
 	bool bIsActive = false;
@@ -29,4 +34,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetIsVisible, meta = (AllowPrivateAccess = "true"))
 	bool bIsVisible = false;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	FName AnalysisTargetId;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	float AnalysisProgress = 0.f;
 };

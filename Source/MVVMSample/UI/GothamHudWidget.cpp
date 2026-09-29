@@ -9,6 +9,7 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/LocalPlayer.h"
+#include "UI/ClueMarkerLayer.h"
 #include "UI/ComboWidget.h"
 #include "UI/DetectiveOverlayWidget.h"
 #include "UI/GadgetSelectorWidget.h"
@@ -65,6 +66,9 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 		// Full-screen layers first so they sit behind every HUD element.
 		DetectiveOverlay = WidgetTree->ConstructWidget<UDetectiveOverlayWidget>();
 		Fill(Canvas, DetectiveOverlay);
+		ClueMarkers = WidgetTree->ConstructWidget<UClueMarkerLayer>();
+		ClueMarkers->SetVisibility(ESlateVisibility::HitTestInvisible);
+		Fill(Canvas, ClueMarkers);
 		Vignette = WidgetTree->ConstructWidget<UDamageVignette>();
 		Vignette->SetVisibility(ESlateVisibility::HitTestInvisible);
 		Fill(Canvas, Vignette);
@@ -110,6 +114,12 @@ void UGothamHudWidget::NativeConstruct()
 	DetectiveOverlay->SetViewModel(ViewModels->GetDetective());
 	ObjectiveTracker->SetViewModel(ViewModels->GetObjectives());
 	Subtitles->SetViewModel(ViewModels->GetSubtitles());
+	ClueMarkers->SetViewModels(ViewModels->GetClues(), ViewModels->GetDetective());
+	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { ApplyMarkerColors(); UpdateVignetteRest(); });
+	}
+	ApplyMarkerColors();
 
 	VitalsVM = ViewModels->GetVitals();
 	LastDamageCount = VitalsVM->GetDamageCount();
@@ -123,6 +133,10 @@ void UGothamHudWidget::NativeConstruct()
 void UGothamHudWidget::NativeDestruct()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(FlashHandle);
+	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		Settings->OnSettingsChanged.Remove(SettingsHandle);
+	}
 	if (VitalsVM)
 	{
 		VitalsVM->RemoveAllFieldValueChangedDelegates(this);
@@ -152,6 +166,15 @@ void UGothamHudWidget::UpdateVignetteRest()
 			Vignette->SetColor(Settings->GetColor(EGothamColorToken::Danger));
 		}
 		Vignette->SetIntensity(VitalsVM->GetIsLowHealth() ? LowHealthVignette : 0.f);
+	}
+}
+
+void UGothamHudWidget::ApplyMarkerColors()
+{
+	if (const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		ClueMarkers->SetColors(Settings->GetColor(EGothamColorToken::Unscanned), Settings->GetColor(EGothamColorToken::Scanned),
+			Settings->GetColor(EGothamColorToken::Accent), Settings->GetColor(EGothamColorToken::TextMuted));
 	}
 }
 

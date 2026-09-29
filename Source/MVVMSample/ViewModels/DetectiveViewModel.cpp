@@ -9,3 +9,9 @@ void UDetectiveViewModel::SetState(bool bInActive, float InAlpha)
 	UE_MVVM_SET_PROPERTY_VALUE(Alpha, Clamped);
 	UE_MVVM_SET_PROPERTY_VALUE_INLINE(bIsVisible, bInActive || Clamped > 0.f);
 }
+
+void UDetectiveViewModel::SetAnalysis(FName InClueId, float InProgress)
+{
+	UE_MVVM_SET_PROPERTY_VALUE(AnalysisTargetId, InClueId);
+	UE_MVVM_SET_PROPERTY_VALUE(AnalysisProgress, InClueId.IsNone() ? 0.f : FMath::Clamp(InProgress, 0.f, 1.f));
+}

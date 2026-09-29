@@ -173,6 +173,8 @@ void AGothamPlayerController::SetupInputComponent()
 		EIC->BindAction(GadgetWheelAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnGadgetWheel);
 		EIC->BindAction(DetectiveAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDetective);
 		EIC->BindAction(ScanAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnScan);
+		EIC->BindAction(ScanAction, ETriggerEvent::Completed, this, &AGothamPlayerController::OnScanReleased);
+		EIC->BindAction(ScanAction, ETriggerEvent::Canceled, this, &AGothamPlayerController::OnScanReleased);
 		EIC->BindAction(ClueLogAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnClueLog);
 		EIC->BindAction(DebugDamageAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugDamage);
 		EIC->BindAction(DebugHealAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugHeal);
@@ -345,9 +347,28 @@ void AGothamPlayerController::OnDetective()
 
 void AGothamPlayerController::OnScan()
 {
-	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
+	AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn());
+	if (!Hero)
+	{
+		return;
+	}
+	// Hold to analyse by default; the Tap accessibility option scans instantly.
+	const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this);
+	if (Settings && Settings->GetSettings().ScanMode == EGothamScanMode::Tap)
 	{
 		Hero->ScanClue();
+	}
+	else
+	{
+		Hero->GetDetectiveComponent()->BeginAnalyse();
+	}
+}
+
+void AGothamPlayerController::OnScanReleased()
+{
+	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
+	{
+		Hero->GetDetectiveComponent()->EndAnalyse();
 	}
 }
 
@@ -432,6 +453,8 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bControls = FParse::Param(Cmd, TEXT("GothamOpenControls"));
 	const bool bCycleLanguage = FParse::Param(Cmd, TEXT("GothamCycleLanguage"));
 	const bool bRebindDemo = FParse::Param(Cmd, TEXT("GothamRebindDemo"));
+	const bool bReveal = FParse::Param(Cmd, TEXT("GothamDetectiveReveal"));
+	const bool bAnalyse = FParse::Param(Cmd, TEXT("GothamDetectiveAnalyse"));
 	const bool bHudDemo = FParse::Param(Cmd, TEXT("GothamHudDemo"));
 	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot")) || bHudDemo;
 
@@ -468,7 +491,7 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
 
 	// Core tickers, not world timers: the world is paused or slowed while some of these screens are open.
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, WeakUI, bWheel, bDetective, bClueLog, StressCount](float)
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, WeakUI, bWheel, bDetective, bClueLog, StressCount, bReveal, bAnalyse](float)
 	{
 		AGothamCharacter* Hero = WeakThis.IsValid() ? Cast<AGothamCharacter>(WeakThis->GetPawn()) : nullptr;
 		if (!Hero)
@@ -488,14 +511,20 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 		}
 		if (bDetective || bClueLog)
 		{
-			// Enter detective mode, stand next to the first clue and scan it.
-			Hero->ToggleDetective();
+			// Stand a few metres from the first clue, facing it and the rest of the roof.
 			for (TActorIterator<AClueActor> It(Hero->GetWorld()); It; ++It)
 			{
-				Hero->SetActorLocation(It->GetActorLocation() + FVector(-250.f, 0.f, 120.f));
+				const FVector Clue = It->GetActorLocation();
+				Hero->SetActorLocation(Clue + FVector(-420.f, -260.f, 40.f));
+				WeakThis->SetControlRotation(FRotator(-14.f, (Clue - Hero->GetActorLocation()).Rotation().Yaw + 12.f, 0.f));
 				break;
 			}
-			Hero->ScanClue();
+			// -GothamDetectiveReveal / -GothamDetectiveAnalyse open the mode later, so the shot lands mid-effect.
+			if (!bReveal && !bAnalyse)
+			{
+				Hero->ToggleDetective();
+				Hero->ScanClue();
+			}
 		}
 		if ((bClueLog || StressCount > 0) && WeakUI.IsValid())
 		{
@@ -511,6 +540,32 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 		return false;
 	}), 1.f);
 
+	if (bDetective && (bReveal || bAnalyse))
+	{
+		float Delay = 4.f;
+		FParse::Value(Cmd, TEXT("GothamShotDelay="), Delay);
+		// Reveal: open 0.8 s before the shot (the opening pulse is ~half way). Analyse: open earlier, start analysing
+		// 0.55 s before the shot (about half of the 1.1 s analysis).
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
+		{
+			if (AGothamCharacter* Hero = WeakThis.IsValid() ? Cast<AGothamCharacter>(WeakThis->GetPawn()) : nullptr)
+			{
+				Hero->ToggleDetective();
+			}
+			return false;
+		}), bReveal ? Delay - 0.8f : Delay - 2.f);
+		if (bAnalyse)
+		{
+			FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
+			{
+				if (AGothamCharacter* Hero = WeakThis.IsValid() ? Cast<AGothamCharacter>(WeakThis->GetPawn()) : nullptr)
+				{
+					Hero->GetDetectiveComponent()->BeginAnalyse();
+				}
+				return false;
+			}), Delay - 0.55f);
+		}
+	}
 	if (bHudDemo)
 	{
 		// A representative combat moment: a recent hit, a live combo and a gadget recharging.

@@ -63,86 +63,147 @@ def unary(mat, cls, a, x, y, **props):
 # drawn as a filled silhouette plus a soft halo, visible through walls. "Alpha" blends the whole effect.
 # --------------------------------------------------------------------------------------------------------------
 def build_vision():
+    """Detective Mode post-process (V3).
+
+    - Tactical wireframe: edges from scene depth and world normals (4-tap cross), faded with distance.
+    - Cold fill: the scene's luminance tinted dark blue, so the world reads as a scan rather than a colour grade.
+    - Stencil classes (1 clue, 2 scanned clue, 3 hostile, 4 interactable) filled and haloed in palette colours.
+    - Radial reveal: the look spreads outward from RevealCenter up to RevealRadius (driven by the opening pulse).
+    - Scan pulse: a glowing ring at PulseRadius around PulseCenter, faded by PulseStrength.
+    Alpha blends the whole effect in and out.
+    """
     mat = fresh_asset("M_DetectiveVision", "/Game/Materials", unreal.Material, unreal.MaterialFactoryNew())
     mat.set_editor_property("material_domain", unreal.MaterialDomain.MD_POST_PROCESS)
     mat.set_editor_property("blendable_location", unreal.BlendableLocation.BL_SCENE_COLOR_AFTER_TONEMAPPING)
 
-    scene = node(mat, unreal.MaterialExpressionSceneTexture, 0, 0,
-                 scene_texture_id=unreal.SceneTextureId.PPI_POST_PROCESS_INPUT0)
-    alpha = scalar(mat, "Alpha", 0.0, 0, 8)
+    def comp_mask(src, x, y, output="", r=False, g=False, b=False, a=False):
+        m = node(mat, unreal.MaterialExpressionComponentMask, x, y, r=r, g=g, b=b, a=a)
+        MEL.connect_material_expressions(src, output, m, "")
+        return m
 
-    # Stylised world: grey scaled by a blue tint, slightly dimmed.
-    # SceneTexture "Color" is float4; keep just RGB so it can mix with the float3 effect colours.
-    scene_rgb = node(mat, unreal.MaterialExpressionComponentMask, 0.5, 1, r=True, g=True, b=True, a=False)
-    MEL.connect_material_expressions(scene, "Color", scene_rgb, "")
-    desat = node(mat, unreal.MaterialExpressionDesaturation, 1, 0)
-    link(scene_rgb, desat, "")
-    tint = const3(mat, 0.30, 0.55, 0.95, 1, 1)
-    world = binary(mat, unreal.MaterialExpressionMultiply, desat, tint, 2, 0)
+    def op(cls, a_, b_, x, y, in_a="A", in_b="B"):
+        return binary(mat, cls, a_, b_, x, y, in_a, in_b)
 
-    # Stencil sampling: centre plus four neighbours two pixels away (for the halo).
-    screen = node(mat, unreal.MaterialExpressionScreenPosition, 0, 4)
-    inv_size = node(mat, unreal.MaterialExpressionViewProperty, 0, 5,
-                    property=unreal.MaterialExposedViewProperty.MEVP_VIEW_SIZE)
+    def sat(src, x, y):
+        n = node(mat, unreal.MaterialExpressionSaturate, x, y)
+        link(src, n, "")
+        return n
 
-    def stencil_at(offset_x, offset_y, row):
-        st = node(mat, unreal.MaterialExpressionSceneTexture, 4, row,
-                  scene_texture_id=unreal.SceneTextureId.PPI_CUSTOM_STENCIL)
-        if offset_x or offset_y:
-            off = node(mat, unreal.MaterialExpressionConstant2Vector, 2, row, r=offset_x, g=offset_y)
-            scaled = node(mat, unreal.MaterialExpressionMultiply, 3, row)
+    def absn(src, x, y):
+        n = node(mat, unreal.MaterialExpressionAbs, x, y)
+        link(src, n, "")
+        return n
+
+    alpha = scalar(mat, "Alpha", 0.0, 0, 0)
+    scene = node(mat, unreal.MaterialExpressionSceneTexture, 0, 2, scene_texture_id=unreal.SceneTextureId.PPI_POST_PROCESS_INPUT0)
+    scene_rgb = comp_mask(scene, 1, 2, "Color", r=True, g=True, b=True)
+
+    screen = node(mat, unreal.MaterialExpressionScreenPosition, 0, 6)
+    view = node(mat, unreal.MaterialExpressionViewProperty, 0, 7, property=unreal.MaterialExposedViewProperty.MEVP_VIEW_SIZE)
+
+    row = [10]
+
+    def sample(tex_id, dx, dy, channels):
+        y = row[0]
+        row[0] += 3
+        st = node(mat, unreal.MaterialExpressionSceneTexture, 4, y, scene_texture_id=tex_id)
+        if dx or dy:
+            off = node(mat, unreal.MaterialExpressionConstant2Vector, 1, y, r=dx, g=dy)
+            scaled = node(mat, unreal.MaterialExpressionMultiply, 2, y)
             link(off, scaled, "A")
-            MEL.connect_material_expressions(inv_size, "InvProperty", scaled, "B")
-            uv = node(mat, unreal.MaterialExpressionAdd, 3, row + 0.5)
+            MEL.connect_material_expressions(view, "InvProperty", scaled, "B")
+            uv = node(mat, unreal.MaterialExpressionAdd, 3, y)
             MEL.connect_material_expressions(screen, "ViewportUV", uv, "A")
             link(scaled, uv, "B")
             link(uv, st, "UVs")
-        red = node(mat, unreal.MaterialExpressionComponentMask, 5, row, r=True, g=False, b=False, a=False)
-        MEL.connect_material_expressions(st, "Color", red, "")
-        return red
+        return comp_mask(st, 5, y, "Color", **channels)
 
-    centre = stencil_at(0, 0, 10)
-    neighbours = [stencil_at(2, 0, 12), stencil_at(-2, 0, 14), stencil_at(0, 2, 16), stencil_at(0, -2, 18)]
+    R = {"r": True}
+    RGB = {"r": True, "g": True, "b": True}
+    D, N, S = unreal.SceneTextureId.PPI_SCENE_DEPTH, unreal.SceneTextureId.PPI_WORLD_NORMAL, unreal.SceneTextureId.PPI_CUSTOM_STENCIL
+    taps = [(1.5, 0), (-1.5, 0), (0, 1.5), (0, -1.5)]
 
-    nmax = neighbours[0]
-    for i, n in enumerate(neighbours[1:]):
-        nmax = binary(mat, unreal.MaterialExpressionMax, nmax, n, 6 + i, 12)
+    # --- edges ---------------------------------------------------------------------------------------------------
+    dc = sample(D, 0, 0, R)
+    depth_sum = None
+    for i, (dx, dy) in enumerate(taps):
+        diff = absn(op(unreal.MaterialExpressionSubtract, sample(D, dx, dy, R), dc, 7, 10 + i), 8, 10 + i)
+        depth_sum = diff if depth_sum is None else op(unreal.MaterialExpressionAdd, depth_sum, diff, 9, 10 + i)
+    depth_rel = op(unreal.MaterialExpressionDivide, depth_sum, op(unreal.MaterialExpressionMax, dc, const(mat, 1.0, 9, 15), 10, 15), 11, 14)
+    edge_depth = sat(op(unreal.MaterialExpressionMultiply, depth_rel, scalar(mat, "DepthEdgeGain", 5.0, 11, 16), 12, 14), 13, 14)
 
-    inside = unary(mat, unreal.MaterialExpressionSaturate, centre, 6, 10)            # 1 on a clue
-    around = unary(mat, unreal.MaterialExpressionSaturate, nmax, 9, 12)              # 1 next to a clue
-    halo_mask = unary(mat, unreal.MaterialExpressionSaturate,
-                      binary(mat, unreal.MaterialExpressionSubtract, around, inside, 10, 12), 11, 12)
+    nc = sample(N, 0, 0, RGB)
+    normal_sum = None
+    for i, (dx, dy) in enumerate(taps):
+        d = op(unreal.MaterialExpressionDotProduct, nc, sample(N, dx, dy, RGB), 7, 30 + i)
+        one_minus = node(mat, unreal.MaterialExpressionOneMinus, 8, 30 + i)
+        link(d, one_minus, "")
+        normal_sum = one_minus if normal_sum is None else op(unreal.MaterialExpressionAdd, normal_sum, one_minus, 9, 30 + i)
+    edge_normal = sat(op(unreal.MaterialExpressionMultiply, normal_sum, scalar(mat, "NormalEdgeGain", 1.6, 9, 35), 10, 34), 11, 34)
 
-    # Unscanned = orange, scanned = green. (stencil - 1) is 0 or 1.
-    # Colours are parameters so the accessibility palette (colour-blind presets, high contrast) can recolour clues.
-    orange = vector_param(mat, "UnscannedColor", (1.0, 0.55, 0.1), 7, 9)
-    green = vector_param(mat, "ScannedColor", (0.2, 1.0, 0.4), 7, 10)
-    one = const(mat, 1.0, 7, 11)
+    far_ratio = op(unreal.MaterialExpressionDivide, dc, const(mat, 9000.0, 11, 22), 12, 22)
+    far_one_minus = node(mat, unreal.MaterialExpressionOneMinus, 13, 22)
+    link(far_ratio, far_one_minus, "")
+    far = sat(far_one_minus, 14, 22)
+    edge = op(unreal.MaterialExpressionMultiply, op(unreal.MaterialExpressionMax, edge_depth, edge_normal, 14, 18), far, 15, 18)
 
-    def pick(stencil_value, row):
-        scanned = unary(mat, unreal.MaterialExpressionSaturate,
-                        binary(mat, unreal.MaterialExpressionSubtract, stencil_value, one, 8, row), 9, row)
-        lerp = node(mat, unreal.MaterialExpressionLinearInterpolate, 10, row)
-        link(orange, lerp, "A")
-        link(green, lerp, "B")
-        link(scanned, lerp, "Alpha")
-        return lerp
+    # --- cold fill -----------------------------------------------------------------------------------------------
+    luma = op(unreal.MaterialExpressionDotProduct, scene_rgb, const3(mat, 0.2126, 0.7152, 0.0722, 2, 3), 3, 2)
+    fill_color = vector_param(mat, "FillColor", (0.05, 0.11, 0.22), 3, 4)
+    base = op(unreal.MaterialExpressionMultiply, op(unreal.MaterialExpressionMultiply, luma, const(mat, 2.2, 4, 3), 5, 3), fill_color, 6, 3)
+    edge_color = vector_param(mat, "EdgeColor", (0.35, 0.65, 1.0), 14, 24)
+    edge_rgb = op(unreal.MaterialExpressionMultiply, edge, edge_color, 16, 18)
 
-    fill_color = pick(centre, 20)
-    halo_color = pick(nmax, 22)
+    # --- stencil classes -----------------------------------------------------------------------------------------
+    s_c = sample(S, 0, 0, R)
+    s_n = None
+    for i, (dx, dy) in enumerate([(2, 0), (-2, 0), (0, 2), (0, -2)]):
+        v = sample(S, dx, dy, R)
+        s_n = v if s_n is None else op(unreal.MaterialExpressionMax, s_n, v, 7, 50 + i)
+    class_colors = [vector_param(mat, "UnscannedColor", (1.0, 0.55, 0.1), 8, 56), vector_param(mat, "ScannedColor", (0.35, 0.7, 0.9), 8, 57),
+                    vector_param(mat, "HostileColor", (0.9, 0.1, 0.1), 8, 58), vector_param(mat, "InteractColor", (0.88, 0.91, 0.95), 8, 59)]
 
-    fill = binary(mat, unreal.MaterialExpressionMultiply, fill_color, inside, 12, 20)
-    glow_strength = const(mat, 2.2, 11, 23)
-    halo_scaled = binary(mat, unreal.MaterialExpressionMultiply, halo_color, halo_mask, 12, 22)
-    halo = binary(mat, unreal.MaterialExpressionMultiply, halo_scaled, glow_strength, 13, 22)
+    def class_color(sv, y):
+        total = None
+        for k, col in enumerate(class_colors, start=1):
+            dist = op(unreal.MaterialExpressionMultiply, absn(op(unreal.MaterialExpressionSubtract, sv, const(mat, float(k), 8, y + k), 9, y + k), 9.5, y + k), const(mat, 2.0, 9, y + k + 0.5), 10, y + k + 0.3)
+            om = node(mat, unreal.MaterialExpressionOneMinus, 11, y + k)
+            link(dist, om, "")
+            wk = sat(om, 12, y + k)
+            term = op(unreal.MaterialExpressionMultiply, col, wk, 13, y + k)
+            total = term if total is None else op(unreal.MaterialExpressionAdd, total, term, 14, y + k)
+        return total
 
-    detective = binary(mat, unreal.MaterialExpressionAdd,
-                       binary(mat, unreal.MaterialExpressionAdd, world, fill, 14, 0), halo, 15, 0)
+    inside = sat(s_c, 8, 52)
+    around = sat(s_n, 8, 53)
+    halo_mask = sat(op(unreal.MaterialExpressionSubtract, around, inside, 9, 53), 10, 53)
+    fill_rgb = op(unreal.MaterialExpressionMultiply, op(unreal.MaterialExpressionMultiply, class_color(s_c, 60), inside, 16, 60), const(mat, 0.55, 16, 61), 17, 60)
+    halo_rgb = op(unreal.MaterialExpressionMultiply, op(unreal.MaterialExpressionMultiply, class_color(s_n, 70), halo_mask, 16, 70), const(mat, 2.2, 16, 71), 17, 70)
 
-    out = node(mat, unreal.MaterialExpressionLinearInterpolate, 16, 0)
-    link(scene_rgb, out, "A")
-    link(detective, out, "B")
-    link(alpha, out, "Alpha")
+    # --- reveal and pulse ----------------------------------------------------------------------------------------
+    wp = node(mat, unreal.MaterialExpressionWorldPosition, 0, 80)
+    reveal_center = comp_mask(vector_param(mat, "RevealCenter", (0.0, 0.0, 0.0), 0, 81), 1, 81, "", r=True, g=True, b=True)
+    reveal_dist = op(unreal.MaterialExpressionDistance, wp, reveal_center, 2, 80)
+    reveal = sat(op(unreal.MaterialExpressionDivide, op(unreal.MaterialExpressionSubtract, scalar(mat, "RevealRadius", 1.0e7, 2, 82), reveal_dist, 3, 81), const(mat, 250.0, 3, 82), 4, 81), 5, 81)
+
+    pulse_center = comp_mask(vector_param(mat, "PulseCenter", (0.0, 0.0, 0.0), 0, 84), 1, 84, "", r=True, g=True, b=True)
+    pulse_dist = op(unreal.MaterialExpressionDistance, wp, pulse_center, 2, 84)
+    ring_off = absn(op(unreal.MaterialExpressionSubtract, pulse_dist, scalar(mat, "PulseRadius", 0.0, 2, 86), 3, 85), 4, 85)
+    ring_om = node(mat, unreal.MaterialExpressionOneMinus, 5, 85)
+    link(op(unreal.MaterialExpressionDivide, ring_off, const(mat, 220.0, 4, 86), 5, 86), ring_om, "")
+    ring = op(unreal.MaterialExpressionMultiply, sat(ring_om, 6, 85), scalar(mat, "PulseStrength", 0.0, 6, 86), 7, 85)
+    ring_rgb = op(unreal.MaterialExpressionMultiply, ring, op(unreal.MaterialExpressionMultiply, edge_color, const(mat, 2.5, 7, 87), 8, 87), 9, 85)
+
+    # --- combine -------------------------------------------------------------------------------------------------
+    detective = op(unreal.MaterialExpressionAdd,
+                   op(unreal.MaterialExpressionAdd, op(unreal.MaterialExpressionAdd, base, edge_rgb, 18, 3), fill_rgb, 19, 3),
+                   halo_rgb, 20, 3)
+    mix = op(unreal.MaterialExpressionMultiply, alpha, reveal, 20, 6)
+    blended = node(mat, unreal.MaterialExpressionLinearInterpolate, 21, 3)
+    link(scene_rgb, blended, "A")
+    link(detective, blended, "B")
+    link(mix, blended, "Alpha")
+    out = op(unreal.MaterialExpressionAdd, blended, op(unreal.MaterialExpressionMultiply, ring_rgb, alpha, 21, 7), 22, 3)
 
     MEL.connect_material_property(out, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     MEL.recompile_material(mat)
@@ -150,10 +211,6 @@ def build_vision():
     unreal.log("Built M_DetectiveVision")
 
 
-# --------------------------------------------------------------------------------------------------------------
-# M_DetectiveOverlay_UI: full-screen UI material. Scanlines, vignette and a sweeping wipe band, all scaled by
-# "Progress" (the view model's transition alpha).
-# --------------------------------------------------------------------------------------------------------------
 def build_overlay():
     mat = fresh_asset("M_DetectiveOverlay_UI", "/Game/Materials", unreal.Material, unreal.MaterialFactoryNew())
     mat.set_editor_property("material_domain", unreal.MaterialDomain.MD_UI)

@@ -23,6 +23,14 @@ enum class EGothamSubtitleSize : uint8
 	Count
 };
 
+/** How clue analysis is triggered: hold the scan input for a moment, or tap once. */
+enum class EGothamScanMode : uint8
+{
+	Hold,
+	Tap,
+	Count
+};
+
 enum class EGothamWheelMode : uint8
 {
 	Hold,
@@ -39,6 +47,7 @@ enum class EGothamSetting : uint8
 	HighContrast,
 	ReducedMotion,
 	WheelMode,
+	ScanMode,
 	SubtitleSize,
 	SubtitleBackground,
 	Count
@@ -60,6 +69,7 @@ struct MVVMSAMPLE_API FGothamSettingsData
 	bool bHighContrast = false;
 	bool bReducedMotion = false;
 	EGothamWheelMode WheelMode = EGothamWheelMode::Hold;
+	EGothamScanMode ScanMode = EGothamScanMode::Hold;
 	EGothamSubtitleSize SubtitleSize = EGothamSubtitleSize::Medium;
 	bool bSubtitleBackground = true;
 

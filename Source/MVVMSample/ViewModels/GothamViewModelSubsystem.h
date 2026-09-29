@@ -97,6 +97,7 @@ private:
 	FDelegateHandle ComboHandle;
 	FDelegateHandle DetectiveHandle;
 	FDelegateHandle ScanHandle;
+	FDelegateHandle AnalysisHandle;
 	FDelegateHandle CluesHandle;
 	FDelegateHandle SettingsHandle;
 	FTSTicker::FDelegateHandle SubtitleHideHandle;

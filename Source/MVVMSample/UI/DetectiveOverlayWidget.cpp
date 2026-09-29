@@ -57,8 +57,7 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 		ScanGlyph->SetAction(TEXT("Scan"));
 		Strip->AddChildToHorizontalBox(ScanGlyph)->SetVerticalAlignment(VAlign_Center);
 
-		UTextBlock* ScanLabel = WidgetTree->ConstructWidget<UTextBlock>();
-		ScanLabel->SetText(LOCTEXT("Scan", "Scan"));
+		ScanLabel = WidgetTree->ConstructWidget<UTextBlock>();
 		Strip->AddChildToHorizontalBox(ScanLabel)->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
 	}
 	return Super::RebuildWidget();
@@ -101,6 +100,9 @@ void UDetectiveOverlayWidget::Refresh()
 	}
 	Prompt->SetRenderOpacity(ViewModel->GetAlpha());
 	ModeLabel->SetColorAndOpacity(FSlateColor(GetToken(EGothamColorToken::Info)));
+	// The prompt names the input the player actually has to perform.
+	GothamStyle::ApplyText(ScanLabel, EGothamTextStyle::Label, GetToken(EGothamColorToken::TextPrimary));
+	ScanLabel->SetText(GetGothamSettings().ScanMode == EGothamScanMode::Tap ? LOCTEXT("Scan", "Scan") : LOCTEXT("HoldToAnalyse", "Hold to analyse"));
 	if (Material)
 	{
 		// The scanline scroll and wipe sweep freeze in reduced-motion mode; the tint and vignette stay.

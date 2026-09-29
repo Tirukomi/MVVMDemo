@@ -72,6 +72,7 @@ bool FGothamSettingsData::Cycle(EGothamSetting Setting, int32 Direction)
 	case EGothamSetting::HighContrast:       bHighContrast = !bHighContrast; break;
 	case EGothamSetting::ReducedMotion:      bReducedMotion = !bReducedMotion; break;
 	case EGothamSetting::WheelMode:          WheelMode = Step(WheelMode, Direction); break;
+	case EGothamSetting::ScanMode:           ScanMode = Step(ScanMode, Direction); break;
 	case EGothamSetting::SubtitleSize:       SubtitleSize = Step(SubtitleSize, Direction); break;
 	case EGothamSetting::SubtitleBackground: bSubtitleBackground = !bSubtitleBackground; break;
 	default: break;
@@ -82,7 +83,7 @@ bool FGothamSettingsData::Cycle(EGothamSetting Setting, int32 Direction)
 bool FGothamSettingsData::operator==(const FGothamSettingsData& Other) const
 {
 	return Language == Other.Language && ColorMode == Other.ColorMode && UIScaleIndex == Other.UIScaleIndex
-		&& bHighContrast == Other.bHighContrast && bReducedMotion == Other.bReducedMotion && WheelMode == Other.WheelMode
+		&& bHighContrast == Other.bHighContrast && bReducedMotion == Other.bReducedMotion && WheelMode == Other.WheelMode && ScanMode == Other.ScanMode
 		&& SubtitleSize == Other.SubtitleSize && bSubtitleBackground == Other.bSubtitleBackground;
 }
 
@@ -103,6 +104,7 @@ void FGothamSettingsData::LoadFromConfig(const FConfigFile& File, const TCHAR* S
 	if (File.GetBool(Section, TEXT("HighContrast"), bBool)) { bHighContrast = bBool; }
 	if (File.GetBool(Section, TEXT("ReducedMotion"), bBool)) { bReducedMotion = bBool; }
 	if (File.GetInt(Section, TEXT("WheelMode"), Int)) { WheelMode = ClampEnum(Int, WheelMode); }
+	if (File.GetInt(Section, TEXT("ScanMode"), Int)) { ScanMode = ClampEnum(Int, ScanMode); }
 	if (File.GetInt(Section, TEXT("SubtitleSize"), Int)) { SubtitleSize = ClampEnum(Int, SubtitleSize); }
 	if (File.GetBool(Section, TEXT("SubtitleBackground"), bBool)) { bSubtitleBackground = bBool; }
 }
@@ -115,6 +117,7 @@ void FGothamSettingsData::SaveToConfig(FConfigFile& File, const TCHAR* Section) 
 	File.SetString(Section, TEXT("HighContrast"), bHighContrast ? TEXT("True") : TEXT("False"));
 	File.SetString(Section, TEXT("ReducedMotion"), bReducedMotion ? TEXT("True") : TEXT("False"));
 	File.SetInt64(Section, TEXT("WheelMode"), static_cast<int64>(WheelMode));
+	File.SetInt64(Section, TEXT("ScanMode"), static_cast<int64>(ScanMode));
 	File.SetInt64(Section, TEXT("SubtitleSize"), static_cast<int64>(SubtitleSize));
 	File.SetString(Section, TEXT("SubtitleBackground"), bSubtitleBackground ? TEXT("True") : TEXT("False"));
 }

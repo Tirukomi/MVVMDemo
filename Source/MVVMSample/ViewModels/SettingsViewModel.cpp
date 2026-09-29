@@ -66,6 +66,7 @@ FText USettingsViewModel::GetLabel(EGothamSetting Setting)
 	case EGothamSetting::HighContrast:       return LOCTEXT("HighContrastLabel", "High contrast");
 	case EGothamSetting::ReducedMotion:      return LOCTEXT("ReducedMotionLabel", "Reduced motion");
 	case EGothamSetting::WheelMode:          return LOCTEXT("WheelModeLabel", "Gadget wheel");
+	case EGothamSetting::ScanMode:           return LOCTEXT("ScanModeLabel", "Clue analysis");
 	case EGothamSetting::SubtitleSize:       return LOCTEXT("SubtitleSizeLabel", "Subtitle size");
 	case EGothamSetting::SubtitleBackground: return LOCTEXT("SubtitleBackgroundLabel", "Subtitle background");
 	default: return FText::GetEmpty();
@@ -99,6 +100,8 @@ FText USettingsViewModel::GetValueText(EGothamSetting Setting) const
 	case EGothamSetting::ReducedMotion:      return OnOff(Current.bReducedMotion);
 	case EGothamSetting::WheelMode:
 		return Current.WheelMode == EGothamWheelMode::Hold ? LOCTEXT("WheelHold", "Hold") : LOCTEXT("WheelToggle", "Toggle");
+	case EGothamSetting::ScanMode:
+		return Current.ScanMode == EGothamScanMode::Hold ? LOCTEXT("ScanHold", "Hold") : LOCTEXT("ScanTap", "Tap");
 	case EGothamSetting::SubtitleSize:
 		switch (Current.SubtitleSize)
 		{
@@ -120,6 +123,7 @@ void USettingsViewModel::Recompute()
 	UE_MVVM_SET_PROPERTY_VALUE(HighContrastValue, GetValueText(EGothamSetting::HighContrast));
 	UE_MVVM_SET_PROPERTY_VALUE(ReducedMotionValue, GetValueText(EGothamSetting::ReducedMotion));
 	UE_MVVM_SET_PROPERTY_VALUE(WheelModeValue, GetValueText(EGothamSetting::WheelMode));
+	UE_MVVM_SET_PROPERTY_VALUE(ScanModeValue, GetValueText(EGothamSetting::ScanMode));
 	UE_MVVM_SET_PROPERTY_VALUE(SubtitleSizeValue, GetValueText(EGothamSetting::SubtitleSize));
 	UE_MVVM_SET_PROPERTY_VALUE(SubtitleBackgroundValue, GetValueText(EGothamSetting::SubtitleBackground));
 }
@@ -135,6 +139,7 @@ void USettingsViewModel::RefreshTexts()
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HighContrastValue);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ReducedMotionValue);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(WheelModeValue);
+	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ScanModeValue);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SubtitleSizeValue);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SubtitleBackgroundValue);
 }

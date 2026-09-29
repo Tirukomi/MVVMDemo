@@ -18,6 +18,9 @@ class MVVMSAMPLE_API UClueEntryViewModel : public UMVVMViewModelBase
 public:
 	void Initialize(FName InClueId, const FText& InTitle, const FText& InDescription, const TSoftObjectPtr<UTexture2D>& InThumbnail);
 	void SetDiscovered(bool bInDiscovered);
+	/** Where the clue sits in the world, for markers anchored to it. */
+	void SetWorldLocation(const FVector& InLocation) { WorldLocation = InLocation; bHasWorldLocation = true; }
+	bool GetWorldLocation(FVector& OutLocation) const { OutLocation = WorldLocation; return bHasWorldLocation; }
 
 	/** Starts streaming the thumbnail if it is not loaded yet. Safe to call repeatedly. */
 	void RequestThumbnail();
@@ -53,6 +56,8 @@ private:
 	void OnThumbnailLoaded();
 
 	FName ClueId;
+	FVector WorldLocation = FVector::ZeroVector;
+	bool bHasWorldLocation = false;
 	FText Title;
 	FText Description;
 	TSoftObjectPtr<UTexture2D> ThumbnailPath;

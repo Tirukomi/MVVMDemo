@@ -67,6 +67,7 @@ void UGothamOptionRow::Setup(EGothamSetting InSetting, USettingsViewModel* InVie
 		ViewModel->AddFieldValueChangedDelegate(FVM::HighContrastValue, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::ReducedMotionValue, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::WheelModeValue, Delegate);
+		ViewModel->AddFieldValueChangedDelegate(FVM::ScanModeValue, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::SubtitleSizeValue, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::SubtitleBackgroundValue, Delegate);
 	}

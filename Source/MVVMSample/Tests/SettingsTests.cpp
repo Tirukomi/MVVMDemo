@@ -66,6 +66,7 @@ bool FGothamSettingsPersistenceTest::RunTest(const FString& Parameters)
 	Written.bHighContrast = true;
 	Written.bReducedMotion = true;
 	Written.WheelMode = EGothamWheelMode::Toggle;
+	Written.ScanMode = EGothamScanMode::Tap;
 	Written.SubtitleSize = EGothamSubtitleSize::Large;
 	Written.bSubtitleBackground = false;
 	Written.SaveToConfig(File, Section);

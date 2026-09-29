@@ -34,6 +34,14 @@ void UDetectiveComponent::ToggleDetective()
 {
 	bActive = !bActive;
 	ApplyHighlights(bActive);
+	if (bActive && GetOwner())
+	{
+		OnScanPulse.Broadcast(GetOwner()->GetActorLocation(), OpenPulseRadius);
+	}
+	else
+	{
+		EndAnalyse();
+	}
 	if (IsRegistered())
 	{
 		SetComponentTickEnabled(true);
@@ -65,19 +73,36 @@ void UDetectiveComponent::Advance(float DeltaTime)
 	Alpha = Alpha < Target ? FMath::Min(Alpha + Step, Target) : FMath::Max(Alpha - Step, Target);
 	BroadcastCurrent();
 
-	if (FMath::IsNearlyEqual(Alpha, Target) && IsRegistered())
+	if (Analysis.bRunning)
+	{
+		if (!AnalysisTarget.IsValid() || AnalysisTarget->IsScanned())
+		{
+			EndAnalyse();
+		}
+		else if (Analysis.Advance(DeltaTime, AnalyseSeconds))
+		{
+			CompleteScan(AnalysisTarget.Get());
+			AnalysisTarget.Reset();
+			BroadcastAnalysis();
+		}
+		else
+		{
+			BroadcastAnalysis();
+		}
+	}
+
+	if (FMath::IsNearlyEqual(Alpha, Target) && !Analysis.bRunning && IsRegistered())
 	{
 		SetComponentTickEnabled(false);
 	}
 }
 
-bool UDetectiveComponent::TryScan()
+AClueActor* UDetectiveComponent::FindNearestUnscanned() const
 {
-	if (!bActive || !GetOwner())
+	if (!GetOwner())
 	{
-		return false;
+		return nullptr;
 	}
-
 	AClueActor* Best = nullptr;
 	float BestDistSq = FMath::Square(ScanRadius);
 	for (const TWeakObjectPtr<AClueActor>& Actor : ClueActors)
@@ -94,14 +119,77 @@ bool UDetectiveComponent::TryScan()
 			Best = Clue;
 		}
 	}
+	return Best;
+}
+
+bool UDetectiveComponent::TryScan()
+{
+	AClueActor* Best = bActive ? FindNearestUnscanned() : nullptr;
 	if (!Best)
 	{
 		return false;
 	}
-
-	Best->MarkScanned();
-	RegisterScan(Best->GetClue());
+	CompleteScan(Best);
 	return true;
+}
+
+void UDetectiveComponent::CompleteScan(AClueActor* Clue)
+{
+	Clue->MarkScanned();
+	RegisterScan(Clue->GetClue());
+	OnScanPulse.Broadcast(Clue->GetActorLocation(), ScanPulseRadius);
+}
+
+bool UDetectiveComponent::BeginAnalyse()
+{
+	AClueActor* Best = bActive ? FindNearestUnscanned() : nullptr;
+	if (!Best)
+	{
+		return false;
+	}
+	AnalysisTarget = Best;
+	Analysis.Begin();
+	if (IsRegistered())
+	{
+		SetComponentTickEnabled(true);
+	}
+	BroadcastAnalysis();
+	return true;
+}
+
+void UDetectiveComponent::EndAnalyse()
+{
+	if (Analysis.bRunning)
+	{
+		Analysis.Cancel();
+		AnalysisTarget.Reset();
+		BroadcastAnalysis();
+	}
+}
+
+FName UDetectiveComponent::GetAnalysisTargetId() const
+{
+	const AClueActor* Target = AnalysisTarget.Get();
+	return Target && Target->GetClue() ? Target->GetClue()->ClueId : NAME_None;
+}
+
+void UDetectiveComponent::BroadcastAnalysis() const
+{
+	OnAnalysisChanged.Broadcast(Analysis.bRunning ? GetAnalysisTargetId() : NAME_None, Analysis.bRunning ? Analysis.Progress : 0.f);
+}
+
+bool UDetectiveComponent::GetClueLocation(FName ClueId, FVector& OutLocation) const
+{
+	for (const TWeakObjectPtr<AClueActor>& Actor : ClueActors)
+	{
+		const AClueActor* Clue = Actor.Get();
+		if (Clue && Clue->GetClue() && Clue->GetClue()->ClueId == ClueId)
+		{
+			OutLocation = Clue->GetActorLocation();
+			return true;
+		}
+	}
+	return false;
 }
 
 void UDetectiveComponent::RegisterScan(const UClueDataAsset* Clue)

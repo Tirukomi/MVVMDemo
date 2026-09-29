@@ -46,4 +46,7 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> ModeLabel;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> ScanLabel;
 };

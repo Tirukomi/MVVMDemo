@@ -10,6 +10,7 @@ import sys
 ROOT = r"D:\UEProjects\MVVMSample\Content\Localization\Game"
 
 DE = {
+    "Clue analysis": "Hinweisanalyse", "Tap": "Tippen", "Hold to analyse": "Halten zum Analysieren", "Analysing": "Analysiere", "Unknown evidence": "Unbekanntes Beweisstück", "{0} m": "{0} m",
     "Hits": "Treffer", "Objective": "Ziel", "Low": "Niedrig", "Ready": "Bereit", "{0}s": "{0} s",
     "Attack": "Angreifen", "Case file": "Fallakte", "Detective mode": "Detektivmodus",
     "Gadget 1": "Gadget 1", "Gadget 2": "Gadget 2", "Gadget 3": "Gadget 3", "Gadget wheel": "Gadget-Rad",
@@ -57,6 +58,7 @@ DE = {
 }
 
 JA = {
+    "Clue analysis": "手がかり分析", "Tap": "タップ", "Hold to analyse": "長押しで分析", "Analysing": "分析中", "Unknown evidence": "不明な証拠", "{0} m": "{0} m",
     "Hits": "ヒット", "Objective": "目標", "Low": "低下", "Ready": "準備完了", "{0}s": "{0}秒",
     "Attack": "攻撃", "Case file": "事件ファイル", "Detective mode": "探偵モード",
     "Gadget 1": "ガジェット 1", "Gadget 2": "ガジェット 2", "Gadget 3": "ガジェット 3", "Gadget wheel": "ガジェットホイール",

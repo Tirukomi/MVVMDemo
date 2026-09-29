@@ -23,6 +23,8 @@ CUBE = EAL.load_asset("/Engine/BasicShapes/Cube")
 CYLINDER = EAL.load_asset("/Engine/BasicShapes/Cylinder")
 CHAMFER = EAL.load_asset("/Game/LevelPrototyping/Meshes/SM_ChamferCube") if EAL.does_asset_exist("/Game/LevelPrototyping/Meshes/SM_ChamferCube") else CUBE
 
+INTERACTABLE = 4  # EGothamStencil::Interactable
+
 # Clue positions (see CreateDetectiveAssets.py); props keep clear of them so clues stay visible.
 CLUE_SPOTS = [(750, 420), (-600, 800), (350, -1000), (-1100, -300), (0, 1400)]
 
@@ -41,6 +43,9 @@ def fresh_material(name, domain=None):
         mat = ATOOLS.create_asset(name, MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
     if domain is not None:
         mat.set_editor_property("material_domain", domain)
+    else:
+        # LevelPrototyping meshes are Nanite; without the flag they fall back to the default material.
+        mat.set_editor_property("used_with_nanite", True)
     return mat
 
 
@@ -290,12 +295,16 @@ def rotator(pitch=0.0, yaw=0.0, roll=0.0):
     return unreal.Rotator(pitch=pitch, yaw=yaw, roll=roll)
 
 
-def mesh_actor(mesh, loc, scale, mat, label, rot=None, shadows=True):
+def mesh_actor(mesh, loc, scale, mat, label, rot=None, shadows=True, stencil=0):
     a = eas.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(*loc))
     smc = a.static_mesh_component
     smc.set_static_mesh(mesh)
     smc.set_material(0, mat)
     smc.set_editor_property("cast_shadow", shadows)
+    if stencil:
+        # Detective Mode colours custom-depth objects by stencil class (see Gameplay/DetectiveTypes.h).
+        smc.set_editor_property("render_custom_depth", True)
+        smc.set_editor_property("custom_depth_stencil_value", stencil)
     a.set_actor_scale3d(unreal.Vector(*scale))
     if rot:
         a.set_actor_rotation(rotator(*rot), False)
@@ -304,9 +313,9 @@ def mesh_actor(mesh, loc, scale, mat, label, rot=None, shadows=True):
     return a
 
 
-def box(loc, size, mat, label, rot=None, mesh=None, shadows=True):
+def box(loc, size, mat, label, rot=None, mesh=None, shadows=True, stencil=0):
     """Box by centre and full size in cm (engine cube is 100 cm)."""
-    return mesh_actor(mesh or CUBE, loc, (size[0] / 100.0, size[1] / 100.0, size[2] / 100.0), mat, label, rot, shadows)
+    return mesh_actor(mesh or CUBE, loc, (size[0] / 100.0, size[1] / 100.0, size[2] / 100.0), mat, label, rot, shadows, stencil)
 
 
 def clear_of_clues(x, y, radius):
@@ -373,7 +382,7 @@ def build_level(mats):
     box((-1650, 1050, 30), (400, 200, 60), concrete, "DeckStep")
 
     # Stairwell hut with a lit door.
-    box((1500, 1500, 180), (500, 400, 360), concrete, "Stairwell")
+    box((1500, 1500, 180), (500, 400, 360), concrete, "Stairwell", stencil=INTERACTABLE)
     box((1500, 1500, 364), (520, 420, 8), metal, "StairwellRoof")
     box((1248, 1500, 110), (6, 140, 220), cold_glow, "StairwellDoorGlow", shadows=False)
     point_light((1180, 1500, 250), (0.75, 0.85, 1.0), 120, 900, "DoorLight", shadows=True)
@@ -381,7 +390,7 @@ def build_level(mats):
     # Water tank on legs.
     for dx, dy in [(-140, -140), (140, -140), (-140, 140), (140, 140)]:
         box((-1500 + dx, -1500 + dy, 150), (20, 20, 300), metal, "TankLeg")
-    mesh_actor(CYLINDER, (-1500, -1500, 450), (4.0, 4.0, 3.0), metal, "WaterTank")
+    mesh_actor(CYLINDER, (-1500, -1500, 450), (4.0, 4.0, 3.0), metal, "WaterTank", stencil=INTERACTABLE)
 
     # AC units and vents, scattered clear of clues and the spawn.
     placed = 0

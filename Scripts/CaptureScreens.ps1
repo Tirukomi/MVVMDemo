@@ -11,6 +11,8 @@ $shots = @(
     @{ name = "hud";              flags = "-GothamHudDemo";                                shot = "gotham_hud";       res = "1280 720" },
     @{ name = "hud-wheel";        flags = "-GothamOpenWheel";                              shot = "gotham_wheel";     res = "1280 720" },
     @{ name = "detective";        flags = "-GothamDetective";                              shot = "gotham_detective"; res = "1280 720" },
+    @{ name = "detective-reveal"; flags = "-GothamDetective -GothamDetectiveReveal";      shot = "gotham_detective"; res = "1280 720" },
+    @{ name = "detective-analyse"; flags = "-GothamDetective -GothamDetectiveAnalyse";    shot = "gotham_detective"; res = "1280 720" },
     @{ name = "case-file";        flags = "-GothamClueLog=200";                            shot = "gotham_cluelog";   res = "1280 720" },
     @{ name = "pause";            flags = "-GothamOpenPause";                              shot = "gotham_pause";     res = "1280 720" },
     @{ name = "settings-en";      flags = "-GothamOpenSettings";                           shot = "gotham_settings";  res = "1280 720" },

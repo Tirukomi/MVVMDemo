@@ -51,7 +51,7 @@ Requires UE 5.8 (path assumptions in `Scripts/` point at `D:\UnrealEngine\UE_5.8
 | Attack (builds the combo) | Left mouse | A |
 | Gadgets 1 to 3 | 1, 2, 3 | X, Y, B |
 | Gadget wheel (hold, or toggle in settings) | Q | Left shoulder |
-| Detective Mode / scan clue | V / E | D-pad up / right |
+| Detective Mode / analyse clue (hold; Tap in settings) | V / E | D-pad up / right |
 | Case file | J | Select |
 | Pause (settings, controls) | Esc | Start |
 | Debug: damage, heal, combo hit | F1, F2, F3 | n/a |

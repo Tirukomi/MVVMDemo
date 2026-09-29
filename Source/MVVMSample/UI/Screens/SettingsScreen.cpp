@@ -50,7 +50,7 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 
 		const EGothamSetting Order[] = {
 			EGothamSetting::Language, EGothamSetting::ColorVision, EGothamSetting::UIScale, EGothamSetting::HighContrast,
-			EGothamSetting::ReducedMotion, EGothamSetting::WheelMode, EGothamSetting::SubtitleSize, EGothamSetting::SubtitleBackground };
+			EGothamSetting::ReducedMotion, EGothamSetting::WheelMode, EGothamSetting::ScanMode, EGothamSetting::SubtitleSize, EGothamSetting::SubtitleBackground };
 		for (const EGothamSetting Setting : Order)
 		{
 			UGothamOptionRow* Row = WidgetTree->ConstructWidget<UGothamOptionRow>();
@@ -90,7 +90,7 @@ void USettingsScreen::NativeConstruct()
 		ViewModel = Settings->GetViewModel();
 		const EGothamSetting Order[] = {
 			EGothamSetting::Language, EGothamSetting::ColorVision, EGothamSetting::UIScale, EGothamSetting::HighContrast,
-			EGothamSetting::ReducedMotion, EGothamSetting::WheelMode, EGothamSetting::SubtitleSize, EGothamSetting::SubtitleBackground };
+			EGothamSetting::ReducedMotion, EGothamSetting::WheelMode, EGothamSetting::ScanMode, EGothamSetting::SubtitleSize, EGothamSetting::SubtitleBackground };
 		for (int32 i = 0; i < Rows.Num(); ++i)
 		{
 			Rows[i]->Setup(Order[i], ViewModel);

@@ -58,6 +58,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
 	FText WheelModeValue;
 	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
+	FText ScanModeValue;
+	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
 	FText SubtitleSizeValue;
 	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
 	FText SubtitleBackgroundValue;

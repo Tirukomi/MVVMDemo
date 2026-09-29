@@ -97,6 +97,7 @@ void UGothamViewModelSubsystem::Unbind()
 	{
 		DetectiveComp->OnDetectiveChanged.Remove(DetectiveHandle);
 		DetectiveComp->OnClueScanned.Remove(ScanHandle);
+		DetectiveComp->OnAnalysisChanged.Remove(AnalysisHandle);
 		DetectiveComp->OnCluesCollected.Remove(CluesHandle);
 	}
 	BoundCombo.Reset();
@@ -122,6 +123,7 @@ void UGothamViewModelSubsystem::BindToCharacter(AGothamCharacter* Character)
 	ComboHandle = BoundCombo->OnComboChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleCombo);
 	DetectiveHandle = BoundDetective->OnDetectiveChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleDetective);
 	ScanHandle = BoundDetective->OnClueScanned.AddUObject(this, &UGothamViewModelSubsystem::HandleClueScanned);
+	AnalysisHandle = BoundDetective->OnAnalysisChanged.AddWeakLambda(this, [this](FName ClueId, float Progress) { Detective->SetAnalysis(ClueId, Progress); });
 
 	// Static slot data (name, key hint, tint) is set once per bind; cooldowns stream in afterwards.
 	const TArray<FGothamGadgetDefinition>& Defs = BoundGadgets->GetGadgets();
@@ -172,6 +174,11 @@ void UGothamViewModelSubsystem::RebuildClues()
 		UClueEntryViewModel* Entry = NewObject<UClueEntryViewModel>(this);
 		Entry->Initialize(Clue->ClueId, Clue->Title, Clue->Description, Clue->Thumbnail);
 		Entry->SetDiscovered(DetectiveComp->IsScanned(Clue->ClueId));
+		FVector Location;
+		if (DetectiveComp->GetClueLocation(Clue->ClueId, Location))
+		{
+			Entry->SetWorldLocation(Location);
+		}
 		Entries.Add(Entry);
 	}
 	Clues->SetEntries(MoveTemp(Entries));

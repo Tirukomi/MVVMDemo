@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Gameplay/DetectiveTypes.h"
 #include "ClueActor.generated.h"
 
 class UClueDataAsset;
@@ -22,8 +23,8 @@ public:
 	AClueActor();
 
 	/** Stencil values the Detective Mode post-process material keys off. */
-	static constexpr int32 StencilUnscanned = 1;
-	static constexpr int32 StencilScanned = 2;
+	static constexpr int32 StencilUnscanned = EGothamStencil::ClueUnscanned;
+	static constexpr int32 StencilScanned = EGothamStencil::ClueScanned;
 
 	const UClueDataAsset* GetClue() const { return Clue; }
 	bool IsScanned() const { return bScanned; }
