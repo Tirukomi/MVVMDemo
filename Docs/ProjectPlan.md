@@ -102,6 +102,12 @@ Deliverable: playable map where damage, gadget use and hits update the HUD **pur
 
 **Exit:** builds clean, HUD reflects all three systems, view-model test passes, GIF captured.
 
+**As built (deviations):** HUD widgets are C++-built UMG trees that bind through field-notify delegates rather than
+editor-authored MVVM bindings; `UGothamViewModelResolver` is in place so designer-authored `WBP_` widgets with editor
+bindings can be added in M2. Debug keys are F1 damage, F2 heal, F3 combo hit. Component tick logic lives in
+`Advance()` so tests can drive unregistered components. Known M2 item: CommonUI logs that input routing needs a
+`CommonGameViewportClient`.
+
 ### M2 — Common UI layer stack, menus, input (1.5 weeks)
 
 1. `UPrimaryGameLayout` with `Game` / `GameMenu` / `Menu` / `Modal` layers; `UGothamUISubsystem` to push/pop

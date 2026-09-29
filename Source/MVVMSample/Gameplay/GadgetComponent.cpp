@@ -1,0 +1,92 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#include "Gameplay/GadgetComponent.h"
+
+#define LOCTEXT_NAMESPACE "Gotham.Gadgets"
+
+UGadgetComponent::UGadgetComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+
+	auto Make = [](FText Name, float Cooldown, FLinearColor Tint)
+	{
+		FGothamGadgetDefinition Def;
+		Def.DisplayName = Name;
+		Def.CooldownSeconds = Cooldown;
+		Def.Tint = Tint;
+		return Def;
+	};
+	Gadgets = {
+		Make(LOCTEXT("Batarang", "Batarang"), 3.f, FLinearColor(0.9f, 0.75f, 0.2f)),
+		Make(LOCTEXT("Grapnel", "Grapnel"), 6.f, FLinearColor(0.3f, 0.7f, 1.f)),
+		Make(LOCTEXT("Smoke", "Smoke Pellet"), 10.f, FLinearColor(0.7f, 0.4f, 1.f)),
+	};
+	Remaining.Init(0.f, Gadgets.Num());
+}
+
+void UGadgetComponent::SetGadgets(const TArray<FGothamGadgetDefinition>& NewGadgets)
+{
+	Gadgets = NewGadgets;
+	Remaining.Init(0.f, Gadgets.Num());
+	BroadcastAll();
+}
+
+float UGadgetComponent::GetCooldownRemaining(int32 SlotIndex) const
+{
+	return Remaining.IsValidIndex(SlotIndex) ? Remaining[SlotIndex] : 0.f;
+}
+
+bool UGadgetComponent::UseGadget(int32 SlotIndex)
+{
+	if (!Gadgets.IsValidIndex(SlotIndex) || Remaining.Num() != Gadgets.Num() || Remaining[SlotIndex] > 0.f)
+	{
+		return false;
+	}
+
+	Remaining[SlotIndex] = Gadgets[SlotIndex].CooldownSeconds;
+	OnGadgetUsed.Broadcast(SlotIndex);
+	OnCooldownChanged.Broadcast(SlotIndex, Remaining[SlotIndex], Gadgets[SlotIndex].CooldownSeconds);
+	if (IsRegistered())
+	{
+		SetComponentTickEnabled(true);
+	}
+	return true;
+}
+
+void UGadgetComponent::BroadcastAll() const
+{
+	for (int32 i = 0; i < Gadgets.Num(); ++i)
+	{
+		OnCooldownChanged.Broadcast(i, GetCooldownRemaining(i), Gadgets[i].CooldownSeconds);
+	}
+}
+
+void UGadgetComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Advance(DeltaTime);
+}
+
+void UGadgetComponent::Advance(float DeltaTime)
+{
+	bool bAnyCooling = false;
+	for (int32 i = 0; i < Remaining.Num(); ++i)
+	{
+		if (Remaining[i] > 0.f)
+		{
+			Remaining[i] = FMath::Max(0.f, Remaining[i] - DeltaTime);
+			OnCooldownChanged.Broadcast(i, Remaining[i], Gadgets[i].CooldownSeconds);
+			bAnyCooling |= Remaining[i] > 0.f;
+		}
+	}
+	if (!bAnyCooling)
+	{
+		if (IsRegistered())
+		{
+			SetComponentTickEnabled(false);
+		}
+	}
+}
+
+#undef LOCTEXT_NAMESPACE
