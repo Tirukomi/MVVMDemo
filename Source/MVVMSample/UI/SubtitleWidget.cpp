@@ -1,9 +1,11 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/SubtitleWidget.h"
+#include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Components/Border.h"
+#include "UI/Slate/SGothamPanel.h"
+#include "UI/Widgets/GothamPanel.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
@@ -17,8 +19,9 @@ TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
 		Size->SetMaxDesiredWidth(900.f);
 		WidgetTree->RootWidget = Size;
 
-		Panel = WidgetTree->ConstructWidget<UBorder>();
-		Panel->SetPadding(FMargin(20.f, 10.f));
+		Panel = WidgetTree->ConstructWidget<UGothamPanel>();
+		Panel->SetPanelPadding(FMargin(20.f, 10.f));
+		Panel->SetShape(8.f, EGothamChamfer::Opposite);
 		Size->SetContent(Panel);
 
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -69,17 +72,22 @@ void USubtitleWidget::Refresh()
 	}
 	SetVisibility(ViewModel->GetIsVisible() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
-	FSlateFontInfo LineFont = LineText->GetFont();
-	LineFont.Size = ViewModel->GetFontSize();
-	LineText->SetFont(LineFont);
+	GothamStyle::ApplyText(SpeakerText, EGothamTextStyle::Label, GetToken(EGothamColorToken::Accent));
 	FSlateFontInfo SpeakerFont = SpeakerText->GetFont();
 	SpeakerFont.Size = FMath::Max(12, ViewModel->GetFontSize() - 6);
 	SpeakerText->SetFont(SpeakerFont);
 
 	SpeakerText->SetText(ViewModel->GetSpeaker());
 	LineText->SetText(ViewModel->GetLine());
-	SpeakerText->SetColorAndOpacity(FSlateColor(GetToken(EGothamColorToken::Info)));
 
 	// Backing panel is optional; in high contrast it is near-opaque so the text always has a solid backdrop.
-	Panel->SetBrushColor(ViewModel->GetHasBackground() ? FLinearColor(0.f, 0.f, 0.f, GetPanelAlpha() * 0.85f) : FLinearColor::Transparent);
+	FLinearColor Fill = GetToken(EGothamColorToken::Panel);
+	Fill.A = GetPanelAlpha() * 0.85f;
+	FLinearColor Edge = GetToken(EGothamColorToken::PanelEdge);
+	Edge.A = 0.5f;
+	Panel->SetColors(ViewModel->GetHasBackground() ? Fill : FLinearColor::Transparent, ViewModel->GetHasBackground() ? Edge : FLinearColor::Transparent);
+	GothamStyle::ApplyText(LineText, EGothamTextStyle::Body, GetToken(EGothamColorToken::TextPrimary));
+	FSlateFontInfo SizedFont = LineText->GetFont();
+	SizedFont.Size = ViewModel->GetFontSize();
+	LineText->SetFont(SizedFont);
 }

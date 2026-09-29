@@ -123,6 +123,15 @@ namespace GothamPalette
 {
 	FLinearColor Resolve(EGothamColorToken Token, EGothamColorMode Mode, bool bHighContrast)
 	{
+		switch (Token)
+		{
+		case EGothamColorToken::Panel:       return bHighContrast ? FLinearColor(0.f, 0.f, 0.f) : FLinearColor(0.012f, 0.015f, 0.02f);
+		case EGothamColorToken::PanelEdge:   return bHighContrast ? FLinearColor(0.85f, 0.88f, 0.92f) : FLinearColor(0.32f, 0.38f, 0.46f);
+		case EGothamColorToken::TextPrimary: return bHighContrast ? FLinearColor(1.f, 1.f, 1.f) : FLinearColor(0.88f, 0.91f, 0.95f);
+		case EGothamColorToken::TextMuted:   return bHighContrast ? FLinearColor(0.85f, 0.88f, 0.92f) : FLinearColor(0.5f, 0.56f, 0.64f);
+		case EGothamColorToken::Accent:      return bHighContrast ? FLinearColor(1.f, 0.8f, 0.2f) : FLinearColor(0.96f, 0.68f, 0.22f);
+		default: break;
+		}
 		// Indexed [mode][token]. The red/green presets lean on the Okabe-Ito colour-blind-safe set (blue / orange /
 		// sky / yellow); the tritan preset moves away from blue-yellow confusion toward teal / red / magenta.
 		static const FLinearColor Table[static_cast<int32>(EGothamColorMode::Count)][6] = {

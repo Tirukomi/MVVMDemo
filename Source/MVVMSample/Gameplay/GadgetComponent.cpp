@@ -9,18 +9,19 @@ UGadgetComponent::UGadgetComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 
-	auto Make = [](FText Name, float Cooldown, FLinearColor Tint)
+	auto Make = [](FText Name, float Cooldown, FLinearColor Tint, int32 Icon)
 	{
 		FGothamGadgetDefinition Def;
 		Def.DisplayName = Name;
 		Def.CooldownSeconds = Cooldown;
 		Def.Tint = Tint;
+		Def.IconIndex = Icon;
 		return Def;
 	};
 	Gadgets = {
-		Make(LOCTEXT("WingBlade", "Wing-Blade"), 3.f, FLinearColor(0.9f, 0.75f, 0.2f)),
-		Make(LOCTEXT("Grapnel", "Grapnel"), 6.f, FLinearColor(0.3f, 0.7f, 1.f)),
-		Make(LOCTEXT("Smoke", "Smoke Pellet"), 10.f, FLinearColor(0.7f, 0.4f, 1.f)),
+		Make(LOCTEXT("WingBlade", "Wing-Blade"), 3.f, FLinearColor(0.9f, 0.75f, 0.2f), 0),
+		Make(LOCTEXT("Grapnel", "Grapnel"), 6.f, FLinearColor(0.3f, 0.7f, 1.f), 1),
+		Make(LOCTEXT("Smoke", "Smoke Pellet"), 10.f, FLinearColor(0.7f, 0.4f, 1.f), 2),
 	};
 	Remaining.Init(0.f, Gadgets.Num());
 }

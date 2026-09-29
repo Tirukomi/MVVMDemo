@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Widgets/GothamButton.h"
+#include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -52,9 +53,7 @@ bool UGothamButton::Initialize()
 		WidgetTree->RootWidget = Content;
 
 		Label = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo Font = Label->GetFont();
-		Font.Size = 20;
-		Label->SetFont(Font);
+		Label->SetFont(GothamStyle::Font(EGothamTextStyle::BodyStrong));
 		Label->SetJustification(ETextJustify::Center);
 		Label->SetText(PendingLabel);
 		Content->SetContent(Label);

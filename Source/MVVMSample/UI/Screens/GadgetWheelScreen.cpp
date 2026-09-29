@@ -8,6 +8,7 @@
 #include "Core/GothamCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GadgetWheel.h"
 #include "ViewModels/GadgetViewModels.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
@@ -34,6 +35,7 @@ TSharedRef<SWidget> UGadgetWheelScreen::RebuildWidget()
 		WidgetTree->RootWidget = Dim;
 
 		Wheel = WidgetTree->ConstructWidget<UGadgetWheel>();
+		Wheel->WheelStyle.LabelFont = GothamStyle::Font(EGothamTextStyle::Header);
 		Wheel->OnItemSelected.AddDynamic(this, &UGadgetWheelScreen::HandleItemSelected);
 		Dim->SetContent(Wheel);
 		DefaultFocus = Wheel;

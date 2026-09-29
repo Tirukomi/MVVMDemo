@@ -13,7 +13,7 @@ class MVVMSAMPLE_API UGadgetSlotViewModel : public UMVVMViewModelBase
 	GENERATED_BODY()
 
 public:
-	void SetDefinition(const FText& InName, const FText& InHotkey, const FLinearColor& InTint);
+	void SetDefinition(const FText& InName, const FText& InHotkey, const FLinearColor& InTint, int32 InIconIndex = 0);
 
 	/** Remaining and total seconds; derives percent and ready state. */
 	void SetCooldown(float InRemaining, float InTotal);
@@ -21,6 +21,7 @@ public:
 	const FText& GetDisplayName() const { return DisplayName; }
 	const FText& GetHotkey() const { return Hotkey; }
 	FLinearColor GetTint() const { return Tint; }
+	int32 GetIconIndex() const { return IconIndex; }
 	float GetCooldownRemaining() const { return CooldownRemaining; }
 	float GetCooldownPercent() const { return CooldownPercent; }
 	bool GetIsReady() const { return bIsReady; }
@@ -34,6 +35,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
 	FLinearColor Tint = FLinearColor::White;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	int32 IconIndex = 0;
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
 	float CooldownRemaining = 0.f;
@@ -59,7 +63,14 @@ public:
 	UGadgetSlotViewModel* GetSlot(int32 Index) const;
 	const TArray<TObjectPtr<UGadgetSlotViewModel>>& GetSlots() const { return Slots; }
 
+	/** The gadget shown large in the HUD selector: the last one used. Out-of-range values are ignored. */
+	void SetSelectedIndex(int32 InIndex);
+	int32 GetSelectedIndex() const { return SelectedIndex; }
+
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UGadgetSlotViewModel>> Slots;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	int32 SelectedIndex = 0;
 };

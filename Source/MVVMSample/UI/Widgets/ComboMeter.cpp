@@ -10,7 +10,10 @@ TSharedRef<SWidget> UComboMeter::RebuildWidget()
 		.SegmentCount(SegmentCount)
 		.DesiredSize(MeterSize)
 		.FilledColor(FilledColor)
-		.EmptyColor(EmptyColor);
+		.EmptyColor(EmptyColor)
+		.GhostColor(GhostColor)
+		.Skew(Skew)
+		.Gap(Gap);
 	SlateMeter->SetPercent(Percent);
 	return SlateMeter.ToSharedRef();
 }
@@ -24,6 +27,8 @@ void UComboMeter::SynchronizeProperties()
 		SlateMeter->SetSegmentCount(SegmentCount);
 		SlateMeter->SetDesiredSize(MeterSize);
 		SlateMeter->SetColors(FilledColor, EmptyColor);
+		SlateMeter->SetGhostColor(GhostColor);
+		SlateMeter->SetShape(Skew, Gap);
 		SlateMeter->SetPercent(Percent);
 	}
 }

@@ -17,6 +17,7 @@
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "Core/GothamCharacter.h"
 #include "Gameplay/ComboComponent.h"
+#include "Gameplay/HealthComponent.h"
 #include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/GothamUISettings.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
@@ -431,7 +432,8 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bControls = FParse::Param(Cmd, TEXT("GothamOpenControls"));
 	const bool bCycleLanguage = FParse::Param(Cmd, TEXT("GothamCycleLanguage"));
 	const bool bRebindDemo = FParse::Param(Cmd, TEXT("GothamRebindDemo"));
-	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot"));
+	const bool bHudDemo = FParse::Param(Cmd, TEXT("GothamHudDemo"));
+	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot")) || bHudDemo;
 
 	// -GothamPerf=<label> runs the UI performance harness and quits (see Docs/Performance.md).
 	FString PerfLabel;
@@ -509,6 +511,31 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 		return false;
 	}), 1.f);
 
+	if (bHudDemo)
+	{
+		// A representative combat moment: a recent hit, a live combo and a gadget recharging.
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
+		{
+			if (AGothamCharacter* Hero = WeakThis.IsValid() ? Cast<AGothamCharacter>(WeakThis->GetPawn()) : nullptr)
+			{
+				Hero->GetHealthComponent()->ApplyDamage(38.f);
+				Hero->UseGadget(1);
+			}
+			return false;
+		}), 5.f);
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
+		{
+			if (AGothamCharacter* Hero = WeakThis.IsValid() ? Cast<AGothamCharacter>(WeakThis->GetPawn()) : nullptr)
+			{
+				Hero->GetHealthComponent()->ApplyDamage(9.f); // lands just before the screenshot, so ghost and flash show
+				for (int32 i = 0; i < 12; ++i)
+				{
+					Hero->GetComboComponent()->RegisterHit();
+				}
+			}
+			return false;
+		}), 7.85f);
+	}
 	if (bRebindDemo)
 	{
 		// Rebinds Scan (keyboard slot) from E to R through Enhanced Input user settings, then opens the controls

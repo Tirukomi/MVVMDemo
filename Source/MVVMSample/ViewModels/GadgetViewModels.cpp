@@ -2,8 +2,9 @@
 
 #include "ViewModels/GadgetViewModels.h"
 
-void UGadgetSlotViewModel::SetDefinition(const FText& InName, const FText& InHotkey, const FLinearColor& InTint)
+void UGadgetSlotViewModel::SetDefinition(const FText& InName, const FText& InHotkey, const FLinearColor& InTint, int32 InIconIndex)
 {
+	UE_MVVM_SET_PROPERTY_VALUE(IconIndex, InIconIndex);
 	UE_MVVM_SET_PROPERTY_VALUE(DisplayName, InName);
 	UE_MVVM_SET_PROPERTY_VALUE(Hotkey, InHotkey);
 	UE_MVVM_SET_PROPERTY_VALUE(Tint, InTint);
@@ -33,6 +34,14 @@ void UGadgetBarViewModel::SetSlotCount(int32 Count)
 	}
 	Slots = MoveTemp(NewSlots);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Slots);
+}
+
+void UGadgetBarViewModel::SetSelectedIndex(int32 InIndex)
+{
+	if (Slots.IsValidIndex(InIndex))
+	{
+		UE_MVVM_SET_PROPERTY_VALUE(SelectedIndex, InIndex);
+	}
 }
 
 UGadgetSlotViewModel* UGadgetBarViewModel::GetSlot(int32 Index) const

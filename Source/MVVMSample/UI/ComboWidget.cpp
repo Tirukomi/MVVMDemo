@@ -3,11 +3,16 @@
 #include "UI/ComboWidget.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Components/SizeBox.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
+#include "UI/Slate/SGothamPanel.h"
+#include "UI/Style/GothamMotion.h"
+#include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/ComboMeter.h"
+#include "UI/Widgets/GothamPanel.h"
 #include "ViewModels/ComboViewModel.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.Combo"
@@ -16,29 +21,36 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
-		USizeBox* Size = WidgetTree->ConstructWidget<USizeBox>();
-		Size->SetWidthOverride(180.f);
-		WidgetTree->RootWidget = Size;
-
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
-		Size->SetContent(Column);
+		WidgetTree->RootWidget = Column;
 
-		auto AddText = [&](int32 FontSize)
-		{
-			UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
-			FSlateFontInfo Font = Text->GetFont();
-			Font.Size = FontSize;
-			Text->SetFont(Font);
-			Text->SetJustification(ETextJustify::Right);
-			Column->AddChildToVerticalBox(Text)->SetHorizontalAlignment(HAlign_Right);
-			return Text;
-		};
+		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+		Column->AddChildToVerticalBox(Row);
 
-		MultiplierText = AddText(40);
-		HitsText = AddText(16);
+		CountText = WidgetTree->ConstructWidget<UTextBlock>();
+		Row->AddChildToHorizontalBox(CountText)->SetVerticalAlignment(VAlign_Center);
+
+		UVerticalBox* Side = WidgetTree->ConstructWidget<UVerticalBox>();
+		UHorizontalBoxSlot* SideSlot = Row->AddChildToHorizontalBox(Side);
+		SideSlot->SetVerticalAlignment(VAlign_Center);
+		SideSlot->SetPadding(FMargin(10.f, 6.f, 0.f, 0.f));
+
+		HitsLabel = WidgetTree->ConstructWidget<UTextBlock>();
+		HitsLabel->SetText(LOCTEXT("Hits", "Hits"));
+		Side->AddChildToVerticalBox(HitsLabel);
+
+		MultiplierTag = WidgetTree->ConstructWidget<UGothamPanel>();
+		MultiplierTag->SetShape(5.f, EGothamChamfer::Opposite);
+		MultiplierTag->SetPanelPadding(FMargin(8.f, 1.f));
+		MultiplierText = WidgetTree->ConstructWidget<UTextBlock>();
+		MultiplierTag->SetContent(MultiplierText);
+		Side->AddChildToVerticalBox(MultiplierTag)->SetHorizontalAlignment(HAlign_Left);
 
 		DecayBar = WidgetTree->ConstructWidget<UComboMeter>();
-		Column->AddChildToVerticalBox(DecayBar)->SetPadding(FMargin(0.f, 4.f, 0.f, 0.f));
+		DecayBar->SegmentCount = 1;
+		DecayBar->MeterSize = FVector2D(170.f, 3.f);
+		DecayBar->Gap = 0.f;
+		Column->AddChildToVerticalBox(DecayBar)->SetPadding(FMargin(2.f, 2.f, 0.f, 0.f));
 	}
 	return Super::RebuildWidget();
 }
@@ -58,6 +70,8 @@ void UComboWidget::SetViewModel(UComboViewModel* InViewModel)
 		ViewModel->AddFieldValueChangedDelegate(FVM::DecayAlpha, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::MultiplierText, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::bIsActive, Delegate);
+		LastHits = ViewModel->GetHitCount();
+		LastMultiplier = ViewModel->GetMultiplier();
 	}
 	Refresh();
 }
@@ -68,19 +82,61 @@ void UComboWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+void UComboWidget::OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId)
+{
+	// The decay timer changes every frame while a combo is live: touch only the bar.
+	if (FieldId == UComboViewModel::FFieldNotificationClassDescriptor::DecayAlpha)
+	{
+		if (DecayBar && ViewModel)
+		{
+			DecayBar->SetPercent(ViewModel->GetDecayAlpha());
+		}
+		return;
+	}
+	Refresh();
+}
+
+void UComboWidget::ApplyStyle()
+{
+	if (!CountText)
+	{
+		return;
+	}
+	const FLinearColor Accent = GetToken(EGothamColorToken::Accent);
+	GothamStyle::ApplyText(CountText, EGothamTextStyle::Display, GetToken(EGothamColorToken::TextPrimary));
+	GothamStyle::ApplyText(HitsLabel, EGothamTextStyle::Label, GetToken(EGothamColorToken::TextMuted));
+	GothamStyle::ApplyText(MultiplierText, EGothamTextStyle::Numeric, GetToken(EGothamColorToken::Panel));
+	MultiplierTag->SetColors(Accent, FLinearColor::Transparent, 0.f);
+
+	FLinearColor Track = GetToken(EGothamColorToken::PanelEdge);
+	Track.A = 0.3f;
+	DecayBar->FilledColor = Accent;
+	DecayBar->EmptyColor = Track;
+	DecayBar->bReduceMotion = GetGothamSettings().bReducedMotion;
+	DecayBar->SynchronizeProperties();
+}
+
 void UComboWidget::Refresh()
 {
-	if (!ViewModel || !HitsText)
+	if (!ViewModel || !CountText)
 	{
 		return;
 	}
 	SetVisibility(ViewModel->GetIsActive() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	CountText->SetText(FText::AsNumber(ViewModel->GetHitCount()));
 	MultiplierText->SetText(ViewModel->GetMultiplierText());
-	HitsText->SetText(FText::Format(LOCTEXT("HitsFmt", "{0} hits"), FText::AsNumber(ViewModel->GetHitCount())));
 	DecayBar->SetPercent(ViewModel->GetDecayAlpha());
-	DecayBar->FilledColor = GetToken(EGothamColorToken::Warning);
-	DecayBar->bReduceMotion = GetGothamSettings().bReducedMotion;
-	DecayBar->SynchronizeProperties();
+
+	if (ViewModel->GetHitCount() > LastHits)
+	{
+		GothamMotion::Pop(CountText, 1.22f);
+	}
+	if (ViewModel->GetMultiplier() > LastMultiplier)
+	{
+		GothamMotion::Pop(MultiplierTag, 1.35f, 0.2f);
+	}
+	LastHits = ViewModel->GetHitCount();
+	LastMultiplier = ViewModel->GetMultiplier();
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -93,6 +93,7 @@ private:
 
 	FDelegateHandle HealthHandle;
 	FDelegateHandle GadgetHandle;
+	FDelegateHandle GadgetUsedHandle;
 	FDelegateHandle ComboHandle;
 	FDelegateHandle DetectiveHandle;
 	FDelegateHandle ScanHandle;

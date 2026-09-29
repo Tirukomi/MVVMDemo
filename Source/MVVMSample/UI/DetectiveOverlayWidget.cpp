@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/DetectiveOverlayWidget.h"
+#include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
@@ -46,9 +47,8 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 		StripSlot->SetPadding(FMargin(0.f, 48.f, 0.f, 0.f));
 
 		UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo Font = Label->GetFont();
-		Font.Size = 22;
-		Label->SetFont(Font);
+		Label->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
+		Label->SetTextTransformPolicy(ETextTransformPolicy::ToUpper);
 		Label->SetText(LOCTEXT("Mode", "DETECTIVE MODE"));
 		ModeLabel = Label;
 		Strip->AddChildToHorizontalBox(Label)->SetPadding(FMargin(0.f, 0.f, 24.f, 0.f));

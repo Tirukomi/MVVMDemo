@@ -82,7 +82,7 @@ This is the biggest visual change for the least work.
 
 ### V2: HUD visual language (4 to 5 days)
 
-- **UI toolkit:**
+- **UI toolkit:** (built as Slate panels instead; see "V2 as built")
   - `M_UI_Panel`: an SDF material for chamfered rectangles, with parameters for corner size, border width, fill,
     border colour, inner glow and a scanline amount.
   - `UGothamPanel`: a UMG border wrapper that exposes those parameters as properties, so designers restyle panels
@@ -101,6 +101,34 @@ This is the biggest visual change for the least work.
   view model.
 - **Prompts:** a restyled `UGothamInputGlyph`, with key-cap and face-button shapes drawn in Slate instead of text in
   a box.
+
+**V2 as built:**
+- **Type:** composite fonts built in code from the OFL TTFs in `Content/UI/Fonts` (`UI/Style/GothamStyle`). Barlow
+  Condensed covers display and labels, Barlow covers body text, and Noto Sans JP is a sub-font for the CJK ranges. An
+  8-style type scale (`EGothamTextStyle`) replaces per-widget font sizes. Titles, headers and labels are upper-cased
+  and letter-spaced. Font files are staged as raw files, not imported assets.
+- **Tokens:** `Panel`, `PanelEdge`, `TextPrimary`, `TextMuted` and `Accent` join the palette. They're the same in
+  every colour-vision preset and tighter in high contrast. A test checks text contrast at 7:1 or better (primary) and
+  4.5:1 or better (muted) on panels.
+- **Panel shape:** `SGothamPanel` / `UGothamPanel` draw a chamfered panel (corner mask, edge, left accent bar) with
+  custom vertices. This replaces the planned SDF material: it's crisp at any UI scale, needs no size parameters and
+  works with invalidation.
+- **HUD, top-left:** a 10-segment slanted health bar with a damage ghost (`FGothamGhostFill`, tested). Below it, a
+  "LOW" label (never colour alone) and a readout, then the combo: big numerals, a "HITS" label, an accent multiplier
+  tag that pops on each step, and a thin decay rule.
+- **HUD, top-right:** a gadget selector. The last-used gadget shows large, with original line-art icons
+  (`SGadgetIcon`: a chevron blade, grapple and smoke canister), a cooldown ring and a READY / seconds state. The rest
+  of the loadout shows small, with keys. The objective panel sits beneath it with an accent bar and segmented progress.
+- **Hits and subtitles:** a danger vignette (`SDamageVignette`) flashes on each hit and holds at low health. It's a
+  colour cue, so it stays on under reduced motion. Subtitles and key glyphs use the panel shape (face buttons as
+  octagons).
+- **Motion:** `GothamMotion::Pop` / `Fade` run on real time, one animation per widget, and all are skipped under
+  reduced motion.
+- **Performance** (`Saved/Perf/V2_hud_1080p_fixed*.md`): the first pass re-applied fonts every frame during combo decay
+  and cooldowns, costing 0.41 ms and breaking the budget. After splitting styling from per-frame values, the animating
+  HUD costs +0.09 to +0.20 ms, within 0.3 ms.
+- **Not yet:** menu restyle (V4); the pause and settings screens only picked up the new fonts. Noto Sans JP is a
+  variable font rendered at its default weight, so Japanese reads lighter than the Latin type.
 
 ### V3: Detective Mode 2.0 (4 days)
 

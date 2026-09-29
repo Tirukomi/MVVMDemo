@@ -30,6 +30,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meter")
 	FLinearColor EmptyColor = FLinearColor(1.f, 1.f, 1.f, 0.12f);
 
+	/** Colour of the "damage ghost" trailing drops; transparent disables it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meter")
+	FLinearColor GhostColor = FLinearColor::Transparent;
+
+	/** Horizontal slant of each segment, in pixels. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meter")
+	float Skew = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meter", meta = (ClampMin = "0"))
+	float Gap = 3.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meter")
 	bool bReduceMotion = false;
 

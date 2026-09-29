@@ -6,11 +6,12 @@
 #include "UI/GothamSettingsAwareWidget.h"
 #include "ObjectiveTrackerWidget.generated.h"
 
+class UComboMeter;
+class UGothamPanel;
 class UObjectivesViewModel;
-class UProgressBar;
 class UTextBlock;
 
-/** Small HUD panel: current objective, "2 / 5", and a thin progress bar. */
+/** Objective panel: a muted "OBJECTIVE" label, the objective, "2 / 5" and a segmented progress rule. */
 UCLASS()
 class MVVMSAMPLE_API UObjectiveTrackerWidget : public UGothamSettingsAwareWidget
 {
@@ -32,11 +33,19 @@ private:
 	TObjectPtr<UObjectivesViewModel> ViewModel;
 
 	UPROPERTY(Transient)
+	TObjectPtr<UGothamPanel> Panel;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> HeaderText;
+
+	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> TitleText;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> ProgressText;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UProgressBar> Bar;
+	TObjectPtr<UComboMeter> Bar;
+
+	int32 LastFound = -1;
 };

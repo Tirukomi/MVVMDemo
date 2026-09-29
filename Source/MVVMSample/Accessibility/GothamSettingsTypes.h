@@ -89,6 +89,12 @@ enum class EGothamColorToken : uint8
 	Warning,    // combo meter, cautions
 	Unscanned,  // clue not yet investigated
 	Scanned,    // clue investigated
+	// Neutral tokens: the same in every colour-vision preset, tightened in high contrast.
+	Panel,        // panel fill (use with PanelAlpha)
+	PanelEdge,    // thin panel borders and rules
+	TextPrimary,  // main text
+	TextMuted,    // secondary text and labels
+	Accent,       // the one warm highlight: selection, focus, the combo multiplier
 };
 
 namespace GothamPalette

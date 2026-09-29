@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Widgets/GothamOptionRow.h"
+#include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
@@ -22,9 +23,7 @@ TSharedRef<SWidget> UGothamOptionRow::RebuildWidget()
 		LabelBox->SetWidthOverride(280.f);
 		Row->AddChildToHorizontalBox(LabelBox)->SetVerticalAlignment(VAlign_Center);
 		LabelText = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo LabelFont = LabelText->GetFont();
-		LabelFont.Size = 20;
-		LabelText->SetFont(LabelFont);
+		LabelText->SetFont(GothamStyle::Font(EGothamTextStyle::BodyStrong));
 		LabelText->SetAutoWrapText(true);
 		LabelBox->SetContent(LabelText);
 
@@ -37,9 +36,7 @@ TSharedRef<SWidget> UGothamOptionRow::RebuildWidget()
 		ValueBox->SetWidthOverride(240.f);
 		Row->AddChildToHorizontalBox(ValueBox)->SetVerticalAlignment(VAlign_Center);
 		ValueText = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo ValueFont = ValueText->GetFont();
-		ValueFont.Size = 20;
-		ValueText->SetFont(ValueFont);
+		ValueText->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
 		ValueText->SetJustification(ETextJustify::Center);
 		ValueBox->SetContent(ValueText);
 

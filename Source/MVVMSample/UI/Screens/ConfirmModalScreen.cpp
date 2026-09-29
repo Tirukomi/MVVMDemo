@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Screens/ConfirmModalScreen.h"
+#include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -40,9 +41,7 @@ TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 		Column->AddChildToVerticalBox(TitleText)->SetPadding(FMargin(0.f, 0.f, 0.f, 12.f));
 
 		BodyText = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo Font = BodyText->GetFont();
-		Font.Size = 18;
-		BodyText->SetFont(Font);
+		BodyText->SetFont(GothamStyle::Font(EGothamTextStyle::Body));
 		BodyText->SetJustification(ETextJustify::Center);
 		BodyText->SetAutoWrapText(true);
 		Column->AddChildToVerticalBox(BodyText)->SetPadding(FMargin(0.f, 0.f, 0.f, 24.f));

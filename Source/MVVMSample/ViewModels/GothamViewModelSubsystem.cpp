@@ -85,6 +85,7 @@ void UGothamViewModelSubsystem::Unbind()
 	if (UGadgetComponent* Gadgets = BoundGadgets.Get())
 	{
 		Gadgets->OnCooldownChanged.Remove(GadgetHandle);
+		Gadgets->OnGadgetUsed.Remove(GadgetUsedHandle);
 	}
 	if (UComboComponent* ComboComp = BoundCombo.Get())
 	{
@@ -117,6 +118,7 @@ void UGothamViewModelSubsystem::BindToCharacter(AGothamCharacter* Character)
 
 	HealthHandle = BoundHealth->OnHealthChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleHealth);
 	GadgetHandle = BoundGadgets->OnCooldownChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleGadgetCooldown);
+	GadgetUsedHandle = BoundGadgets->OnGadgetUsed.AddWeakLambda(this, [this](int32 Slot) { GadgetBar->SetSelectedIndex(Slot); });
 	ComboHandle = BoundCombo->OnComboChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleCombo);
 	DetectiveHandle = BoundDetective->OnDetectiveChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleDetective);
 	ScanHandle = BoundDetective->OnClueScanned.AddUObject(this, &UGothamViewModelSubsystem::HandleClueScanned);
@@ -126,7 +128,7 @@ void UGothamViewModelSubsystem::BindToCharacter(AGothamCharacter* Character)
 	GadgetBar->SetSlotCount(Defs.Num());
 	for (int32 i = 0; i < Defs.Num(); ++i)
 	{
-		GadgetBar->GetSlot(i)->SetDefinition(Defs[i].DisplayName, FText::AsNumber(i + 1), Defs[i].Tint);
+		GadgetBar->GetSlot(i)->SetDefinition(Defs[i].DisplayName, FText::AsNumber(i + 1), Defs[i].Tint, Defs[i].IconIndex);
 	}
 
 	CluesHandle = BoundDetective->OnCluesCollected.AddUObject(this, &UGothamViewModelSubsystem::RebuildClues);

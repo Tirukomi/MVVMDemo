@@ -6,11 +6,14 @@
 #include "UI/GothamSettingsAwareWidget.h"
 #include "HealthBarWidget.generated.h"
 
+class UComboMeter;
 class UPlayerVitalsViewModel;
-class UProgressBar;
 class UTextBlock;
 
-/** Health bar + numeric readout. Presentation only: everything it shows comes from the view model. */
+/**
+ * Health, top-left: a slanted segmented bar with a damage ghost, and a small readout underneath. Low health is
+ * spelled out ("LOW") as well as coloured, so it never depends on colour alone.
+ */
 UCLASS()
 class MVVMSAMPLE_API UHealthBarWidget : public UGothamSettingsAwareWidget
 {
@@ -32,8 +35,11 @@ private:
 	TObjectPtr<UPlayerVitalsViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UProgressBar> Bar;
+	TObjectPtr<UComboMeter> Bar;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UTextBlock> Label;
+	TObjectPtr<UTextBlock> StatusText;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> ValueText;
 };

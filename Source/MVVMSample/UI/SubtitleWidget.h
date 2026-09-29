@@ -6,7 +6,7 @@
 #include "UI/GothamSettingsAwareWidget.h"
 #include "SubtitleWidget.generated.h"
 
-class UBorder;
+class UGothamPanel;
 class USubtitleViewModel;
 class UTextBlock;
 
@@ -32,7 +32,7 @@ private:
 	TObjectPtr<USubtitleViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UBorder> Panel;
+	TObjectPtr<UGothamPanel> Panel;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> SpeakerText;

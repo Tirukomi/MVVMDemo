@@ -4,7 +4,9 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "CommonInputSubsystem.h"
-#include "Components/Border.h"
+#include "UI/Slate/SGothamPanel.h"
+#include "UI/Style/GothamStyle.h"
+#include "UI/Widgets/GothamPanel.h"
 #include "Components/TextBlock.h"
 #include "Core/GothamPlayerController.h"
 #include "UI/GothamWidgetTick.h"
@@ -16,15 +18,14 @@ TSharedRef<SWidget> UGothamInputGlyph::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
-		UBorder* Frame = WidgetTree->ConstructWidget<UBorder>();
-		Frame->SetBrushColor(FLinearColor(1.f, 1.f, 1.f, 0.18f));
-		Frame->SetPadding(FMargin(8.f, 2.f));
+		Frame = WidgetTree->ConstructWidget<UGothamPanel>();
+		Frame->SetPanelPadding(FMargin(7.f, 1.f));
+		Frame->SetColors(FLinearColor(0.88f, 0.91f, 0.95f, 0.12f), FLinearColor(0.88f, 0.91f, 0.95f, 0.55f));
 		WidgetTree->RootWidget = Frame;
 
 		Text = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo Font = Text->GetFont();
-		Font.Size = 14;
-		Text->SetFont(Font);
+		GothamStyle::ApplyText(Text, EGothamTextStyle::Key, FLinearColor(0.88f, 0.91f, 0.95f));
+		Text->SetJustification(ETextJustify::Center);
 		Frame->SetContent(Text);
 	}
 	return Super::RebuildWidget();
@@ -131,6 +132,10 @@ void UGothamInputGlyph::Refresh()
 		}
 	}
 	Text->SetText(Key.IsValid() ? GetKeyLabel(Key) : FText::GetEmpty());
+	// Key caps get one cut corner; gamepad face buttons read as round-ish octagons.
+	const bool bFaceButton = Key == EKeys::Gamepad_FaceButton_Bottom || Key == EKeys::Gamepad_FaceButton_Right
+		|| Key == EKeys::Gamepad_FaceButton_Left || Key == EKeys::Gamepad_FaceButton_Top;
+	Frame->SetShape(bFaceButton ? 8.f : 4.f, bFaceButton ? EGothamChamfer::All : EGothamChamfer::BottomRight);
 
 	if (!Key.IsValid() && !ActionName.IsNone())
 	{

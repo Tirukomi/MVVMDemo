@@ -19,6 +19,10 @@ struct FGothamGadgetDefinition
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FLinearColor Tint = FLinearColor::White;
+
+	/** Which line-art icon the HUD draws: 0 wing-blade, 1 grapple, 2 smoke. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0", ClampMax = "2"))
+	int32 IconIndex = 0;
 };
 
 /** Fired when a gadget's cooldown state changes: (SlotIndex, RemainingSeconds, TotalSeconds). */

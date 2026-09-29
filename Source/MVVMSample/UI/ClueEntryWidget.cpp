@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/ClueEntryWidget.h"
+#include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -40,15 +41,11 @@ TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 		Row->AddChildToHorizontalBox(Text)->SetVerticalAlignment(VAlign_Center);
 
 		TitleText = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo TitleFont = TitleText->GetFont();
-		TitleFont.Size = 20;
-		TitleText->SetFont(TitleFont);
+		TitleText->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
 		Text->AddChildToVerticalBox(TitleText);
 
 		BodyText = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo BodyFont = BodyText->GetFont();
-		BodyFont.Size = 14;
-		BodyText->SetFont(BodyFont);
+		BodyText->SetFont(GothamStyle::Font(EGothamTextStyle::Body));
 		BodyText->SetAutoWrapText(true);
 		Text->AddChildToVerticalBox(BodyText);
 	}

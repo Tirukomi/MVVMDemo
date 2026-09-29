@@ -53,4 +53,7 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> Text;
+
+	UPROPERTY(Transient)
+	TObjectPtr<class UGothamPanel> Frame;
 };

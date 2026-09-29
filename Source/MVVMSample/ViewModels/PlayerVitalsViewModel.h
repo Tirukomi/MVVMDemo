@@ -23,6 +23,8 @@ public:
 	float GetMaxHealth() const { return MaxHealth; }
 	float GetHealthPercent() const { return HealthPercent; }
 	bool GetIsLowHealth() const { return bIsLowHealth; }
+	/** Increments on every drop in health, so views can flash without keeping their own history. */
+	int32 GetDamageCount() const { return DamageCount; }
 
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
@@ -36,4 +38,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetIsLowHealth, meta = (AllowPrivateAccess = "true"))
 	bool bIsLowHealth = false;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	int32 DamageCount = 0;
+
+private:
+	bool bHasValue = false;
 };

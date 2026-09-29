@@ -6,11 +6,15 @@
 #include "UI/GothamSettingsAwareWidget.h"
 #include "ComboWidget.generated.h"
 
-class UComboViewModel;
 class UComboMeter;
+class UComboViewModel;
+class UGothamPanel;
 class UTextBlock;
 
-/** Combo counter with a decay timer bar. Hidden while no combo is active. */
+/**
+ * Combo counter under the health bar: big condensed numerals, a "HITS" label, an accent multiplier tag and a thin
+ * decay rule. The count pops on every hit and the tag on every multiplier step (both skipped under reduced motion).
+ */
 UCLASS()
 class MVVMSAMPLE_API UComboWidget : public UGothamSettingsAwareWidget
 {
@@ -22,21 +26,32 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
-	virtual void OnSettingsApplied() override { Refresh(); }
+	virtual void OnSettingsApplied() override { ApplyStyle(); Refresh(); }
 
 private:
+	/** Fonts and colours: only on construction and settings changes (setting a font invalidates layout). */
+	void ApplyStyle();
 	void Refresh();
-	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { Refresh(); }
+	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UComboViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UTextBlock> HitsText;
+	TObjectPtr<UTextBlock> CountText;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> HitsLabel;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGothamPanel> MultiplierTag;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> MultiplierText;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UComboMeter> DecayBar;
+
+	int32 LastHits = 0;
+	float LastMultiplier = 1.f;
 };

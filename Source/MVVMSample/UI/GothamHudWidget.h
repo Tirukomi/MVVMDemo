@@ -3,19 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "UI/Screens/GothamScreen.h"
 #include "GothamHudWidget.generated.h"
 
 class UComboWidget;
+class UDamageVignette;
 class UDetectiveOverlayWidget;
-class UObjectiveTrackerWidget;
-class USubtitleWidget;
-class UGadgetBarViewModel;
-class UGadgetSlotWidget;
+class UGadgetSelectorWidget;
 class UHealthBarWidget;
-class UHorizontalBox;
+class UObjectiveTrackerWidget;
+class UPlayerVitalsViewModel;
+class USubtitleWidget;
 
-/** Combat HUD root. Lays out the three HUD widgets and hands each its view model. */
+/**
+ * Combat HUD root. Layout: health and combo top-left, gadget selector top-right with the objective under it,
+ * subtitles bottom-centre, Detective overlay and the danger vignette full-screen behind everything.
+ */
 UCLASS()
 class MVVMSAMPLE_API UGothamHudWidget : public UGothamScreen
 {
@@ -23,10 +27,6 @@ class MVVMSAMPLE_API UGothamHudWidget : public UGothamScreen
 
 public:
 	UGothamHudWidget(const FObjectInitializer& ObjectInitializer);
-
-	/** Set from tests or content to override which widgets are spawned. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HUD")
-	TSubclassOf<UGadgetSlotWidget> GadgetSlotClass;
 
 	/** The HUD keeps the game in control: mouse captured, no cursor. */
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
@@ -37,14 +37,25 @@ protected:
 	virtual void NativeDestruct() override;
 
 private:
-	void RebuildGadgetSlots();
-	void OnGadgetBarChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { RebuildGadgetSlots(); }
+	void OnVitalsChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
+	/** Flash to full, then settle at the low-health level (or zero) over half a second. */
+	void FlashVignette();
+	void UpdateVignetteRest();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UDamageVignette> Vignette;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UDetectiveOverlayWidget> DetectiveOverlay;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHealthBarWidget> HealthBar;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UDetectiveOverlayWidget> DetectiveOverlay;
+	TObjectPtr<UComboWidget> ComboCounter;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGadgetSelectorWidget> GadgetSelector;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UObjectiveTrackerWidget> ObjectiveTracker;
@@ -53,11 +64,9 @@ private:
 	TObjectPtr<USubtitleWidget> Subtitles;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UComboWidget> ComboCounter;
+	TObjectPtr<UPlayerVitalsViewModel> VitalsVM;
 
-	UPROPERTY(Transient)
-	TObjectPtr<UHorizontalBox> GadgetBox;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UGadgetBarViewModel> GadgetBarVM;
+	FTSTicker::FDelegateHandle FlashHandle;
+	float FlashElapsed = 0.f;
+	int32 LastDamageCount = 0;
 };

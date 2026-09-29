@@ -87,6 +87,19 @@ animated mannequin raise the baseline. Lumen stays off by project decision.
 1080p stays near 166 fps on the dev machine. The game-thread rise is the skeletal mesh and animation Blueprint, not
 the UI. The Detective Mode cost grew because its post-process now runs over a heavier scene; V3 rewrites that pass.
 
+## V2 HUD
+
+| 1080p, game thread over `no-ui` | V1 HUD | V2 first pass | V2 after fix (two runs) |
+|---|---|---|---|
+| hud-idle | +0.08 ms | +0.07 ms | -0.01 / +0.09 ms |
+| hud-animating | +0.16 ms | **+0.41 ms** (over budget) | +0.09 / +0.20 ms |
+| settings | -0.01 ms | +0.15 ms | -0.08 / +0.03 ms |
+
+The first pass re-applied fonts, colours and bar properties on every combo-decay and cooldown notification, so
+layout was invalidated every frame. The fix is `ApplyStyle()` on construction and settings changes only, with a
+per-frame path that touches just the changing value (the decay bar's percent, the cooldown rings, the seconds readout
+when the whole second changes).
+
 ## Budgets
 
 | Budget | Target | Status |

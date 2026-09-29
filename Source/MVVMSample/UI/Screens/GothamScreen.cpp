@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Screens/GothamScreen.h"
+#include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
@@ -49,9 +50,8 @@ FReply UGothamScreen::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEve
 UTextBlock* UGothamScreen::MakeTitle(const FText& Text) const
 {
 	UTextBlock* Title = WidgetTree->ConstructWidget<UTextBlock>();
-	FSlateFontInfo Font = Title->GetFont();
-	Font.Size = 36;
-	Title->SetFont(Font);
+	Title->SetFont(GothamStyle::Font(EGothamTextStyle::Title));
+	Title->SetTextTransformPolicy(ETextTransformPolicy::ToUpper);
 	Title->SetText(Text);
 	Title->SetJustification(ETextJustify::Center);
 	return Title;
@@ -78,9 +78,7 @@ UHorizontalBox* UGothamScreen::MakeHintBar(const FText& AcceptLabel, const FText
 		Bar->AddChildToHorizontalBox(Glyph)->SetPadding(FMargin(16.f, 0.f, 6.f, 0.f));
 
 		UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
-		FSlateFontInfo Font = Text->GetFont();
-		Font.Size = 14;
-		Text->SetFont(Font);
+		Text->SetFont(GothamStyle::Font(EGothamTextStyle::Label));
 		Text->SetText(Label);
 		Bar->AddChildToHorizontalBox(Text)->SetVerticalAlignment(VAlign_Center);
 	};
