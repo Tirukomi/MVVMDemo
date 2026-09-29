@@ -41,6 +41,7 @@ private:
 	void OnDebugDamage();
 	void OnDebugHeal();
 	void OnPause();
+	void OnGadgetWheel();
 	void ApplyInputContext(EGothamInputContext Context);
 
 	UPROPERTY(Transient)
@@ -60,5 +61,7 @@ private:
 	TObjectPtr<UInputAction> DebugHealAction;
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> PauseAction;
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> GadgetWheelAction;
 
 };

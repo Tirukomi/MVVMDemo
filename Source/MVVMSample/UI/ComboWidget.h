@@ -7,7 +7,7 @@
 #include "ComboWidget.generated.h"
 
 class UComboViewModel;
-class UProgressBar;
+class UComboMeter;
 class UTextBlock;
 
 /** Combo counter with a decay timer bar. Hidden while no combo is active. */
@@ -37,5 +37,5 @@ private:
 	TObjectPtr<UTextBlock> MultiplierText;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UProgressBar> DecayBar;
+	TObjectPtr<UComboMeter> DecayBar;
 };

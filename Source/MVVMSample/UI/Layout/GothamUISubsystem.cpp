@@ -65,6 +65,14 @@ void UGothamUISubsystem::TogglePauseMenu()
 	}
 }
 
+void UGothamUISubsystem::OpenGadgetWheel()
+{
+	if (!Tracker.IsMenuOpen() && !Tracker.IsLayerOccupied(EGothamUILayer::GameMenu))
+	{
+		PushScreen(EGothamUILayer::GameMenu, GetDefault<UGothamUISettings>()->GadgetWheelClass.LoadSynchronous());
+	}
+}
+
 void UGothamUISubsystem::HandleLayerChanged(EGothamUILayer Layer)
 {
 	const EGothamInputContext Before = Tracker.GetInputContext();

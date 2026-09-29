@@ -3,11 +3,11 @@
 #include "UI/ComboWidget.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Components/ProgressBar.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
+#include "UI/Widgets/ComboMeter.h"
 #include "ViewModels/ComboViewModel.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.Combo"
@@ -37,8 +37,7 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		MultiplierText = AddText(40);
 		HitsText = AddText(16);
 
-		DecayBar = WidgetTree->ConstructWidget<UProgressBar>();
-		DecayBar->SetFillColorAndOpacity(FLinearColor(0.95f, 0.75f, 0.2f));
+		DecayBar = WidgetTree->ConstructWidget<UComboMeter>();
 		Column->AddChildToVerticalBox(DecayBar)->SetPadding(FMargin(0.f, 4.f, 0.f, 0.f));
 	}
 	return Super::RebuildWidget();

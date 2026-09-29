@@ -25,4 +25,7 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Screens")
 	TSoftClassPtr<UCommonActivatableWidget> SettingsScreenClass;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Screens")
+	TSoftClassPtr<UCommonActivatableWidget> GadgetWheelClass;
 };

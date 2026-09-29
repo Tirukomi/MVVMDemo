@@ -143,6 +143,15 @@ Dev aid: `-GothamOpenPause` opens the pause menu and saves `Saved/Screenshots/..
 
 **Exit:** wheel and meter usable from UMG by a designer; documented paint/hit-test approach.
 
+**As built:** `SGadgetWheel` (`SLeafWidget`) draws ring sectors with `FSlateDrawElement::MakeCustomVerts` on a shared
+white brush, so it needs no image assets; hit-testing is `GothamWheel::IndexFromOffset` (pure, unit-tested). Hover
+animation and `SComboMeter`'s drain run on active timers that unregister once settled, so an idle wheel or full/empty
+meter costs no per-frame work. `UGadgetWheel` / `UComboMeter` are the UMG wrappers (style struct, dynamic events,
+`SetItems`). The wheel screen (`Q` / left shoulder to open, release to use, Esc / B cancels, 1-3 pick directly) slows
+world time to 0.1x and feeds items from the gadget bar view model. Not yet captured: a Slate Insights baseline
+(planned for M6 with the other profiling numbers). Dev aid: `-GothamOpenWheel` opens the wheel, hovers a segment,
+builds a combo and saves `gotham_wheel.png`.
+
 ### M4 — Detective Mode: shaders, post-process, data-driven clues (2 weeks)
 
 1. **UI materials:** scanline/hologram wipe, animated outline glow, distortion-in transition, driven by

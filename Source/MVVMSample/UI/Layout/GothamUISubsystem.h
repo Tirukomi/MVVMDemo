@@ -43,6 +43,10 @@ public:
 	void TogglePauseMenu();
 
 	bool IsMenuOpen() const { return Tracker.IsMenuOpen(); }
+	bool IsLayerOccupied(EGothamUILayer Layer) const { return Tracker.IsLayerOccupied(Layer); }
+
+	/** Opens the hold-to-use gadget wheel unless it (or a menu) is already up. */
+	void OpenGadgetWheel();
 	EGothamInputContext GetInputContext() const { return Tracker.GetInputContext(); }
 
 	FOnGothamInputContextChanged OnInputContextChanged;

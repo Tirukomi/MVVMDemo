@@ -11,6 +11,9 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
+#include "Core/GothamCharacter.h"
+#include "Gameplay/ComboComponent.h"
+#include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/GothamUISettings.h"
 #include "Containers/Ticker.h"
 #include "UnrealClient.h"
@@ -75,14 +78,46 @@ void AGothamPlayerController::BeginPlay()
 				UI->PushScreen(EGothamUILayer::Game, HudClass);
 				UE_LOG(LogGothamHud, Log, TEXT("HUD screen pushed: %s"), *GetNameSafe(HudClass));
 #if !UE_BUILD_SHIPPING
-				// Dev aid for headless verification: -GothamOpenPause opens the pause menu and saves a screenshot.
-				if (FParse::Param(FCommandLine::Get(), TEXT("GothamOpenPause")))
+				// Dev aids for headless verification; each saves a screenshot after 3s.
+				//   -GothamOpenPause  opens the pause menu
+				//   -GothamOpenWheel  opens the gadget wheel, hovers a segment and builds a combo
+				const bool bOpenPause = FParse::Param(FCommandLine::Get(), TEXT("GothamOpenPause"));
+				const bool bOpenWheel = FParse::Param(FCommandLine::Get(), TEXT("GothamOpenWheel"));
+				if (bOpenPause || bOpenWheel)
 				{
-					UI->TogglePauseMenu();
-					// Core ticker, not a world timer: the world is paused while the menu is open.
-					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([](float)
+					if (bOpenPause)
 					{
-						FScreenshotRequest::RequestScreenshot(TEXT("gotham_pause"), true, false);
+						UI->TogglePauseMenu();
+					}
+					else
+					{
+						UI->OpenGadgetWheel();
+					}
+					const FString ShotName = bOpenPause ? TEXT("gotham_pause") : TEXT("gotham_wheel");
+					const TWeakObjectPtr<AGothamPlayerController> WeakThis(this);
+
+					// Core tickers, not world timers: the world is paused or slowed while these screens are open.
+					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, bOpenWheel](float)
+					{
+						if (bOpenWheel && WeakThis.IsValid())
+						{
+							for (TObjectIterator<UGadgetWheelScreen> It; It; ++It)
+							{
+								It->SetStickInput(FVector2D(0.9, 0.3)); // hover the right-hand segment
+							}
+							if (AGothamCharacter* Hero = Cast<AGothamCharacter>(WeakThis->GetPawn()))
+							{
+								for (int32 i = 0; i < 7; ++i)
+								{
+									Hero->GetComboComponent()->RegisterHit();
+								}
+							}
+						}
+						return false;
+					}), 1.f);
+					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([ShotName](float)
+					{
+						FScreenshotRequest::RequestScreenshot(ShotName, true, false);
 						return false;
 					}), 3.f);
 				}
@@ -121,6 +156,7 @@ void AGothamPlayerController::SetupInputComponent()
 			EIC->BindAction(GadgetActions[i], ETriggerEvent::Started, this, &AGothamPlayerController::OnGadget, i);
 		}
 		EIC->BindAction(PauseAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnPause);
+		EIC->BindAction(GadgetWheelAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnGadgetWheel);
 		EIC->BindAction(DebugDamageAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugDamage);
 		EIC->BindAction(DebugHealAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugHeal);
 	}
@@ -135,6 +171,7 @@ void AGothamPlayerController::BuildInputAssets()
 	DebugDamageAction = MakeAction(this, TEXT("IA_DebugDamage"), EInputActionValueType::Boolean);
 	DebugHealAction = MakeAction(this, TEXT("IA_DebugHeal"), EInputActionValueType::Boolean);
 	PauseAction = MakeAction(this, TEXT("IA_Pause"), EInputActionValueType::Boolean);
+	GadgetWheelAction = MakeAction(this, TEXT("IA_GadgetWheel"), EInputActionValueType::Boolean);
 
 	// Move: WASD + left stick.
 	MapAxisKey(GameplayContext, MoveAction, EKeys::W, true, false);
@@ -160,6 +197,8 @@ void AGothamPlayerController::BuildInputAssets()
 		GadgetActions.Add(Action);
 	}
 
+	GameplayContext->MapKey(GadgetWheelAction, EKeys::Q);
+	GameplayContext->MapKey(GadgetWheelAction, EKeys::Gamepad_LeftShoulder);
 	GameplayContext->MapKey(PauseAction, EKeys::Escape);
 	GameplayContext->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
 
@@ -251,12 +290,21 @@ void AGothamPlayerController::OnPause()
 	}
 }
 
+void AGothamPlayerController::OnGadgetWheel()
+{
+	if (auto* UI = GetLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
+	{
+		UI->OpenGadgetWheel();
+	}
+}
+
 const UInputAction* AGothamPlayerController::FindAction(FName Name) const
 {
 	if (Name == TEXT("Move")) return MoveAction;
 	if (Name == TEXT("Look")) return LookAction;
 	if (Name == TEXT("Attack")) return AttackAction;
 	if (Name == TEXT("Pause")) return PauseAction;
+	if (Name == TEXT("GadgetWheel")) return GadgetWheelAction;
 	if (Name == TEXT("Gadget1")) return GadgetActions.IsValidIndex(0) ? GadgetActions[0].Get() : nullptr;
 	if (Name == TEXT("Gadget2")) return GadgetActions.IsValidIndex(1) ? GadgetActions[1].Get() : nullptr;
 	if (Name == TEXT("Gadget3")) return GadgetActions.IsValidIndex(2) ? GadgetActions[2].Get() : nullptr;
