@@ -16,6 +16,10 @@
 #include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/GothamUISettings.h"
 #include "Containers/Ticker.h"
+#include "EngineUtils.h"
+#include "Gameplay/ClueActor.h"
+#include "Gameplay/DetectiveComponent.h"
+#include "UI/ClueEntryWidget.h"
 #include "UnrealClient.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
@@ -78,49 +82,7 @@ void AGothamPlayerController::BeginPlay()
 				UI->PushScreen(EGothamUILayer::Game, HudClass);
 				UE_LOG(LogGothamHud, Log, TEXT("HUD screen pushed: %s"), *GetNameSafe(HudClass));
 #if !UE_BUILD_SHIPPING
-				// Dev aids for headless verification; each saves a screenshot after 3s.
-				//   -GothamOpenPause  opens the pause menu
-				//   -GothamOpenWheel  opens the gadget wheel, hovers a segment and builds a combo
-				const bool bOpenPause = FParse::Param(FCommandLine::Get(), TEXT("GothamOpenPause"));
-				const bool bOpenWheel = FParse::Param(FCommandLine::Get(), TEXT("GothamOpenWheel"));
-				if (bOpenPause || bOpenWheel)
-				{
-					if (bOpenPause)
-					{
-						UI->TogglePauseMenu();
-					}
-					else
-					{
-						UI->OpenGadgetWheel();
-					}
-					const FString ShotName = bOpenPause ? TEXT("gotham_pause") : TEXT("gotham_wheel");
-					const TWeakObjectPtr<AGothamPlayerController> WeakThis(this);
-
-					// Core tickers, not world timers: the world is paused or slowed while these screens are open.
-					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, bOpenWheel](float)
-					{
-						if (bOpenWheel && WeakThis.IsValid())
-						{
-							for (TObjectIterator<UGadgetWheelScreen> It; It; ++It)
-							{
-								It->SetStickInput(FVector2D(0.9, 0.3)); // hover the right-hand segment
-							}
-							if (AGothamCharacter* Hero = Cast<AGothamCharacter>(WeakThis->GetPawn()))
-							{
-								for (int32 i = 0; i < 7; ++i)
-								{
-									Hero->GetComboComponent()->RegisterHit();
-								}
-							}
-						}
-						return false;
-					}), 1.f);
-					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([ShotName](float)
-					{
-						FScreenshotRequest::RequestScreenshot(ShotName, true, false);
-						return false;
-					}), 3.f);
-				}
+				RunDevAids(UI);
 #endif
 			}
 			else
@@ -157,6 +119,9 @@ void AGothamPlayerController::SetupInputComponent()
 		}
 		EIC->BindAction(PauseAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnPause);
 		EIC->BindAction(GadgetWheelAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnGadgetWheel);
+		EIC->BindAction(DetectiveAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDetective);
+		EIC->BindAction(ScanAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnScan);
+		EIC->BindAction(ClueLogAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnClueLog);
 		EIC->BindAction(DebugDamageAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugDamage);
 		EIC->BindAction(DebugHealAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugHeal);
 	}
@@ -172,6 +137,9 @@ void AGothamPlayerController::BuildInputAssets()
 	DebugHealAction = MakeAction(this, TEXT("IA_DebugHeal"), EInputActionValueType::Boolean);
 	PauseAction = MakeAction(this, TEXT("IA_Pause"), EInputActionValueType::Boolean);
 	GadgetWheelAction = MakeAction(this, TEXT("IA_GadgetWheel"), EInputActionValueType::Boolean);
+	DetectiveAction = MakeAction(this, TEXT("IA_Detective"), EInputActionValueType::Boolean);
+	ScanAction = MakeAction(this, TEXT("IA_Scan"), EInputActionValueType::Boolean);
+	ClueLogAction = MakeAction(this, TEXT("IA_ClueLog"), EInputActionValueType::Boolean);
 
 	// Move: WASD + left stick.
 	MapAxisKey(GameplayContext, MoveAction, EKeys::W, true, false);
@@ -197,6 +165,12 @@ void AGothamPlayerController::BuildInputAssets()
 		GadgetActions.Add(Action);
 	}
 
+	GameplayContext->MapKey(DetectiveAction, EKeys::V);
+	GameplayContext->MapKey(DetectiveAction, EKeys::Gamepad_DPad_Up);
+	GameplayContext->MapKey(ScanAction, EKeys::E);
+	GameplayContext->MapKey(ScanAction, EKeys::Gamepad_DPad_Right);
+	GameplayContext->MapKey(ClueLogAction, EKeys::J);
+	GameplayContext->MapKey(ClueLogAction, EKeys::Gamepad_Special_Left);
 	GameplayContext->MapKey(GadgetWheelAction, EKeys::Q);
 	GameplayContext->MapKey(GadgetWheelAction, EKeys::Gamepad_LeftShoulder);
 	GameplayContext->MapKey(PauseAction, EKeys::Escape);
@@ -290,6 +264,30 @@ void AGothamPlayerController::OnPause()
 	}
 }
 
+void AGothamPlayerController::OnDetective()
+{
+	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
+	{
+		Hero->ToggleDetective();
+	}
+}
+
+void AGothamPlayerController::OnScan()
+{
+	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
+	{
+		Hero->ScanClue();
+	}
+}
+
+void AGothamPlayerController::OnClueLog()
+{
+	if (auto* UI = GetLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
+	{
+		UI->ToggleClueLog();
+	}
+}
+
 void AGothamPlayerController::OnGadgetWheel()
 {
 	if (auto* UI = GetLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
@@ -305,6 +303,9 @@ const UInputAction* AGothamPlayerController::FindAction(FName Name) const
 	if (Name == TEXT("Attack")) return AttackAction;
 	if (Name == TEXT("Pause")) return PauseAction;
 	if (Name == TEXT("GadgetWheel")) return GadgetWheelAction;
+	if (Name == TEXT("Detective")) return DetectiveAction;
+	if (Name == TEXT("Scan")) return ScanAction;
+	if (Name == TEXT("ClueLog")) return ClueLogAction;
 	if (Name == TEXT("Gadget1")) return GadgetActions.IsValidIndex(0) ? GadgetActions[0].Get() : nullptr;
 	if (Name == TEXT("Gadget2")) return GadgetActions.IsValidIndex(1) ? GadgetActions[1].Get() : nullptr;
 	if (Name == TEXT("Gadget3")) return GadgetActions.IsValidIndex(2) ? GadgetActions[2].Get() : nullptr;
@@ -329,3 +330,103 @@ void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
 		Input->RemoveMappingContext(GameplayContext);
 	}
 }
+
+#if !UE_BUILD_SHIPPING
+/**
+ * Dev aids for headless verification, enabled by command-line flags. Each saves a screenshot after 4s.
+ *   -GothamOpenPause     opens the pause menu
+ *   -GothamOpenWheel     opens the gadget wheel, hovers a segment and builds a combo
+ *   -GothamDetective     enters detective mode and scans the nearest clue
+ *   -GothamClueLog[=N]   scans a clue, opens the case file, optionally with N extra fake clues
+ *   -GothamShotDelay=S   seconds before the screenshot (default 4; raise it on a cold shader cache)
+ */
+void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
+{
+	const TCHAR* Cmd = FCommandLine::Get();
+	const bool bPause = FParse::Param(Cmd, TEXT("GothamOpenPause"));
+	const bool bWheel = FParse::Param(Cmd, TEXT("GothamOpenWheel"));
+	const bool bDetective = FParse::Param(Cmd, TEXT("GothamDetective"));
+	const bool bClueLog = FParse::Param(Cmd, TEXT("GothamClueLog"));
+	int32 StressCount = 0;
+	FParse::Value(Cmd, TEXT("GothamClueLog="), StressCount);
+	if (!(bPause || bWheel || bDetective || bClueLog || StressCount > 0))
+	{
+		return;
+	}
+
+	if (bPause)
+	{
+		UI->TogglePauseMenu();
+	}
+	if (bWheel)
+	{
+		UI->OpenGadgetWheel();
+	}
+	const FString ShotName = bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : TEXT("gotham_cluelog");
+	const TWeakObjectPtr<AGothamPlayerController> WeakThis(this);
+	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
+
+	// Core tickers, not world timers: the world is paused or slowed while some of these screens are open.
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, WeakUI, bWheel, bDetective, bClueLog, StressCount](float)
+	{
+		AGothamCharacter* Hero = WeakThis.IsValid() ? Cast<AGothamCharacter>(WeakThis->GetPawn()) : nullptr;
+		if (!Hero)
+		{
+			return false;
+		}
+		if (bWheel)
+		{
+			for (TObjectIterator<UGadgetWheelScreen> It; It; ++It)
+			{
+				It->SetStickInput(FVector2D(0.9, 0.3)); // hover the right-hand segment
+			}
+			for (int32 i = 0; i < 7; ++i)
+			{
+				Hero->GetComboComponent()->RegisterHit();
+			}
+		}
+		if (bDetective || bClueLog)
+		{
+			// Enter detective mode, stand next to the first clue and scan it.
+			Hero->ToggleDetective();
+			for (TActorIterator<AClueActor> It(Hero->GetWorld()); It; ++It)
+			{
+				Hero->SetActorLocation(It->GetActorLocation() + FVector(-250.f, 0.f, 120.f));
+				break;
+			}
+			Hero->ScanClue();
+		}
+		if ((bClueLog || StressCount > 0) && WeakUI.IsValid())
+		{
+			if (StressCount > 0)
+			{
+				if (auto* ViewModels = WeakThis->GetLocalPlayer()->GetSubsystem<UGothamViewModelSubsystem>())
+				{
+					ViewModels->AddDebugClues(StressCount);
+				}
+			}
+			WeakUI->ToggleClueLog();
+		}
+		return false;
+	}), 1.f);
+
+	// Later than the actions above so shaders (compiled on first run) and transitions have settled.
+	float ShotDelay = 4.f;
+	FParse::Value(Cmd, TEXT("GothamShotDelay="), ShotDelay);
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([ShotName, StressCount](float)
+	{
+		if (StressCount > 0)
+		{
+			// Proof of virtualisation: rows alive should stay near the viewport size, not the item count.
+			int32 Rows = 0;
+			for (TObjectIterator<UClueEntryWidget> It; It; ++It)
+			{
+				Rows += It->HasAnyFlags(RF_ClassDefaultObject) ? 0 : 1;
+			}
+			UE_LOG(LogGothamHud, Log, TEXT("Clue log: %d row widgets alive for %d fake clues"), Rows, StressCount);
+		}
+		FScreenshotRequest::RequestScreenshot(ShotName, true, false);
+		return false;
+	}), ShotDelay);
+}
+#endif

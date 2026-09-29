@@ -65,6 +65,14 @@ void UGothamUISubsystem::TogglePauseMenu()
 	}
 }
 
+void UGothamUISubsystem::ToggleClueLog()
+{
+	if (!PopTopScreen())
+	{
+		PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ClueLogClass.LoadSynchronous());
+	}
+}
+
 void UGothamUISubsystem::OpenGadgetWheel()
 {
 	if (!Tracker.IsMenuOpen() && !Tracker.IsLayerOccupied(EGothamUILayer::GameMenu))

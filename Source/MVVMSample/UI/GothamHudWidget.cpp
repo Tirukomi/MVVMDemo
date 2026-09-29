@@ -9,8 +9,11 @@
 #include "Components/HorizontalBoxSlot.h"
 #include "Engine/LocalPlayer.h"
 #include "UI/ComboWidget.h"
+#include "UI/DetectiveOverlayWidget.h"
+#include "UI/ObjectiveTrackerWidget.h"
 #include "UI/GadgetSlotWidget.h"
 #include "UI/HealthBarWidget.h"
+#include "ViewModels/DetectiveViewModel.h"
 #include "ViewModels/GadgetViewModels.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 
@@ -37,6 +40,18 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 	{
 		UCanvasPanel* Canvas = WidgetTree->ConstructWidget<UCanvasPanel>();
 		WidgetTree->RootWidget = Canvas;
+
+		// Detective overlay first so it sits behind every other HUD element.
+		DetectiveOverlay = WidgetTree->ConstructWidget<UDetectiveOverlayWidget>();
+		UCanvasPanelSlot* OverlaySlot = Canvas->AddChildToCanvas(DetectiveOverlay);
+		OverlaySlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+		OverlaySlot->SetOffsets(FMargin(0.f));
+
+		ObjectiveTracker = WidgetTree->ConstructWidget<UObjectiveTrackerWidget>();
+		UCanvasPanelSlot* TrackerSlot = Canvas->AddChildToCanvas(ObjectiveTracker);
+		TrackerSlot->SetAnchors(FAnchors(0.f, 0.f));
+		TrackerSlot->SetPosition(FVector2D(48.f, 48.f));
+		TrackerSlot->SetAutoSize(true);
 
 		HealthBar = WidgetTree->ConstructWidget<UHealthBarWidget>();
 		UCanvasPanelSlot* HealthSlot = Canvas->AddChildToCanvas(HealthBar);
@@ -75,6 +90,8 @@ void UGothamHudWidget::NativeConstruct()
 
 	HealthBar->SetViewModel(ViewModels->GetVitals());
 	ComboCounter->SetViewModel(ViewModels->GetCombo());
+	DetectiveOverlay->SetViewModel(ViewModels->GetDetective());
+	ObjectiveTracker->SetViewModel(ViewModels->GetObjectives());
 
 	// Slots are created once and re-created only if the loadout size changes.
 	GadgetBarVM = ViewModels->GetGadgetBar();

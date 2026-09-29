@@ -1,0 +1,44 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "DetectiveVisionComponent.generated.h"
+
+class UCameraComponent;
+class UDetectiveComponent;
+class UMaterialInstanceDynamic;
+
+/**
+ * Presentation for Detective Mode on the world side: drives the post-process material and a small FOV pinch
+ * from the same transition alpha the UI uses, so HUD, materials and camera always move together.
+ */
+UCLASS(ClassGroup = (Gotham), meta = (BlueprintSpawnableComponent))
+class MVVMSAMPLE_API UDetectiveVisionComponent : public UActorComponent
+{
+	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+private:
+	void HandleDetectiveChanged(bool bActive, float Alpha);
+
+	/** FOV the camera eases toward at full detective alpha. */
+	UPROPERTY(EditDefaultsOnly, Category = "Detective", meta = (ClampMin = "30", ClampMax = "120"))
+	float DetectiveFOV = 78.f;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UCameraComponent> Camera;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> VisionMaterial;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UDetectiveComponent> Detective;
+
+	float BaseFOV = 90.f;
+	FDelegateHandle Handle;
+};

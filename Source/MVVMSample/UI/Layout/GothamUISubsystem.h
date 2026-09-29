@@ -45,6 +45,9 @@ public:
 	bool IsMenuOpen() const { return Tracker.IsMenuOpen(); }
 	bool IsLayerOccupied(EGothamUILayer Layer) const { return Tracker.IsLayerOccupied(Layer); }
 
+	/** Opens the case file, or closes the topmost menu if one is already up. */
+	void ToggleClueLog();
+
 	/** Opens the hold-to-use gadget wheel unless it (or a menu) is already up. */
 	void OpenGadgetWheel();
 	EGothamInputContext GetInputContext() const { return Tracker.GetInputContext(); }

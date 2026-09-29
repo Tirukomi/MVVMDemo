@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonUserWidget.h"
+#include "Containers/Ticker.h"
 #include "InputCoreTypes.h"
 #include "GothamInputGlyph.generated.h"
 
@@ -38,6 +39,11 @@ protected:
 private:
 	void Refresh();
 	void HandleInputMethodChanged(ECommonInputType NewType) { Refresh(); }
+
+	/** Mapping queries return nothing until Enhanced Input rebuilds its mappings next tick; retry briefly. */
+	void ScheduleRetry();
+	int32 RetriesLeft = 10;
+	FTSTicker::FDelegateHandle RetryHandle;
 
 	FName ActionName;
 	FKey FixedKeyboardMouse;

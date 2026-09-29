@@ -8,7 +8,12 @@
 
 class AGothamCharacter;
 class UComboComponent;
+class UClueListViewModel;
 class UComboViewModel;
+class UDetectiveComponent;
+class UDetectiveViewModel;
+class UObjectivesViewModel;
+class UClueDataAsset;
 class UGadgetBarViewModel;
 class UGadgetComponent;
 class UHealthComponent;
@@ -33,6 +38,12 @@ public:
 	UPlayerVitalsViewModel* GetVitals() const { return Vitals; }
 	UGadgetBarViewModel* GetGadgetBar() const { return GadgetBar; }
 	UComboViewModel* GetCombo() const { return Combo; }
+	UDetectiveViewModel* GetDetective() const { return Detective; }
+	UObjectivesViewModel* GetObjectives() const { return Objectives; }
+	UClueListViewModel* GetClues() const { return Clues; }
+
+	/** Dev aid: appends fake undiscovered clues to exercise the virtualised clue log. */
+	void AddDebugClues(int32 Count);
 
 	/** Used by the view-model resolver to hand a view model to a widget by class. */
 	UObject* FindViewModel(const UClass* ViewModelClass) const;
@@ -43,6 +54,10 @@ private:
 	void HandleHealth(float Health, float MaxHealth);
 	void HandleGadgetCooldown(int32 Slot, float Remaining, float Total);
 	void HandleCombo(int32 Hits, float Multiplier, float DecayAlpha);
+	void HandleDetective(bool bActive, float Alpha);
+	void HandleClueScanned(const UClueDataAsset* Clue);
+	void RefreshObjectives();
+	void RebuildClues();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UPlayerVitalsViewModel> Vitals;
@@ -53,11 +68,24 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UComboViewModel> Combo;
 
+	UPROPERTY(Transient)
+	TObjectPtr<UDetectiveViewModel> Detective;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UObjectivesViewModel> Objectives;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UClueListViewModel> Clues;
+
 	TWeakObjectPtr<UHealthComponent> BoundHealth;
 	TWeakObjectPtr<UGadgetComponent> BoundGadgets;
 	TWeakObjectPtr<UComboComponent> BoundCombo;
+	TWeakObjectPtr<UDetectiveComponent> BoundDetective;
 
 	FDelegateHandle HealthHandle;
 	FDelegateHandle GadgetHandle;
 	FDelegateHandle ComboHandle;
+	FDelegateHandle DetectiveHandle;
+	FDelegateHandle ScanHandle;
+	FDelegateHandle CluesHandle;
 };

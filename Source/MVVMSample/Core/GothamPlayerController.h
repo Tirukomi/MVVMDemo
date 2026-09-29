@@ -42,6 +42,10 @@ private:
 	void OnDebugHeal();
 	void OnPause();
 	void OnGadgetWheel();
+	void OnDetective();
+	void OnScan();
+	void OnClueLog();
+	void RunDevAids(class UGothamUISubsystem* UI);
 	void ApplyInputContext(EGothamInputContext Context);
 
 	UPROPERTY(Transient)
@@ -63,5 +67,11 @@ private:
 	TObjectPtr<UInputAction> PauseAction;
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> GadgetWheelAction;
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> DetectiveAction;
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> ScanAction;
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> ClueLogAction;
 
 };

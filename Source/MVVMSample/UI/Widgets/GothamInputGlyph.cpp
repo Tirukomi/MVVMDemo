@@ -44,12 +44,14 @@ void UGothamInputGlyph::NativeDestruct()
 	{
 		Input->OnInputMethodChangedNative.Remove(InputMethodHandle);
 	}
+	FTSTicker::GetCoreTicker().RemoveTicker(RetryHandle);
 	Super::NativeDestruct();
 }
 
 void UGothamInputGlyph::SetAction(FName InActionName)
 {
 	ActionName = InActionName;
+	RetriesLeft = 10;
 	Refresh();
 }
 
@@ -112,4 +114,24 @@ void UGothamInputGlyph::Refresh()
 		}
 	}
 	Text->SetText(Key.IsValid() ? GetKeyLabel(Key) : FText::GetEmpty());
+
+	if (!Key.IsValid() && !ActionName.IsNone())
+	{
+		ScheduleRetry();
+	}
+}
+
+void UGothamInputGlyph::ScheduleRetry()
+{
+	FTSTicker::GetCoreTicker().RemoveTicker(RetryHandle);
+	if (RetriesLeft <= 0)
+	{
+		return;
+	}
+	RetryHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
+	{
+		--RetriesLeft;
+		Refresh();
+		return false;
+	}), 0.1f);
 }

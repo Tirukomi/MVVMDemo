@@ -7,6 +7,8 @@
 #include "GothamHudWidget.generated.h"
 
 class UComboWidget;
+class UDetectiveOverlayWidget;
+class UObjectiveTrackerWidget;
 class UGadgetBarViewModel;
 class UGadgetSlotWidget;
 class UHealthBarWidget;
@@ -39,6 +41,12 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHealthBarWidget> HealthBar;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UDetectiveOverlayWidget> DetectiveOverlay;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UObjectiveTrackerWidget> ObjectiveTracker;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UComboWidget> ComboCounter;

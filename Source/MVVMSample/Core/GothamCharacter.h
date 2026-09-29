@@ -8,6 +8,8 @@
 
 class UCameraComponent;
 class UComboComponent;
+class UDetectiveComponent;
+class UDetectiveVisionComponent;
 class UGadgetComponent;
 class UHealthComponent;
 class USpringArmComponent;
@@ -25,6 +27,7 @@ public:
 	UHealthComponent* GetHealthComponent() const { return Health; }
 	UGadgetComponent* GetGadgetComponent() const { return Gadgets; }
 	UComboComponent* GetComboComponent() const { return Combo; }
+	UDetectiveComponent* GetDetectiveComponent() const { return Detective; }
 
 	void MoveInput(const FVector2D& Axis);
 	void LookInput(const FVector2D& Axis);
@@ -33,6 +36,8 @@ public:
 	void Attack();
 
 	void UseGadget(int32 SlotIndex);
+	void ToggleDetective();
+	void ScanClue();
 
 	// Debug helpers bound to F1-F3.
 	void DebugDamage();
@@ -56,4 +61,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UComboComponent> Combo;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UDetectiveComponent> Detective;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UDetectiveVisionComponent> DetectiveVision;
 };

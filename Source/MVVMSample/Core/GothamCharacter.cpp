@@ -8,6 +8,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Gameplay/ComboComponent.h"
+#include "Gameplay/DetectiveComponent.h"
+#include "Gameplay/DetectiveVisionComponent.h"
 #include "Gameplay/GadgetComponent.h"
 #include "Gameplay/HealthComponent.h"
 #include "UObject/ConstructorHelpers.h"
@@ -41,6 +43,8 @@ AGothamCharacter::AGothamCharacter()
 	Health = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
 	Gadgets = CreateDefaultSubobject<UGadgetComponent>(TEXT("Gadgets"));
 	Combo = CreateDefaultSubobject<UComboComponent>(TEXT("Combo"));
+	Detective = CreateDefaultSubobject<UDetectiveComponent>(TEXT("Detective"));
+	DetectiveVision = CreateDefaultSubobject<UDetectiveVisionComponent>(TEXT("DetectiveVision"));
 }
 
 void AGothamCharacter::MoveInput(const FVector2D& Axis)
@@ -67,6 +71,16 @@ void AGothamCharacter::Attack()
 void AGothamCharacter::UseGadget(int32 SlotIndex)
 {
 	Gadgets->UseGadget(SlotIndex);
+}
+
+void AGothamCharacter::ToggleDetective()
+{
+	Detective->ToggleDetective();
+}
+
+void AGothamCharacter::ScanClue()
+{
+	Detective->TryScan();
 }
 
 void AGothamCharacter::DebugDamage()
