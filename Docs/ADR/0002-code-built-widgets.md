@@ -14,6 +14,6 @@ editor builds) and the generated materials.
 ## Consequences
 - Layout is reviewable text; behaviour and layout cannot drift apart.
 - Designers cannot restyle in the designer without a Blueprint subclass. Styling is therefore pushed into data
-  (colour tokens, `UGothamButtonStyle`, `FGothamGadgetWheelStyle`) and the Slate wrappers expose designer properties.
+  (colour tokens, `UGothamButton` kinds, `FGothamGadgetWheelStyle`) and the Slate wrappers expose designer properties.
 - Editor-authored MVVM bindings remain available: the resolver is in place, and any widget can be subclassed in a
   `WBP_`.

@@ -187,6 +187,56 @@ This is the biggest visual change for the least work.
 - **Screen transitions:** a shared intro and outro (slide plus fade, about 150 ms), skipped under reduced motion.
 - **Confirm modal:** the chamfered panel style, with a danger accent on destructive actions.
 
+**V4 as built:**
+- **Shared frame** (`UGothamScreen::BuildMenuFrame`):
+  - a background blur of the world, with a left-heavy scrim (`UGothamScrim`, a vertex gradient)
+  - a section label, a title and an accent rule, over a left-aligned column
+  - the hint bar at the bottom right
+  - colours re-applied from palette tokens whenever settings change
+- **Transitions:** the layer stacks (`UGothamScreenStack`) fade 0.15 s on push and pop, which is Common UI's own
+  intro and outro. Each screen's frame also slides 36 px in on activation (the modal rises instead). Both are off under
+  reduced motion.
+- **Sliding highlight:**
+  - `UGothamMenuList` watches focus changes inside itself (`NativeOnFocusChanging`), and `SGothamHighlight` eases a
+    chamfered accent bar with a glow to the current item (`FGothamSlideRect`, tested for no overshoot and frame-rate
+    independence).
+  - Buttons and rows move focus on hover, so mouse and gamepad agree on the current item.
+  - When focus leaves the list, the bar dims in place.
+- **Buttons:** `UGothamButton` draws its own chamfered panel from tokens. Its kinds are `Standard` (focus adds an
+  accent edge, accent bar and glow), `MenuItem` (big uppercase label; the list highlight shows focus), `Tab` (a filled
+  block when selected, never colour alone) and `Danger`.
+- **Value selectors:** each option row is one focus stop. Left and right change the value (`NativeOnNavigation`, so
+  the d-pad, stick and arrow keys all work) while up and down move between rows. Chevrons dim at a clamped end, and
+  pips show the position among the choices (`GetOptionPosition`, tested).
+- **Settings:**
+  - Common UI tabs (`UGothamTabList` over `UCommonTabListWidgetBase`, with a `UCommonAnimatedSwitcher`): Display,
+    Accessibility, Controls, Language. Q / E or LB / RB switch tabs, and focus lands on the page's first item.
+  - The grouping is data (`USettingsViewModel::GetTabs`, and a test checks every setting appears exactly once).
+  - A detail pane describes the focused option; every option has a description, gathered and translated.
+  - Key bindings live in the Controls tab.
+- **Pause:** Resume, Case file, Settings and Quit, plus a live status panel (objective, evidence found).
+- **Case file as an evidence board:**
+  - a `UTileView` of tiles with case numbers ("No. 007"), thumbnails or a "?" for unfound evidence, and the edge
+    lit on selection
+  - a detail pane with a large thumbnail, status, title and notes
+  - still virtualised: 20 tiles alive for 205 clues
+- **Modal:** the chamfered panel. Destructive confirmations get the danger accent, a danger Yes button and a
+  "Caution" label, so the warning is never colour alone. Focus still starts on No.
+- **Controls:** the same frame; each binding row is a highlight item, and the focused slot glows. Gamepad labels are
+  shortened ("D-pad Up", "View").
+- **Localization:**
+  - new strings for de, ja and en-XA, with 0 missing
+  - `TranslateLocalization.py` now re-points archive entries whose source text changed under the same key. GatherText
+    had kept "SETTINGS" and its translation after the source became "Settings", so titles showed in English.
+  - long German compounds and pseudo-locale runs wrap per character in the detail panes
+- **Performance** (`Saved/Perf/V4_menus_1080p*`): settings costs +0.10 to +0.12 ms of frame time (the blur) and at most
+  +0.06 ms of game thread; the case file costs at most +0.12 ms of game thread. The tab list was the one ticking widget
+  and no longer ticks.
+- **Fix:** closing a panel outline with `Points.Add(Points[0])` asserted, because `Add` may reallocate under the
+  reference; the painter copies the point first.
+- **Not yet:** a real-input pass (mouse hover, stick navigation, shoulder tabs), and the highlight bar only follows
+  scrolling while its list holds focus.
+
 ### V5: Combat readability and polish (3 days)
 
 - **Dummy enemies:** capsule "thugs" that idle and occasionally raise a warning. They exist to drive the UI:

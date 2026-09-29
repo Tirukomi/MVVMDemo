@@ -6,22 +6,53 @@
 #include "UI/Screens/GothamScreen.h"
 #include "PauseMenuScreen.generated.h"
 
-class UGothamButton;
+class UClueListViewModel;
+class UGothamPanel;
+class UObjectivesViewModel;
+class UTextBlock;
 
-/** Pause menu: Resume / Settings / Quit (quit asks for confirmation). Pauses the game while open. */
+/**
+ * Pause menu: Resume / Case file / Settings / Quit (quit asks for confirmation) in a left column with the sliding
+ * highlight, and a status panel (objective, evidence found) on the right. Pauses the game while open.
+ */
 UCLASS()
 class MVVMSAMPLE_API UPauseMenuScreen : public UGothamScreen
 {
 	GENERATED_BODY()
 
+public:
+	/** Opens the quit confirmation, as the Quit item does. */
+	void RequestQuit() { OnQuit(); }
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
+	virtual void OnPaletteChanged() override;
 
 private:
+	void RefreshStatus();
+	void OnStatusChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { RefreshStatus(); }
 	void OnResume();
+	void OnCaseFile();
 	void OnSettings();
 	void OnQuit();
 	void OnQuitConfirmed(bool bConfirmed);
+
+	UPROPERTY(Transient)
+	TObjectPtr<UObjectivesViewModel> Objectives;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UClueListViewModel> Clues;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGothamPanel> StatusPanel;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> ObjectiveText;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> EvidenceText;
 };

@@ -7,13 +7,15 @@
 #include "Blueprint/UserWidget.h"
 #include "GothamOptionRow.generated.h"
 
-class UGothamButton;
+class UGothamSelectorDecor;
 class USettingsViewModel;
 class UTextBlock;
 
 /**
- * One settings row: label, a "<" button, the current value, a ">" button. Both buttons are focusable, so
- * gamepad and keyboard navigation reach every option with the standard directional keys.
+ * One settings row: the label on the left and a compact value selector (chevrons, value, position pips) on the right.
+ * The whole row is one focus stop. Left / right (keys, d-pad or stick) change the value instead of moving focus,
+ * Enter / A steps forward, and a click on either half of the selector steps that way. Hover moves focus, so the
+ * menu highlight follows the mouse too.
  */
 UCLASS()
 class MVVMSAMPLE_API UGothamOptionRow : public UUserWidget
@@ -21,21 +23,34 @@ class MVVMSAMPLE_API UGothamOptionRow : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UGothamOptionRow(const FObjectInitializer& ObjectInitializer);
+
 	void Setup(EGothamSetting InSetting, USettingsViewModel* InViewModel);
+	EGothamSetting GetSetting() const { return Setting; }
 
 	/** The widget that should receive focus when the row is first targeted. */
-	UWidget* GetPrimaryFocusTarget() const;
+	UWidget* GetPrimaryFocusTarget() { return this; }
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	virtual FNavigationReply NativeOnNavigation(const FGeometry& MyGeometry, const FNavigationEvent& InNavigationEvent, const FNavigationReply& InDefaultReply) override;
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual FReply NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent) override;
+	virtual void NativeOnFocusLost(const FFocusEvent& InFocusEvent) override;
 
 private:
+	void Step(int32 Direction);
 	void Refresh();
+	void ApplyColors();
 	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { Refresh(); }
 
 	EGothamSetting Setting = EGothamSetting::Language;
+	bool bFocused = false;
+	FDelegateHandle SettingsHandle;
 
 	UPROPERTY(Transient)
 	TObjectPtr<USettingsViewModel> ViewModel;
@@ -47,8 +62,5 @@ private:
 	TObjectPtr<UTextBlock> ValueText;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamButton> NextButton;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UGothamButton> PrevButton;
+	TObjectPtr<UGothamSelectorDecor> Decor;
 };

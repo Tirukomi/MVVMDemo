@@ -10,6 +10,21 @@ import sys
 ROOT = r"D:\UEProjects\MVVMSample\Content\Localization\Game"
 
 DE = {
+    # V4 menus
+    "Blackwater Ops": "Blackwater Ops", "Paused": "Pausiert", "Evidence": "Beweise", "Options": "Optionen",
+    "Investigation": "Ermittlung", "Change": "Ändern", "Browse": "Durchsuchen", "Caution": "Achtung",
+    "Analysed": "Analysiert", "Not yet found": "Noch nicht gefunden", "No. {0}": "Nr. {0}", "Key bindings": "Tastenbelegung",
+    "Display": "Anzeige", "Accessibility": "Barrierefreiheit",
+    "Language for all menus, the HUD and subtitles. Changes preview immediately.": "Sprache aller Menüs, des HUD und der Untertitel. Änderungen werden sofort als Vorschau angezeigt.",
+    "Swaps the clue, danger and highlight colours for palettes that stay distinct with protanopia, deuteranopia or tritanopia.": "Ersetzt die Farben für Hinweise, Gefahr und Hervorhebungen durch Paletten, die bei Protanopie, Deuteranopie oder Tritanopie unterscheidbar bleiben.",
+    "Scales every menu and HUD element. Layouts reflow, so nothing is cut off at larger sizes.": "Skaliert alle Menü- und HUD-Elemente. Layouts passen sich an, sodass bei größeren Stufen nichts abgeschnitten wird.",
+    "Solid panels and brighter text and edges, for readability over busy scenes.": "Deckende Flächen sowie hellere Texte und Kanten für bessere Lesbarkeit vor unruhigen Szenen.",
+    "Turns off pops, slides, pulses, screen transitions and rain streaks. Colour cues stay on.": "Schaltet Aufploppen, Gleiten, Pulse, Bildschirmübergänge und Regenschlieren ab. Farbhinweise bleiben erhalten.",
+    "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close.": "Halten: Das Gadget-Rad bleibt offen, solange die Taste gedrückt ist. Umschalten: Einmal drücken zum Öffnen, erneut zum Schließen.",
+    "Hold: keep the button held to analyse a clue. Tap: a single press analyses it.": "Halten: Taste gedrückt halten, um einen Hinweis zu analysieren. Tippen: Ein einzelner Druck analysiert ihn.",
+    "Text size for subtitles and speaker names.": "Textgröße für Untertitel und Sprechernamen.",
+    "Draws a solid panel behind subtitles so they read over any scene.": "Zeichnet eine deckende Fläche hinter die Untertitel, damit sie vor jeder Szene lesbar bleiben.",
+    "Change the key or button for every action, separately for keyboard and mouse and for gamepad.": "Ändere die Taste für jede Aktion, getrennt für Tastatur und Maus sowie für das Gamepad.",
     "Clue analysis": "Hinweisanalyse", "Tap": "Tippen", "Hold to analyse": "Halten zum Analysieren", "Analysing": "Analysiere", "Unknown evidence": "Unbekanntes Beweisstück", "{0} m": "{0} m",
     "Hits": "Treffer", "Objective": "Ziel", "Low": "Niedrig", "Ready": "Bereit", "{0}s": "{0} s",
     "Attack": "Angreifen", "Case file": "Fallakte", "Detective mode": "Detektivmodus",
@@ -58,6 +73,21 @@ DE = {
 }
 
 JA = {
+    # V4 menus
+    "Blackwater Ops": "Blackwater Ops", "Paused": "ポーズ中", "Evidence": "証拠", "Options": "オプション",
+    "Investigation": "捜査", "Change": "変更", "Browse": "閲覧", "Caution": "注意",
+    "Analysed": "分析済み", "Not yet found": "未発見", "No. {0}": "No. {0}", "Key bindings": "キー割り当て",
+    "Display": "表示", "Accessibility": "アクセシビリティ",
+    "Language for all menus, the HUD and subtitles. Changes preview immediately.": "メニュー、HUD、字幕の言語。変更はすぐにプレビューされます。",
+    "Swaps the clue, danger and highlight colours for palettes that stay distinct with protanopia, deuteranopia or tritanopia.": "手がかり・危険・強調の色を、1型・2型・3型色覚でも見分けやすい配色に切り替えます。",
+    "Scales every menu and HUD element. Layouts reflow, so nothing is cut off at larger sizes.": "すべてのメニューとHUDの大きさを変更します。レイアウトが再配置されるため、大きくしても切れません。",
+    "Solid panels and brighter text and edges, for readability over busy scenes.": "不透明なパネルと明るい文字・縁取りで、背景が複雑でも読みやすくします。",
+    "Turns off pops, slides, pulses, screen transitions and rain streaks. Colour cues stay on.": "ポップ、スライド、パルス、画面遷移、雨の筋をオフにします。色による合図は残ります。",
+    "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close.": "長押し：ボタンを押している間ガジェットホイールを表示します。切り替え：一度押すと開き、もう一度押すと閉じます。",
+    "Hold: keep the button held to analyse a clue. Tap: a single press analyses it.": "長押し：ボタンを押し続けて手がかりを分析します。タップ：一度押すだけで分析します。",
+    "Text size for subtitles and speaker names.": "字幕と話者名の文字サイズ。",
+    "Draws a solid panel behind subtitles so they read over any scene.": "字幕の背後に不透明なパネルを表示し、どの場面でも読みやすくします。",
+    "Change the key or button for every action, separately for keyboard and mouse and for gamepad.": "すべての操作のキーやボタンを、キーボード・マウスとゲームパッドで個別に変更できます。",
     "Clue analysis": "手がかり分析", "Tap": "タップ", "Hold to analyse": "長押しで分析", "Analysing": "分析中", "Unknown evidence": "不明な証拠", "{0} m": "{0} m",
     "Hits": "ヒット", "Objective": "目標", "Low": "低下", "Ready": "準備完了", "{0}s": "{0}秒",
     "Attack": "攻撃", "Case file": "事件ファイル", "Detective mode": "探偵モード",
@@ -116,13 +146,39 @@ def pseudo(text):
     return f"[{body} {padding}]"
 
 
+def manifest_sources():
+    """(namespace path, key) -> current source text, from the gathered manifest."""
+    manifest = json.load(open(f"{ROOT}\\Game.manifest", encoding="utf-16"))
+    sources = {}
+
+    def walk(node, path):
+        path = path + (node.get("Namespace", ""),)
+        for child in node.get("Children", []):
+            for key in child.get("Keys", []):
+                sources[(path, key["Key"])] = child["Source"]["Text"]
+        for sub in node.get("Subnamespaces", []):
+            walk(sub, path)
+
+    walk(manifest, ())
+    return sources
+
+
+SOURCES = manifest_sources()
+
+
 def fill(culture, table, make=None):
     path = f"{ROOT}\\{culture}\\Game.archive"
     archive = json.load(open(path, encoding="utf-16"))
     missing = []
 
-    def walk(node):
+    def walk(node, ns_path=()):
+        ns_path = ns_path + (node.get("Namespace", ""),)
         for child in node.get("Children", []):
+            # GatherText keeps an archive entry's old source when only the source text changed (same key), so the
+            # translation would silently stay attached to the old text. Re-point it at the manifest's source.
+            current = SOURCES.get((ns_path, child.get("Key")))
+            if current is not None and current != child["Source"]["Text"]:
+                child["Source"]["Text"] = current
             source = child["Source"]["Text"]
             if make:
                 child["Translation"]["Text"] = make(source)
@@ -131,7 +187,7 @@ def fill(culture, table, make=None):
             else:
                 missing.append(source)
         for sub in node.get("Subnamespaces", []):
-            walk(sub)
+            walk(sub, ns_path)
 
     walk(archive)
     json.dump(archive, open(path, "w", encoding="utf-16"), ensure_ascii=False, indent="\t")

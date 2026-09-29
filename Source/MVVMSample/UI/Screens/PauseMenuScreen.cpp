@@ -3,9 +3,10 @@
 #include "UI/Screens/PauseMenuScreen.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Components/Border.h"
 #include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
 #include "Components/SizeBox.h"
+#include "Components/Spacer.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
@@ -15,7 +16,13 @@
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Screens/ConfirmModalScreen.h"
+#include "UI/Slate/SGothamPanel.h"
 #include "UI/Widgets/GothamButton.h"
+#include "UI/Widgets/GothamMenuList.h"
+#include "UI/Widgets/GothamPanel.h"
+#include "ViewModels/ClueViewModels.h"
+#include "ViewModels/GothamViewModelSubsystem.h"
+#include "ViewModels/ObjectivesViewModel.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.PauseMenu"
 
@@ -23,40 +30,96 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
-		// Full-screen dim, menu column centred.
-		UBorder* Dim = WidgetTree->ConstructWidget<UBorder>();
-		Dim->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 0.6f));
-		Dim->SetHorizontalAlignment(HAlign_Center);
-		Dim->SetVerticalAlignment(VAlign_Center);
-		WidgetTree->RootWidget = Dim;
+		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "Blackwater Ops"), LOCTEXT("Title", "Paused"));
 
-		USizeBox* Width = WidgetTree->ConstructWidget<USizeBox>();
-		Width->SetWidthOverride(360.f);
-		Dim->SetContent(Width);
+		UHorizontalBox* Split = WidgetTree->ConstructWidget<UHorizontalBox>();
+		Column->AddChildToVerticalBox(Split)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
-		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
-		Width->SetContent(Column);
+		// Left: the menu, a highlight bar sliding behind the current item.
+		USizeBox* MenuWidth = WidgetTree->ConstructWidget<USizeBox>();
+		MenuWidth->SetMinDesiredWidth(380.f);
+		Split->AddChildToHorizontalBox(MenuWidth)->SetVerticalAlignment(VAlign_Top);
+		UGothamMenuList* Menu = WidgetTree->ConstructWidget<UGothamMenuList>();
+		MenuWidth->SetContent(Menu);
 
-		Column->AddChildToVerticalBox(MakeTitle(LOCTEXT("Title", "PAUSED")))->SetPadding(FMargin(0.f, 0.f, 0.f, 24.f));
-
-		UGothamButton* Resume = AddButton(Column, LOCTEXT("Resume", "Resume"));
-		UGothamButton* Settings = AddButton(Column, LOCTEXT("Settings", "Settings"));
-		UGothamButton* Quit = AddButton(Column, LOCTEXT("Quit", "Quit"));
+		UGothamButton* Resume = AddMenuItem(Menu, LOCTEXT("Resume", "Resume"));
+		UGothamButton* CaseFile = AddMenuItem(Menu, LOCTEXT("CaseFile", "Case file"));
+		UGothamButton* Settings = AddMenuItem(Menu, LOCTEXT("Settings", "Settings"));
+		UGothamButton* Quit = AddMenuItem(Menu, LOCTEXT("Quit", "Quit"));
 		Resume->OnClicked().AddUObject(this, &UPauseMenuScreen::OnResume);
+		CaseFile->OnClicked().AddUObject(this, &UPauseMenuScreen::OnCaseFile);
 		Settings->OnClicked().AddUObject(this, &UPauseMenuScreen::OnSettings);
 		Quit->OnClicked().AddUObject(this, &UPauseMenuScreen::OnQuit);
 		DefaultFocus = Resume;
 
-		Column->AddChildToVerticalBox(MakeHintBar(LOCTEXT("Select", "Select"), LOCTEXT("Back", "Back")))
-			->SetPadding(FMargin(0.f, 24.f, 0.f, 0.f));
+		UHorizontalBoxSlot* Gap = Split->AddChildToHorizontalBox(WidgetTree->ConstructWidget<USpacer>());
+		Gap->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+
+		// Right: where the investigation stands, so pausing doubles as a status check.
+		USizeBox* StatusWidth = WidgetTree->ConstructWidget<USizeBox>();
+		StatusWidth->SetWidthOverride(360.f);
+		Split->AddChildToHorizontalBox(StatusWidth)->SetVerticalAlignment(VAlign_Top);
+		StatusPanel = WidgetTree->ConstructWidget<UGothamPanel>();
+		StatusPanel->SetPanelPadding(FMargin(22.f, 16.f, 22.f, 18.f));
+		StatusPanel->SetShape(12.f, EGothamChamfer::Opposite);
+		StatusWidth->SetContent(StatusPanel);
+
+		UVerticalBox* Status = WidgetTree->ConstructWidget<UVerticalBox>();
+		StatusPanel->SetContent(Status);
+		Status->AddChildToVerticalBox(MakeText(LOCTEXT("ObjectiveLabel", "Objective"), EGothamTextStyle::Label, EGothamColorToken::TextMuted));
+		ObjectiveText = MakeText(FText::GetEmpty(), EGothamTextStyle::Header, EGothamColorToken::TextPrimary);
+		ObjectiveText->SetAutoWrapText(true);
+		Status->AddChildToVerticalBox(ObjectiveText)->SetPadding(FMargin(0.f, 2.f, 0.f, 14.f));
+		Status->AddChildToVerticalBox(MakeText(LOCTEXT("EvidenceLabel", "Evidence"), EGothamTextStyle::Label, EGothamColorToken::TextMuted));
+		EvidenceText = MakeText(FText::GetEmpty(), EGothamTextStyle::Numeric, EGothamColorToken::Accent);
+		Status->AddChildToVerticalBox(EvidenceText)->SetPadding(FMargin(0.f, 2.f, 0.f, 0.f));
+
+		AddFooter(MakeHintBar(LOCTEXT("Select", "Select"), LOCTEXT("Back", "Resume")));
 	}
 	return Super::RebuildWidget();
+}
+
+void UPauseMenuScreen::OnPaletteChanged()
+{
+	Super::OnPaletteChanged();
+	if (StatusPanel)
+	{
+		StatusPanel->SetColors(GothamStyle::Token(this, EGothamColorToken::Panel, GothamStyle::PanelAlpha(this)),
+			GothamStyle::Token(this, EGothamColorToken::PanelEdge, 0.7f));
+		StatusPanel->SetAccent(GothamStyle::Token(this, EGothamColorToken::Accent), 3.f);
+	}
 }
 
 void UPauseMenuScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 	UGameplayStatics::SetGamePaused(this, true);
+	RefreshStatus();
+}
+
+void UPauseMenuScreen::NativeConstruct()
+{
+	Super::NativeConstruct();
+	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+	UGothamViewModelSubsystem* ViewModels = LocalPlayer ? LocalPlayer->GetSubsystem<UGothamViewModelSubsystem>() : nullptr;
+	if (!ViewModels)
+	{
+		return;
+	}
+	Objectives = ViewModels->GetObjectives();
+	Clues = ViewModels->GetClues();
+	const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UPauseMenuScreen::OnStatusChanged);
+	Objectives->AddFieldValueChangedDelegate(UObjectivesViewModel::FFieldNotificationClassDescriptor::ObjectiveTitle, Delegate);
+	Clues->AddFieldValueChangedDelegate(UClueListViewModel::FFieldNotificationClassDescriptor::Entries, Delegate);
+	Clues->AddFieldValueChangedDelegate(UClueListViewModel::FFieldNotificationClassDescriptor::DiscoveredCount, Delegate);
+	RefreshStatus();
+}
+
+void UPauseMenuScreen::NativeDestruct()
+{
+	if (Objectives) { Objectives->RemoveAllFieldValueChangedDelegates(this); }
+	if (Clues) { Clues->RemoveAllFieldValueChangedDelegates(this); }
+	Super::NativeDestruct();
 }
 
 void UPauseMenuScreen::NativeOnDeactivated()
@@ -65,9 +128,28 @@ void UPauseMenuScreen::NativeOnDeactivated()
 	Super::NativeOnDeactivated();
 }
 
+void UPauseMenuScreen::RefreshStatus()
+{
+	if (!ObjectiveText)
+	{
+		return;
+	}
+	ObjectiveText->SetText(Objectives ? Objectives->GetObjectiveTitle() : FText::GetEmpty());
+	EvidenceText->SetText(Clues ? FText::Format(LOCTEXT("EvidenceFmt", "{0} / {1}"),
+		FText::AsNumber(Clues->GetDiscoveredCount()), FText::AsNumber(Clues->GetTotalCount())) : FText::GetEmpty());
+}
+
 void UPauseMenuScreen::OnResume()
 {
 	DeactivateWidget();
+}
+
+void UPauseMenuScreen::OnCaseFile()
+{
+	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
+	{
+		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ClueLogClass.LoadSynchronous());
+	}
 }
 
 void UPauseMenuScreen::OnSettings()
@@ -85,7 +167,7 @@ void UPauseMenuScreen::OnQuit()
 	if (UConfirmModalScreen* Modal = UI ? UI->PushScreen<UConfirmModalScreen>(EGothamUILayer::Modal, ModalClass) : nullptr)
 	{
 		Modal->Setup(LOCTEXT("QuitTitle", "Quit game?"), LOCTEXT("QuitBody", "Unsaved progress will be lost."),
-			FOnConfirmResult::CreateUObject(this, &UPauseMenuScreen::OnQuitConfirmed));
+			FOnConfirmResult::CreateUObject(this, &UPauseMenuScreen::OnQuitConfirmed), /*bDestructive*/ true);
 	}
 }
 

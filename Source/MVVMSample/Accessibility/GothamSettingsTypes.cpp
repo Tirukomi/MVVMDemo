@@ -80,6 +80,32 @@ bool FGothamSettingsData::Cycle(EGothamSetting Setting, int32 Direction)
 	return *this != Before;
 }
 
+void FGothamSettingsData::GetOptionPosition(EGothamSetting Setting, int32& OutIndex, int32& OutCount) const
+{
+	auto Enum = [&OutIndex, &OutCount](auto Value)
+	{
+		OutIndex = static_cast<int32>(Value);
+		OutCount = static_cast<int32>(decltype(Value)::Count);
+	};
+	auto Bool = [&OutIndex, &OutCount](bool bValue) { OutIndex = bValue ? 1 : 0; OutCount = 2; };
+	switch (Setting)
+	{
+	case EGothamSetting::Language:
+		OutCount = GetLanguages().Num();
+		OutIndex = FMath::Max(0, GetLanguages().IndexOfByPredicate([this](const FGothamLanguageOption& L) { return Language == L.Culture; }));
+		break;
+	case EGothamSetting::ColorVision:        Enum(ColorMode); break;
+	case EGothamSetting::UIScale:            OutCount = GetUIScaleSteps().Num(); OutIndex = FMath::Clamp(UIScaleIndex, 0, OutCount - 1); break;
+	case EGothamSetting::HighContrast:       Bool(bHighContrast); break;
+	case EGothamSetting::ReducedMotion:      Bool(bReducedMotion); break;
+	case EGothamSetting::WheelMode:          Enum(WheelMode); break;
+	case EGothamSetting::ScanMode:           Enum(ScanMode); break;
+	case EGothamSetting::SubtitleSize:       Enum(SubtitleSize); break;
+	case EGothamSetting::SubtitleBackground: Bool(bSubtitleBackground); break;
+	default:                                 OutIndex = 0; OutCount = 1; break;
+	}
+}
+
 bool FGothamSettingsData::operator==(const FGothamSettingsData& Other) const
 {
 	return Language == Other.Language && ColorMode == Other.ColorMode && UIScaleIndex == Other.UIScaleIndex

@@ -8,7 +8,7 @@
 
 namespace
 {
-	enum class EChannel : uint8 { Scale, Opacity };
+	enum class EChannel : uint8 { Scale, Opacity, Translation };
 
 	/** Active animations per widget and channel, so a new animation replaces the old one instead of stacking. */
 	TMap<TPair<TWeakObjectPtr<UWidget>, EChannel>, FTSTicker::FDelegateHandle>& Active()
@@ -93,4 +93,55 @@ namespace GothamMotion
 			W->SetRenderOpacity(FMath::Lerp(From, To, FMath::InterpEaseOut(0.f, 1.f, T, 2.f)));
 		});
 	}
+
+	void SlideIn(UWidget* Widget, const FVector2D& From, float Seconds)
+	{
+		if (!Widget)
+		{
+			return;
+		}
+		if (IsReduced(Widget))
+		{
+			Widget->SetRenderTranslation(FVector2D::ZeroVector);
+			return;
+		}
+		Run(Widget, EChannel::Translation, Seconds, [From](UWidget* W, float T)
+		{
+			W->SetRenderTranslation(From * (1.f - FMath::InterpEaseOut(0.f, 1.f, T, 3.f)));
+		});
+	}
+}
+
+void FGothamSlideRect::SetTarget(const FVector2f& InPosition, const FVector2f& InSize, bool bSnap)
+{
+	TargetPosition = InPosition;
+	TargetSize = InSize;
+	if (bSnap || !bHasValue)
+	{
+		Position = TargetPosition;
+		Size = TargetSize;
+		bHasValue = true;
+		bMoving = false;
+		return;
+	}
+	bMoving = !Position.Equals(TargetPosition, 0.5f) || !Size.Equals(TargetSize, 0.5f);
+}
+
+bool FGothamSlideRect::Advance(float DeltaSeconds)
+{
+	if (!bMoving)
+	{
+		return false;
+	}
+	// Frame-rate independent: the remaining distance shrinks by exp(-Rate * dt) every step.
+	const float Keep = FMath::Exp(-Rate * FMath::Max(DeltaSeconds, 0.f));
+	Position = TargetPosition + (Position - TargetPosition) * Keep;
+	Size = TargetSize + (Size - TargetSize) * Keep;
+	if (Position.Equals(TargetPosition, 0.5f) && Size.Equals(TargetSize, 0.5f))
+	{
+		Position = TargetPosition;
+		Size = TargetSize;
+		bMoving = false;
+	}
+	return bMoving;
 }

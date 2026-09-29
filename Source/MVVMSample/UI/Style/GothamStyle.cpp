@@ -2,6 +2,8 @@
 
 #include "UI/Style/GothamStyle.h"
 
+#include "Accessibility/GothamSettingsSubsystem.h"
+
 #include "Components/TextBlock.h"
 #include "Fonts/CompositeFont.h"
 #include "HAL/FileManager.h"
@@ -113,6 +115,20 @@ namespace GothamStyle
 	bool IsUpperCase(EGothamTextStyle Style)
 	{
 		return Style == EGothamTextStyle::Title || Style == EGothamTextStyle::Label || Style == EGothamTextStyle::Header;
+	}
+
+	FLinearColor Token(const UObject* Context, EGothamColorToken InToken, float Alpha)
+	{
+		const UGothamSettingsSubsystem* Settings = Context ? UGothamSettingsSubsystem::Get(Context) : nullptr;
+		FLinearColor Color = Settings ? Settings->GetColor(InToken) : GothamPalette::Resolve(InToken, EGothamColorMode::Default, false);
+		Color.A = Alpha;
+		return Color;
+	}
+
+	float PanelAlpha(const UObject* Context)
+	{
+		const UGothamSettingsSubsystem* Settings = Context ? UGothamSettingsSubsystem::Get(Context) : nullptr;
+		return Settings ? Settings->GetPanelAlpha() : GothamPalette::PanelAlpha(false);
 	}
 
 	void ApplyText(UTextBlock* Text, EGothamTextStyle Style, const FLinearColor& Color)

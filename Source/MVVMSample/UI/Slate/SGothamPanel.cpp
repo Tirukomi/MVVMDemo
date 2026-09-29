@@ -22,6 +22,76 @@ TArray<FVector2f> GothamChamferedRect(const FVector2f& Size, float Corner, uint8
 	return P;
 }
 
+void GothamPaintPanel(FSlateWindowElementList& OutDrawElements, int32 LayerId, const FGeometry& Geometry,
+	const FVector2f& Offset, const FVector2f& Size, const FGothamPanelLook& Look, float Opacity)
+{
+	if (Size.X <= 0.f || Size.Y <= 0.f)
+	{
+		return;
+	}
+	const FSlateBrush* White = FCoreStyle::Get().GetBrush("GenericWhiteBox");
+	const TArray<FVector2f> Outline = GothamChamferedRect(Size, Look.Corner, Look.ChamferMask);
+	auto Closed = [&Offset](TArray<FVector2f> Points, const FVector2f& Shift)
+	{
+		for (FVector2f& P : Points) { P += Offset + Shift; }
+		const FVector2f First = Points[0]; // copy: Add() may reallocate under a reference into the array
+		Points.Add(First);
+		return Points;
+	};
+	auto Faded = [Opacity](FLinearColor Color, float Scale = 1.f) { Color.A *= Opacity * Scale; return Color; };
+
+	// Glow: a few outlines stepping outward, each fainter. Cheap, and it scales with the shape.
+	if (Look.GlowSize > 0.f && Look.Glow.A > 0.f)
+	{
+		constexpr int32 Rings = 3;
+		for (int32 i = 1; i <= Rings; ++i)
+		{
+			const float E = Look.GlowSize * i / Rings;
+			const TArray<FVector2f> Ring = GothamChamferedRect(Size + FVector2f(2.f * E), Look.Corner + E * 0.4f, Look.ChamferMask);
+			FSlateDrawElement::MakeLines(OutDrawElements, LayerId, Geometry.ToPaintGeometry(), Closed(Ring, FVector2f(-E)),
+				ESlateDrawEffect::None, Faded(Look.Glow, 1.f - (i - 1.f) / Rings), true, Look.GlowSize / Rings + 0.5f);
+		}
+	}
+
+	// Fill: the outline is convex, so a fan around its centroid covers it exactly.
+	if (Look.Fill.A > 0.f && Outline.Num() >= 3)
+	{
+		const FColor Vertex = Faded(Look.Fill).ToFColor(true);
+		FVector2f Centre = FVector2f::ZeroVector;
+		for (const FVector2f& P : Outline) { Centre += P; }
+		Centre /= Outline.Num();
+
+		TArray<FSlateVertex> Verts;
+		TArray<SlateIndex> Indices;
+		Verts.AddZeroed(Outline.Num() + 1);
+		Verts[0].Position = FVector2f(Geometry.LocalToAbsolute(FVector2D(Centre + Offset)));
+		Verts[0].Color = Vertex;
+		for (int32 i = 0; i < Outline.Num(); ++i)
+		{
+			Verts[i + 1].Position = FVector2f(Geometry.LocalToAbsolute(FVector2D(Outline[i] + Offset)));
+			Verts[i + 1].Color = Vertex;
+			Indices.Append({ 0, static_cast<SlateIndex>(i + 1), static_cast<SlateIndex>((i + 1) % Outline.Num() + 1) });
+		}
+		FSlateDrawElement::MakeCustomVerts(OutDrawElements, LayerId, White->GetRenderingResource(), Verts, Indices, nullptr, 0, 0);
+	}
+
+	// Accent bar hugging the left edge, inside any chamfer.
+	if (Look.AccentWidth > 0.f && Look.Accent.A > 0.f)
+	{
+		const float TopInset = (Look.ChamferMask & EGothamChamfer::TopLeft) ? FMath::Min(Look.Corner, Size.Y * 0.5f) : 0.f;
+		const float BottomInset = (Look.ChamferMask & EGothamChamfer::BottomLeft) ? FMath::Min(Look.Corner, Size.Y * 0.5f) : 0.f;
+		FSlateDrawElement::MakeBox(OutDrawElements, LayerId + 1,
+			Geometry.ToPaintGeometry(FVector2f(Look.AccentWidth, FMath::Max(0.f, Size.Y - TopInset - BottomInset)), FSlateLayoutTransform(Offset + FVector2f(0.f, TopInset))),
+			White, ESlateDrawEffect::None, Faded(Look.Accent));
+	}
+
+	if (Look.EdgeThickness > 0.f && Look.Edge.A > 0.f && Outline.Num() >= 2)
+	{
+		FSlateDrawElement::MakeLines(OutDrawElements, LayerId + 1, Geometry.ToPaintGeometry(), Closed(Outline, FVector2f::ZeroVector),
+			ESlateDrawEffect::None, Faded(Look.Edge), true, Look.EdgeThickness);
+	}
+}
+
 void SGothamPanel::Construct(const FArguments& InArgs)
 {
 	Corner = InArgs._Corner;
@@ -74,59 +144,27 @@ void SGothamPanel::SetAccent(const FLinearColor& InColor, float InWidth)
 	Invalidate(EInvalidateWidgetReason::Paint);
 }
 
+void SGothamPanel::SetGlow(const FLinearColor& InColor, float InSize)
+{
+	GlowColor = InColor;
+	GlowSize = InSize;
+	Invalidate(EInvalidateWidgetReason::Paint);
+}
+
 int32 SGothamPanel::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
 	FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {
-	const FVector2f Size = FVector2f(AllottedGeometry.GetLocalSize());
-	const float Opacity = InWidgetStyle.GetColorAndOpacityTint().A;
-	const TArray<FVector2f> Outline = GothamChamferedRect(Size, Corner, ChamferMask);
-	const FSlateBrush* White = FCoreStyle::Get().GetBrush("GenericWhiteBox");
-
-	// Fill: the outline is convex, so a fan around its centroid covers it exactly.
-	if (FillColor.A > 0.f && Outline.Num() >= 3)
-	{
-		FLinearColor Fill = FillColor;
-		Fill.A *= Opacity;
-		const FColor Vertex = Fill.ToFColor(true);
-		FVector2f Centre = FVector2f::ZeroVector;
-		for (const FVector2f& P : Outline) { Centre += P; }
-		Centre /= Outline.Num();
-
-		TArray<FSlateVertex> Verts;
-		TArray<SlateIndex> Indices;
-		Verts.AddZeroed(Outline.Num() + 1);
-		Verts[0].Position = FVector2f(AllottedGeometry.LocalToAbsolute(FVector2D(Centre)));
-		Verts[0].Color = Vertex;
-		for (int32 i = 0; i < Outline.Num(); ++i)
-		{
-			Verts[i + 1].Position = FVector2f(AllottedGeometry.LocalToAbsolute(FVector2D(Outline[i])));
-			Verts[i + 1].Color = Vertex;
-			Indices.Append({ 0, static_cast<SlateIndex>(i + 1), static_cast<SlateIndex>((i + 1) % Outline.Num() + 1) });
-		}
-		FSlateDrawElement::MakeCustomVerts(OutDrawElements, LayerId, White->GetRenderingResource(), Verts, Indices, nullptr, 0, 0);
-	}
-
-	// Accent bar hugging the left edge, inside any chamfer.
-	if (AccentWidth > 0.f && AccentColor.A > 0.f)
-	{
-		const float TopInset = (ChamferMask & EGothamChamfer::TopLeft) ? FMath::Min(Corner, Size.Y * 0.5f) : 0.f;
-		const float BottomInset = (ChamferMask & EGothamChamfer::BottomLeft) ? FMath::Min(Corner, Size.Y * 0.5f) : 0.f;
-		FLinearColor Accent = AccentColor;
-		Accent.A *= Opacity;
-		FSlateDrawElement::MakeBox(OutDrawElements, LayerId + 1,
-			AllottedGeometry.ToPaintGeometry(FVector2f(AccentWidth, FMath::Max(0.f, Size.Y - TopInset - BottomInset)), FSlateLayoutTransform(FVector2f(0.f, TopInset))),
-			White, ESlateDrawEffect::None, Accent);
-	}
-
-	if (EdgeThickness > 0.f && EdgeColor.A > 0.f && Outline.Num() >= 2)
-	{
-		TArray<FVector2f> Closed = Outline;
-		Closed.Add(Outline[0]);
-		FLinearColor Edge = EdgeColor;
-		Edge.A *= Opacity;
-		FSlateDrawElement::MakeLines(OutDrawElements, LayerId + 1, AllottedGeometry.ToPaintGeometry(), MoveTemp(Closed),
-			ESlateDrawEffect::None, Edge, true, EdgeThickness);
-	}
-
+	FGothamPanelLook Look;
+	Look.Corner = Corner;
+	Look.ChamferMask = ChamferMask;
+	Look.Fill = FillColor;
+	Look.Edge = EdgeColor;
+	Look.EdgeThickness = EdgeThickness;
+	Look.Accent = AccentColor;
+	Look.AccentWidth = AccentWidth;
+	Look.Glow = GlowColor;
+	Look.GlowSize = GlowSize;
+	GothamPaintPanel(OutDrawElements, LayerId, AllottedGeometry, FVector2f::ZeroVector, FVector2f(AllottedGeometry.GetLocalSize()),
+		Look, InWidgetStyle.GetColorAndOpacityTint().A);
 	return SCompoundWidget::OnPaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId + 2, InWidgetStyle, bParentEnabled);
 }

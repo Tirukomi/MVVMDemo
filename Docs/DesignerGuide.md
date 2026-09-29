@@ -24,12 +24,16 @@ subtitle/gadget bar view model all read from it, so adding an entry adds it ever
 | To change | Edit |
 |---|---|
 | Colours that carry meaning (health, warning, clue state) | `GothamPalette::Resolve` (`Accessibility/GothamSettingsTypes.cpp`) |
-| Menu button look | `UGothamButtonStyle` (or subclass it in a Blueprint and set it on the button) |
+| Menu button look | `UGothamButton::ApplyState` draws from palette tokens; pick a kind with `SetKind` (`Standard`, `MenuItem`, `Tab`, `Danger`) |
+| Menu highlight bar | `UGothamMenuList::ApplyLook` (shape, fill, accent bar, glow); slide speed is `FGothamSlideRect::Rate` |
+| Menu backdrop | `BuildMenuFrame` blur strength per screen; `UGothamScrim` left/right alphas |
+| Screen transitions | `GothamMotion::ScreenSeconds` / `ScreenSlide` (stack fade plus content slide; both off under reduced motion) |
+| Settings tabs and grouping | `USettingsViewModel::GetTabs` (a test checks every setting is in exactly one tab) |
 | Gadget wheel look | `FGothamGadgetWheelStyle` on the `UGadgetWheel` widget (radii, gap, colours, font) |
 | Combo meter | `UComboMeter` properties (segments, colours, size) |
 | Detective post-process | `M_DetectiveVision` (regenerate with `CreateDetectiveAssets.py`, or edit in the material editor) |
 | Detective overlay | `M_DetectiveOverlay_UI`; parameters `Progress`, `Tint`, `MotionScale` |
-| Clue log row layout | subclass `WBP_ClueEntry` (it already exists as a Blueprint over `UClueEntryWidget`) |
+| Case-file tile layout | subclass `WBP_ClueEntry` (a Blueprint over `UClueEntryWidget`, now an evidence-board tile; size in `UClueEntryWidget::TileWidth/TileHeight`) |
 
 Never hard-code a colour that means something. Ask the palette for a token (`Good`, `Danger`, `Info`, `Warning`,
 `Unscanned`, `Scanned`) so colour-blind presets and high contrast keep working.
@@ -38,9 +42,10 @@ Never hard-code a colour that means something. Ask the palette for a token (`Goo
 
 1. Add the value to `FGothamSettingsData` and an entry in `EGothamSetting` (`Accessibility/GothamSettingsTypes.h`);
    extend `Cycle`, `operator==`, `LoadFromConfig` / `SaveToConfig`.
-2. Add its label and value text in `USettingsViewModel` (`GetLabel`, `GetValueText`, a `FieldNotify` text property).
-3. Add a row in `USettingsScreen` (both lists: construction and `NativeConstruct`), and subscribe the row to the new
-   field in `UGothamOptionRow::Setup`.
+2. Add its label, description and value text in `USettingsViewModel` (`GetLabel`, `GetDescription`, `GetValueText`,
+   a `FieldNotify` text property) and its position in `FGothamSettingsData::GetOptionPosition` (the selector pips).
+3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it. Subscribe the row to the
+   new field in `UGothamOptionRow::Setup`.
 4. Read it wherever it matters through `UGothamSettingsSubsystem::Get(this)` or, for widgets, derive from
    `UGothamSettingsAwareWidget` and override `OnSettingsApplied`.
 5. Add a case to `Tests/SettingsTests.cpp`.

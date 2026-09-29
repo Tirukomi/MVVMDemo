@@ -28,6 +28,7 @@
 #include "Gameplay/ClueActor.h"
 #include "Gameplay/DetectiveComponent.h"
 #include "UI/ClueEntryWidget.h"
+#include "UI/Screens/PauseMenuScreen.h"
 #include "UnrealClient.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
@@ -427,6 +428,7 @@ void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
 /**
  * Dev aids for headless verification, enabled by command-line flags. Each saves a screenshot after 4s.
  *   -GothamOpenPause     opens the pause menu
+ *   -GothamOpenQuit      opens the pause menu, then its (destructive) quit confirmation
  *   -GothamOpenWheel     opens the gadget wheel, hovers a segment and builds a combo
  *   -GothamDetective     enters detective mode and scans the nearest clue
  *   -GothamClueLog[=N]   scans a clue, opens the case file, optionally with N extra fake clues
@@ -438,11 +440,12 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const TCHAR* Cmd = FCommandLine::Get();
 	// Screenshot runs must be deterministic: the first mouse delta after window capture would otherwise swing the camera.
 	if (FParse::Param(Cmd, TEXT("GothamShot")) || FParse::Param(Cmd, TEXT("GothamOpenWheel")) || FParse::Param(Cmd, TEXT("GothamDetective"))
-		|| FParse::Param(Cmd, TEXT("GothamOpenPause")) || FParse::Param(Cmd, TEXT("GothamOpenSettings")) || FParse::Param(Cmd, TEXT("GothamClueLog")))
+		|| FParse::Param(Cmd, TEXT("GothamOpenPause")) || FParse::Param(Cmd, TEXT("GothamOpenQuit")) || FParse::Param(Cmd, TEXT("GothamOpenSettings")) || FParse::Param(Cmd, TEXT("GothamClueLog")))
 	{
 		SetIgnoreLookInput(true);
 	}
-	const bool bPause = FParse::Param(Cmd, TEXT("GothamOpenPause"));
+	const bool bQuit = FParse::Param(Cmd, TEXT("GothamOpenQuit"));
+	const bool bPause = FParse::Param(Cmd, TEXT("GothamOpenPause")) || bQuit;
 	const bool bWheel = FParse::Param(Cmd, TEXT("GothamOpenWheel"));
 	const bool bDetective = FParse::Param(Cmd, TEXT("GothamDetective"));
 	int32 StressCount = 0;
@@ -474,6 +477,21 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	{
 		UI->TogglePauseMenu();
 	}
+	if (bQuit)
+	{
+		// After the pause menu's intro, the way a player would reach it.
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([](float)
+		{
+			for (TObjectIterator<UPauseMenuScreen> It; It; ++It)
+			{
+				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsActivated())
+				{
+					It->RequestQuit();
+				}
+			}
+			return false;
+		}), 1.f);
+	}
 	if (bWheel)
 	{
 		UI->OpenGadgetWheel();
@@ -486,7 +504,7 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	{
 		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
 	}
-	const FString ShotName = bPlainShot ? TEXT("gotham_hud") : bRebindDemo ? TEXT("gotham_controls") : bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : bSettings ? TEXT("gotham_settings") : bControls ? TEXT("gotham_controls") : TEXT("gotham_cluelog");
+	const FString ShotName = bPlainShot ? TEXT("gotham_hud") : bQuit ? TEXT("gotham_quit") : bRebindDemo ? TEXT("gotham_controls") : bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : bSettings ? TEXT("gotham_settings") : bControls ? TEXT("gotham_controls") : TEXT("gotham_cluelog");
 	const TWeakObjectPtr<AGothamPlayerController> WeakThis(this);
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
 

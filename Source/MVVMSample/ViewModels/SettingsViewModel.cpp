@@ -73,6 +73,38 @@ FText USettingsViewModel::GetLabel(EGothamSetting Setting)
 	}
 }
 
+FText USettingsViewModel::GetDescription(EGothamSetting Setting)
+{
+	switch (Setting)
+	{
+	case EGothamSetting::Language:           return LOCTEXT("LanguageDesc", "Language for all menus, the HUD and subtitles. Changes preview immediately.");
+	case EGothamSetting::ColorVision:        return LOCTEXT("ColorVisionDesc", "Swaps the clue, danger and highlight colours for palettes that stay distinct with protanopia, deuteranopia or tritanopia.");
+	case EGothamSetting::UIScale:            return LOCTEXT("UIScaleDesc", "Scales every menu and HUD element. Layouts reflow, so nothing is cut off at larger sizes.");
+	case EGothamSetting::HighContrast:       return LOCTEXT("HighContrastDesc", "Solid panels and brighter text and edges, for readability over busy scenes.");
+	case EGothamSetting::ReducedMotion:      return LOCTEXT("ReducedMotionDesc", "Turns off pops, slides, pulses, screen transitions and rain streaks. Colour cues stay on.");
+	case EGothamSetting::WheelMode:          return LOCTEXT("WheelModeDesc", "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close.");
+	case EGothamSetting::ScanMode:           return LOCTEXT("ScanModeDesc", "Hold: keep the button held to analyse a clue. Tap: a single press analyses it.");
+	case EGothamSetting::SubtitleSize:       return LOCTEXT("SubtitleSizeDesc", "Text size for subtitles and speaker names.");
+	case EGothamSetting::SubtitleBackground: return LOCTEXT("SubtitleBackgroundDesc", "Draws a solid panel behind subtitles so they read over any scene.");
+	default: return FText::GetEmpty();
+	}
+}
+
+const TArray<FGothamSettingsTab>& USettingsViewModel::GetTabs()
+{
+	static const TArray<FGothamSettingsTab> Tabs = {
+		{ TEXT("Display"), LOCTEXT("TabDisplay", "Display"),
+			{ EGothamSetting::UIScale, EGothamSetting::SubtitleSize, EGothamSetting::SubtitleBackground } },
+		{ TEXT("Accessibility"), LOCTEXT("TabAccessibility", "Accessibility"),
+			{ EGothamSetting::ColorVision, EGothamSetting::HighContrast, EGothamSetting::ReducedMotion } },
+		{ TEXT("Controls"), LOCTEXT("TabControls", "Controls"),
+			{ EGothamSetting::WheelMode, EGothamSetting::ScanMode } },
+		{ TEXT("Language"), LOCTEXT("TabLanguage", "Language"),
+			{ EGothamSetting::Language } },
+	};
+	return Tabs;
+}
+
 FText USettingsViewModel::GetValueText(EGothamSetting Setting) const
 {
 	switch (Setting)

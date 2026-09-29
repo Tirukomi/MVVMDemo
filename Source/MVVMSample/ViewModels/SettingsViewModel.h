@@ -9,6 +9,14 @@
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSettingsDataEvent, const FGothamSettingsData&);
 
+/** One settings tab: an id, its label and the options it holds, in display order. */
+struct FGothamSettingsTab
+{
+	FName Id;
+	FText Label;
+	TArray<EGothamSetting> Settings;
+};
+
 /**
  * Working copy of the settings for the settings screen. Edits take effect live (preview) through OnPreview;
  * Apply commits them, Revert returns to the last committed values. Pure data plus text: no world or widgets.
@@ -39,6 +47,10 @@ public:
 	bool GetIsDirty() const { return bIsDirty; }
 
 	static FText GetLabel(EGothamSetting Setting);
+	/** One or two sentences for the settings screen's detail pane. */
+	static FText GetDescription(EGothamSetting Setting);
+	/** How the settings screen groups options. Every setting is in exactly one tab (tested). */
+	static const TArray<FGothamSettingsTab>& GetTabs();
 	FText GetValueText(EGothamSetting Setting) const;
 
 protected:

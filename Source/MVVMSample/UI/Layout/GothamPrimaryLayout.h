@@ -4,10 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "CommonUserWidget.h"
+#include "Widgets/CommonActivatableWidgetContainer.h"
 #include "UI/Layout/GothamUITypes.h"
 #include "GothamPrimaryLayout.generated.h"
 
-class UCommonActivatableWidgetStack;
+/**
+ * A layer stack with the shared screen transition: a short fade (GothamMotion::ScreenSeconds) on both push and pop, so
+ * every screen gets an intro and an outro from Common UI itself. Screens add their own content slide on activation.
+ */
+UCLASS()
+class MVVMSAMPLE_API UGothamScreenStack : public UCommonActivatableWidgetStack
+{
+	GENERATED_BODY()
+
+public:
+	UGothamScreenStack(const FObjectInitializer& ObjectInitializer);
+};
 
 /** Root of all UI for a local player: one activatable-widget stack per EGothamUILayer, stacked in z-order. */
 UCLASS()
@@ -20,9 +32,14 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:
+	/** Reduced motion turns the transition off (duration 0). */
+	void ApplyMotionSetting();
+	FDelegateHandle SettingsHandle;
+
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UCommonActivatableWidgetStack>> Layers;
 };

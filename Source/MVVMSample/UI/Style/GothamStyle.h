@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsTypes.h"
 #include "Fonts/SlateFontInfo.h"
 
 class UTextBlock;
@@ -34,6 +35,12 @@ namespace GothamStyle
 
 	/** Applies font, case transform and colour. */
 	MVVMSAMPLE_API void ApplyText(UTextBlock* Text, EGothamTextStyle Style, const FLinearColor& Color);
+
+	/** A palette token under the player's current colour and contrast settings (defaults without a game instance). */
+	MVVMSAMPLE_API FLinearColor Token(const UObject* Context, EGothamColorToken InToken, float Alpha = 1.f);
+
+	/** Panel fill alpha under the current contrast setting. */
+	MVVMSAMPLE_API float PanelAlpha(const UObject* Context);
 
 	/** Convenience: construct-and-style is the common case in code-built widgets. */
 	MVVMSAMPLE_API bool AreCustomFontsAvailable();

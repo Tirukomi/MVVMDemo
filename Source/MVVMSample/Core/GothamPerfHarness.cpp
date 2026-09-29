@@ -260,10 +260,10 @@ void FGothamPerfHarness::Start(AGothamPlayerController* Controller, const FStrin
 		},
 		[](float Seconds)
 		{
-			// Scroll back and forth across the whole list; the pool must keep rebinding rows.
-			for (TObjectIterator<UGothamClueListView> It; It; ++It)
+			// Scroll back and forth across the whole board (offset is in rows of 4 tiles); the pool must keep rebinding tiles.
+			for (TObjectIterator<UGothamClueTileView> It; It; ++It)
 			{
-				It->SetScrollOffset(250.f + 240.f * FMath::Sin(Seconds * 2.f));
+				It->SetScrollOffset(62.f + 60.f * FMath::Sin(Seconds * 2.f));
 			}
 		},
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } } });

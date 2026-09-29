@@ -3,7 +3,6 @@
 #include "UI/Screens/ControlsScreen.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Components/Border.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/ScrollBox.h"
@@ -16,6 +15,7 @@
 #include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamInputGlyph.h"
+#include "UI/Widgets/GothamMenuList.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "ViewModels/ControlsViewModel.h"
 
@@ -27,63 +27,62 @@ TSharedRef<SWidget> UControlsScreen::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
-		UBorder* Dim = WidgetTree->ConstructWidget<UBorder>();
-		Dim->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 0.9f));
-		Dim->SetHorizontalAlignment(HAlign_Center);
-		Dim->SetVerticalAlignment(VAlign_Center);
-		WidgetTree->RootWidget = Dim;
+		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "Options"), LOCTEXT("Title", "Controls"));
 
-		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
-		Dim->SetContent(Column);
-		Column->AddChildToVerticalBox(MakeTitle(LOCTEXT("Title", "CONTROLS")));
-
-		Status = WidgetTree->ConstructWidget<UTextBlock>();
-		Status->SetJustification(ETextJustify::Center);
+		Status = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::Warning);
 		Status->SetAutoWrapText(true);
-		Column->AddChildToVerticalBox(Status)->SetPadding(FMargin(0.f, 4.f, 0.f, 12.f));
+		Column->AddChildToVerticalBox(Status)->SetPadding(FMargin(22.f, 0.f, 0.f, 10.f));
 
-		USizeBox* Height = WidgetTree->ConstructWidget<USizeBox>();
-		Height->SetMaxDesiredHeight(360.f);
-		Column->AddChildToVerticalBox(Height);
-		UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>();
-		Height->SetContent(Scroll);
+		constexpr float LabelWidth = 300.f;
+		constexpr float SlotWidth = 230.f;
 
 		// Header: which column is which device.
 		UHorizontalBox* Header = WidgetTree->ConstructWidget<UHorizontalBox>();
-		Scroll->AddChild(Header);
+		Column->AddChildToVerticalBox(Header)->SetPadding(FMargin(22.f, 0.f, 0.f, 6.f));
 		auto AddHeaderCell = [&](const FText& Text, float Width)
 		{
 			USizeBox* Box = WidgetTree->ConstructWidget<USizeBox>();
 			Box->SetWidthOverride(Width);
-			UTextBlock* Cell = WidgetTree->ConstructWidget<UTextBlock>();
-			Cell->SetText(Text);
+			UTextBlock* Cell = MakeText(Text, EGothamTextStyle::Label, EGothamColorToken::TextMuted);
 			Cell->SetJustification(ETextJustify::Center);
 			Box->SetContent(Cell);
 			Header->AddChildToHorizontalBox(Box);
 		};
-		AddHeaderCell(FText::GetEmpty(), 260.f);
-		AddHeaderCell(LOCTEXT("KeyboardColumn", "Keyboard / Mouse"), 220.f);
-		AddHeaderCell(LOCTEXT("GamepadColumn", "Gamepad"), 220.f);
+		AddHeaderCell(FText::GetEmpty(), LabelWidth);
+		AddHeaderCell(LOCTEXT("KeyboardColumn", "Keyboard / Mouse"), SlotWidth);
+		AddHeaderCell(LOCTEXT("GamepadColumn", "Gamepad"), SlotWidth);
+
+		// The list takes the frame's remaining height and scrolls inside it.
+		UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>();
+		// Keep the focused row on screen as gamepad / keyboard focus moves.
+		Scroll->SetScrollWhenFocusChanges(EScrollWhenFocusChanges::AnimatedScroll);
+		UVerticalBoxSlot* ScrollSlot = Column->AddChildToVerticalBox(Scroll);
+		ScrollSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+		ScrollSlot->SetHorizontalAlignment(HAlign_Left);
+		// Each binding row is one highlight item; the focused slot inside it also glows.
+		UGothamMenuList* List = WidgetTree->ConstructWidget<UGothamMenuList>();
+		Scroll->AddChild(List);
 
 		SlotButtons.Reset();
 		for (const FGothamBindingDef& Def : GothamBindings::GetDefinitions())
 		{
 			UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
-			Scroll->AddChild(Row);
+			List->AddItem(Row);
 
 			USizeBox* LabelBox = WidgetTree->ConstructWidget<USizeBox>();
-			LabelBox->SetWidthOverride(260.f);
-			UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>();
-			Label->SetText(Def.DisplayName);
+			LabelBox->SetWidthOverride(LabelWidth);
+			UTextBlock* Label = MakeText(Def.DisplayName, EGothamTextStyle::BodyStrong, EGothamColorToken::TextPrimary);
 			Label->SetAutoWrapText(true);
 			LabelBox->SetContent(Label);
-			Row->AddChildToHorizontalBox(LabelBox)->SetVerticalAlignment(VAlign_Center);
+			UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(LabelBox);
+			LabelSlot->SetVerticalAlignment(VAlign_Center);
+			LabelSlot->SetPadding(FMargin(22.f, 0.f, 0.f, 0.f));
 
 			for (int32 SlotIndex = 0; SlotIndex < 2; ++SlotIndex)
 			{
 				USizeBox* Cell = WidgetTree->ConstructWidget<USizeBox>();
-				Cell->SetWidthOverride(220.f);
-				Row->AddChildToHorizontalBox(Cell)->SetPadding(FMargin(2.f));
+				Cell->SetWidthOverride(SlotWidth);
+				Row->AddChildToHorizontalBox(Cell)->SetPadding(FMargin(4.f, 3.f));
 				if (SlotIndex == GothamBindings::GamepadSlot && !Def.bHasGamepadSlot)
 				{
 					continue; // e.g. WASD directions: the left stick is fixed, so there is nothing to rebind
@@ -101,18 +100,17 @@ TSharedRef<SWidget> UControlsScreen::RebuildWidget()
 		}
 
 		UHorizontalBox* Buttons = WidgetTree->ConstructWidget<UHorizontalBox>();
-		Column->AddChildToVerticalBox(Buttons)->SetPadding(FMargin(0.f, 16.f, 0.f, 0.f));
+		Column->AddChildToVerticalBox(Buttons)->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
 		UGothamButton* Reset = WidgetTree->ConstructWidget<UGothamButton>();
 		Reset->SetLabel(LOCTEXT("ResetAll", "Reset to defaults"));
 		Reset->OnClicked().AddLambda([this]() { ResetAll(); });
-		Buttons->AddChildToHorizontalBox(Reset)->SetPadding(FMargin(4.f, 0.f));
+		Buttons->AddChildToHorizontalBox(Reset)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
 		UGothamButton* Back = WidgetTree->ConstructWidget<UGothamButton>();
 		Back->SetLabel(LOCTEXT("Back", "Back"));
 		Back->OnClicked().AddLambda([this]() { DeactivateWidget(); });
-		Buttons->AddChildToHorizontalBox(Back)->SetPadding(FMargin(4.f, 0.f));
+		Buttons->AddChildToHorizontalBox(Back);
 
-		Column->AddChildToVerticalBox(MakeHintBar(LOCTEXT("Rebind", "Rebind"), LOCTEXT("BackHint", "Back")))
-			->SetPadding(FMargin(0.f, 16.f, 0.f, 0.f));
+		AddFooter(MakeHintBar(LOCTEXT("Rebind", "Rebind"), LOCTEXT("BackHint", "Back")));
 	}
 	return Super::RebuildWidget();
 }

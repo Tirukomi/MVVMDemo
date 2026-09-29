@@ -40,9 +40,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Panel", meta = (ClampMin = "0"))
 	float AccentWidth = 0.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Panel")
+	FLinearColor GlowColor = FLinearColor::Transparent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Panel", meta = (ClampMin = "0"))
+	float GlowSize = 0.f;
+
 	void SetShape(float InCorner, uint8 InMask);
 	void SetColors(const FLinearColor& InFill, const FLinearColor& InEdge, float InEdgeThickness = 1.f);
 	void SetAccent(const FLinearColor& InColor, float InWidth);
+	void SetGlow(const FLinearColor& InColor, float InSize);
 	void SetPanelPadding(const FMargin& InPadding);
 
 	virtual void SynchronizeProperties() override;

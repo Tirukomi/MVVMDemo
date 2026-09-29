@@ -79,6 +79,9 @@ struct MVVMSAMPLE_API FGothamSettingsData
 	float GetUIScale() const;
 	int32 GetSubtitleFontSize() const;
 
+	/** Where the current value sits among the option's choices, for the selector's position pips. */
+	void GetOptionPosition(EGothamSetting Setting, int32& OutIndex, int32& OutCount) const;
+
 	/** Steps a setting by Direction (+1 / -1), wrapping. Returns true if the value changed. */
 	bool Cycle(EGothamSetting Setting, int32 Direction);
 

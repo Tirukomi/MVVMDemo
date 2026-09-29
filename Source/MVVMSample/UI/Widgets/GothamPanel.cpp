@@ -17,6 +17,7 @@ TSharedRef<SWidget> UGothamPanel::RebuildWidget()
 		.EdgeThickness(EdgeThickness)
 		.AccentColor(AccentColor)
 		.AccentWidth(AccentWidth);
+	MyPanel->SetGlow(GlowColor, GlowSize);
 
 	if (GetChildrenCount() > 0 && GetContentSlot()->Content)
 	{
@@ -50,6 +51,7 @@ void UGothamPanel::SynchronizeProperties()
 		MyPanel->SetShape(Corner, ChamferMask);
 		MyPanel->SetColors(FillColor, EdgeColor, EdgeThickness);
 		MyPanel->SetAccent(AccentColor, AccentWidth);
+		MyPanel->SetGlow(GlowColor, GlowSize);
 	}
 }
 
@@ -79,6 +81,13 @@ void UGothamPanel::SetAccent(const FLinearColor& InColor, float InWidth)
 	AccentColor = InColor;
 	AccentWidth = InWidth;
 	if (MyPanel.IsValid()) { MyPanel->SetAccent(AccentColor, AccentWidth); }
+}
+
+void UGothamPanel::SetGlow(const FLinearColor& InColor, float InSize)
+{
+	GlowColor = InColor;
+	GlowSize = InSize;
+	if (MyPanel.IsValid()) { MyPanel->SetGlow(GlowColor, GlowSize); }
 }
 
 void UGothamPanel::SetPanelPadding(const FMargin& InPadding)

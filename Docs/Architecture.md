@@ -56,13 +56,23 @@ hit-testing, layer/input-context tracking) so the rules are unit-tested without 
   `UGothamUISubsystem` is the only place screens are pushed and popped; `FGothamUIModeTracker` derives the input
   context (gameplay vs menu) from what is open.
 - **Screens.** Everything full-screen derives `UGothamScreen` (input config, Esc / B to go back, default focus,
-  small builders for titles, buttons and hint bars). The HUD is a screen in the Game layer.
+  small builders for titles, buttons and hint bars). The HUD is a screen in the Game layer. `BuildMenuFrame` gives
+  menus one look (background blur, a left-heavy scrim, section label, title and rule) and a content slide on
+  activation; the layer stacks (`UGothamScreenStack`) add a 0.15 s fade on push and pop. Both are off under reduced
+  motion.
+- **Menu focus.** `UGothamMenuList` draws a highlight bar behind the current item. It is event-driven:
+  `NativeOnFocusChanging` finds which item is on the new focus path, and `SGothamHighlight` eases toward it with
+  `FGothamSlideRect` (tested), reading the target's geometry only while the list holds focus. Buttons and option rows
+  move focus on hover, so mouse and gamepad share one "current item". Option rows handle left and right in
+  `NativeOnNavigation`, so the d-pad, stick and arrow keys change values while up and down still move between rows.
+- **Tabs.** Settings uses `UCommonTabListWidgetBase` (`UGothamTabList`) linked to a `UCommonAnimatedSwitcher`; the
+  grouping is data (`USettingsViewModel::GetTabs`).
 - **Widgets build their own tree** in `RebuildWidget` (see ADR 0002) and bind to view models with field-notify
   delegates. `UGothamSettingsAwareWidget` adds live restyling from accessibility settings.
 - **Custom Slate.** `SGadgetWheel` (custom vertices, angle hit-testing) and `SComboMeter` (segmented, eased) wrapped as
   `UWidget`s (`UGadgetWheel`, `UComboMeter`) so designers can place and bind them.
-- **Lists.** The case file uses `UListView` over `UClueEntryViewModel`s; rows are pooled and rebind/cancel thumbnail
-  streaming when recycled.
+- **Lists.** The case file is a `UTileView` (evidence board) over `UClueEntryViewModel`s; tiles are pooled and
+  rebind or cancel thumbnail streaming when recycled. Selection follows navigation and drives a detail pane.
 
 ## Input
 

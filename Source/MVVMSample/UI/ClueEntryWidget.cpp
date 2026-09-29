@@ -4,50 +4,72 @@
 #include "UI/Style/GothamStyle.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Components/Border.h"
-#include "Components/HorizontalBox.h"
-#include "Components/HorizontalBoxSlot.h"
 #include "Components/Image.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
 #include "UI/GothamWidgetTick.h"
+#include "UI/Slate/SGothamPanel.h"
+#include "UI/Widgets/GothamPanel.h"
 #include "ViewModels/ClueViewModels.h"
+
+#define LOCTEXT_NAMESPACE "Gotham.ClueLog"
+
+FText GothamCaseNumber(int32 Index)
+{
+	FNumberFormattingOptions Digits;
+	Digits.MinimumIntegralDigits = 3;
+	Digits.UseGrouping = false;
+	return FText::Format(LOCTEXT("CaseNumberFmt", "No. {0}"), FText::AsNumber(Index + 1, &Digits));
+}
 
 TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
-		Frame = WidgetTree->ConstructWidget<UBorder>();
-		Frame->SetBrushColor(FLinearColor(0.03f, 0.03f, 0.04f, 0.8f));
-		Frame->SetPadding(FMargin(8.f));
-		WidgetTree->RootWidget = Frame;
+		// Leave a gutter inside the tile slot so neighbours' glows do not touch.
+		USizeBox* Outer = WidgetTree->ConstructWidget<USizeBox>();
+		Outer->SetWidthOverride(TileWidth - 12.f);
+		Outer->SetHeightOverride(TileHeight - 12.f);
+		WidgetTree->RootWidget = Outer;
 
-		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
-		Frame->SetContent(Row);
+		Frame = WidgetTree->ConstructWidget<UGothamPanel>();
+		Frame->SetPanelPadding(FMargin(7.f));
+		Frame->SetShape(10.f, EGothamChamfer::Opposite);
+		Outer->SetContent(Frame);
 
-		USizeBox* Box = WidgetTree->ConstructWidget<USizeBox>();
-		Box->SetWidthOverride(72.f);
-		Box->SetHeightOverride(72.f);
-		Row->AddChildToHorizontalBox(Box)->SetPadding(FMargin(0.f, 0.f, 12.f, 0.f));
+		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
+		Frame->SetContent(Column);
+
+		UOverlay* Picture = WidgetTree->ConstructWidget<UOverlay>();
+		UVerticalBoxSlot* PictureSlot = Column->AddChildToVerticalBox(Picture);
+		PictureSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
 		Thumbnail = WidgetTree->ConstructWidget<UImage>();
-		Thumbnail->SetColorAndOpacity(FLinearColor(0.15f, 0.15f, 0.18f, 1.f));
-		Box->SetContent(Thumbnail);
+		UOverlaySlot* ThumbSlot = Picture->AddChildToOverlay(Thumbnail);
+		ThumbSlot->SetHorizontalAlignment(HAlign_Fill);
+		ThumbSlot->SetVerticalAlignment(VAlign_Fill);
 
-		UVerticalBox* Text = WidgetTree->ConstructWidget<UVerticalBox>();
-		Row->AddChildToHorizontalBox(Text)->SetVerticalAlignment(VAlign_Center);
+		UnknownMark = WidgetTree->ConstructWidget<UTextBlock>();
+		UnknownMark->SetText(FText::FromString(TEXT("?")));
+		UnknownMark->SetFont(GothamStyle::Font(EGothamTextStyle::Display));
+		UOverlaySlot* MarkSlot = Picture->AddChildToOverlay(UnknownMark);
+		MarkSlot->SetHorizontalAlignment(HAlign_Center);
+		MarkSlot->SetVerticalAlignment(VAlign_Center);
+
+		CaseNumber = WidgetTree->ConstructWidget<UTextBlock>();
+		CaseNumber->SetFont(GothamStyle::Font(EGothamTextStyle::Key));
+		UOverlaySlot* NumberSlot = Picture->AddChildToOverlay(CaseNumber);
+		NumberSlot->SetPadding(FMargin(5.f, 3.f));
 
 		TitleText = WidgetTree->ConstructWidget<UTextBlock>();
-		TitleText->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
-		Text->AddChildToVerticalBox(TitleText);
-
-		BodyText = WidgetTree->ConstructWidget<UTextBlock>();
-		BodyText->SetFont(GothamStyle::Font(EGothamTextStyle::Body));
-		BodyText->SetAutoWrapText(true);
-		Text->AddChildToVerticalBox(BodyText);
+		GothamStyle::ApplyText(TitleText, EGothamTextStyle::Label, FLinearColor::White);
+		TitleText->SetClipping(EWidgetClipping::ClipToBounds);
+		Column->AddChildToVerticalBox(TitleText)->SetPadding(FMargin(1.f, 6.f, 0.f, 0.f));
 	}
 	return Super::RebuildWidget();
 }
@@ -56,6 +78,13 @@ void UClueEntryWidget::NativeOnListItemObjectSet(UObject* ListItemObject)
 {
 	IUserObjectListEntry::NativeOnListItemObjectSet(ListItemObject);
 	Bind(Cast<UClueEntryViewModel>(ListItemObject));
+}
+
+void UClueEntryWidget::NativeOnItemSelectionChanged(bool bIsSelected)
+{
+	IUserObjectListEntry::NativeOnItemSelectionChanged(bIsSelected);
+	bSelected = bIsSelected;
+	ApplySelection();
 }
 
 void UClueEntryWidget::NativeConstruct()
@@ -67,7 +96,7 @@ void UClueEntryWidget::NativeConstruct()
 void UClueEntryWidget::NativeOnEntryReleased()
 {
 	IUserObjectListEntry::NativeOnEntryReleased();
-	// Scrolled out of view: stop listening and drop any load that would otherwise land on a recycled row.
+	// Scrolled out of view: stop listening and drop any load that would otherwise land on a recycled tile.
 	Bind(nullptr);
 }
 
@@ -90,7 +119,6 @@ void UClueEntryWidget::Bind(UClueEntryViewModel* InViewModel)
 		using FVM = UClueEntryViewModel::FFieldNotificationClassDescriptor;
 		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UClueEntryWidget::OnFieldChanged);
 		ViewModel->AddFieldValueChangedDelegate(FVM::DisplayTitle, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::DisplayDescription, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::bIsDiscovered, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::Thumbnail, Delegate);
 		if (ViewModel->GetIsDiscovered())
@@ -107,24 +135,48 @@ void UClueEntryWidget::Refresh()
 	{
 		return;
 	}
+	using namespace GothamStyle;
 	const bool bDiscovered = ViewModel->GetIsDiscovered();
 	TitleText->SetText(ViewModel->GetDisplayTitle());
-	BodyText->SetText(ViewModel->GetDisplayDescription());
-	Frame->SetRenderOpacity(bDiscovered ? 1.f : 0.55f);
+	TitleText->SetColorAndOpacity(Token(this, bDiscovered ? EGothamColorToken::TextPrimary : EGothamColorToken::TextMuted));
 
-	// Thumbnails only load for discovered clues, and only once a row that shows them is on screen.
+	const UListView* Owner = Cast<UListView>(GetOwningListView());
+	CaseNumber->SetText(Owner ? GothamCaseNumber(Owner->GetIndexForItem(ViewModel)) : FText::GetEmpty());
+	CaseNumber->SetColorAndOpacity(Token(this, EGothamColorToken::TextMuted));
+
+	// Thumbnails only load for discovered clues, and only once a tile that shows them is on screen.
 	if (bDiscovered)
 	{
 		ViewModel->RequestThumbnail();
 	}
-	if (UTexture2D* Texture = bDiscovered ? ViewModel->GetThumbnail() : nullptr)
+	UTexture2D* Texture = bDiscovered ? ViewModel->GetThumbnail() : nullptr;
+	if (Texture)
 	{
-		Thumbnail->SetBrushFromTexture(Texture, true);
+		Thumbnail->SetBrushFromTexture(Texture, false);
 		Thumbnail->SetColorAndOpacity(FLinearColor::White);
 	}
 	else
 	{
 		Thumbnail->SetBrush(FSlateBrush());
-		Thumbnail->SetColorAndOpacity(FLinearColor(0.15f, 0.15f, 0.18f, 1.f));
+		Thumbnail->SetColorAndOpacity(Token(this, EGothamColorToken::PanelEdge, 0.12f));
 	}
+	UnknownMark->SetVisibility(bDiscovered ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+	UnknownMark->SetColorAndOpacity(Token(this, EGothamColorToken::PanelEdge, 0.5f));
+	ApplySelection();
 }
+
+void UClueEntryWidget::ApplySelection()
+{
+	if (!Frame)
+	{
+		return;
+	}
+	using namespace GothamStyle;
+	const FLinearColor Accent = Token(this, EGothamColorToken::Accent);
+	Frame->SetColors(Token(this, EGothamColorToken::Panel, PanelAlpha(this)),
+		bSelected ? Accent : Token(this, EGothamColorToken::PanelEdge, 0.45f), bSelected ? 1.5f : 1.f);
+	Frame->SetAccent(Accent, bSelected ? 3.f : 0.f);
+	Frame->SetGlow(Token(this, EGothamColorToken::Accent, 0.3f), bSelected ? 5.f : 0.f);
+}
+
+#undef LOCTEXT_NAMESPACE

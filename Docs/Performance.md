@@ -100,14 +100,28 @@ layout was invalidated every frame. The fix is `ApplyStyle()` on construction an
 per-frame path that touches just the changing value (the decay bar's percent, the cooldown rings, the seconds readout
 when the whole second changes).
 
+## V4 menus
+
+1080p, over `no-ui` in the same run (`Saved/Perf/V4_menus_1080p*.md`; the third run is after the tab list stopped
+ticking).
+
+| Scenario | Frame time | Game thread |
+|---|---|---|
+| settings (blur, scrim, tabs, highlight list, detail pane) | +0.10 / +0.12 ms | +0.03 / +0.06 / +0.01 ms |
+| case-file-505 (tile view, scrolling across the board) | +0.01 / +0.02 ms | +0.06 / +0.12 / +0.08 ms |
+
+The frame-time cost is the background blur. The highlight bar's active timer runs only while its list holds focus
+and invalidates paint only when the bar moves. The evidence board keeps 20 tile widgets alive for 205 clues (the
+viewport's worth), logged by `-GothamClueLog=200`.
+
 ## Budgets
 
 | Budget | Target | Status |
 |---|---|---|
-| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met: worst case 0.09 ms with invalidation on |
+| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met: worst case +0.25 ms (Detective Mode markers, V3); menus up to +0.12 ms |
 | Ticking widgets while idle | 0 | Met (0) |
-| Row widgets for any list | bounded by viewport, not item count | Met (5 for 505 items) |
-| Widget objects, all screens | no unbounded growth | Steady: 11 (HUD) to 44 (settings) |
+| Row widgets for any list | bounded by viewport, not item count | Met (case-file tile view: 20 tiles for 205 clues) |
+| Widget objects, all screens | no unbounded growth | Steady: 9 (HUD) to 38 (tabbed settings) |
 
 ## Not measured
 

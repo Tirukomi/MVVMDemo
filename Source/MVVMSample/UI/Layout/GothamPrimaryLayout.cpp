@@ -2,11 +2,22 @@
 
 #include "UI/Layout/GothamPrimaryLayout.h"
 
+#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "Slate/SCommonAnimatedSwitcher.h"
 #include "UI/GothamWidgetTick.h"
+#include "UI/Style/GothamMotion.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
+
+UGothamScreenStack::UGothamScreenStack(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	TransitionType = ECommonSwitcherTransition::FadeOnly;
+	TransitionCurveType = ETransitionCurve::QuadOut;
+	TransitionDuration = GothamMotion::ScreenSeconds;
+}
 
 TSharedRef<SWidget> UGothamPrimaryLayout::RebuildWidget()
 {
@@ -18,7 +29,7 @@ TSharedRef<SWidget> UGothamPrimaryLayout::RebuildWidget()
 		Layers.Reset();
 		for (int32 i = 0; i < static_cast<int32>(EGothamUILayer::Count); ++i)
 		{
-			UCommonActivatableWidgetStack* Stack = WidgetTree->ConstructWidget<UCommonActivatableWidgetStack>();
+			UCommonActivatableWidgetStack* Stack = WidgetTree->ConstructWidget<UGothamScreenStack>();
 			UOverlaySlot* StackSlot = Root->AddChildToOverlay(Stack);
 			StackSlot->SetHorizontalAlignment(HAlign_Fill);
 			StackSlot->SetVerticalAlignment(VAlign_Fill);
@@ -32,6 +43,32 @@ void UGothamPrimaryLayout::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
+	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { ApplyMotionSetting(); });
+	}
+	ApplyMotionSetting();
+}
+
+void UGothamPrimaryLayout::NativeDestruct()
+{
+	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		Settings->OnSettingsChanged.Remove(SettingsHandle);
+	}
+	Super::NativeDestruct();
+}
+
+void UGothamPrimaryLayout::ApplyMotionSetting()
+{
+	const float Seconds = GothamMotion::IsReduced(this) ? 0.f : GothamMotion::ScreenSeconds;
+	for (UCommonActivatableWidgetStack* Stack : Layers)
+	{
+		if (Stack && !FMath::IsNearlyEqual(Stack->GetTransitionDuration(), Seconds))
+		{
+			Stack->SetTransitionDuration(Seconds);
+		}
+	}
 }
 
 UCommonActivatableWidgetStack* UGothamPrimaryLayout::GetLayer(EGothamUILayer Layer) const
