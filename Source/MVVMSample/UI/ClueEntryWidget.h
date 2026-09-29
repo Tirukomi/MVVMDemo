@@ -25,6 +25,7 @@ class MVVMSAMPLE_API UClueEntryWidget : public UUserWidget, public IUserObjectLi
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
+	virtual void NativeConstruct() override;
 	virtual void NativeOnEntryReleased() override;
 	virtual void NativeDestruct() override;
 

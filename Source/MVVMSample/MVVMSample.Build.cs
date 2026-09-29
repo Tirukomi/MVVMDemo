@@ -17,7 +17,7 @@ public class MVVMSample : ModuleRules
 			"UMG", "Slate", "SlateCore",
 			"ModelViewViewModel", "FieldNotification",
 			"CommonUI", "CommonInput",
-			"GameplayTags", "DeveloperSettings"
+			"GameplayTags", "DeveloperSettings", "RenderCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

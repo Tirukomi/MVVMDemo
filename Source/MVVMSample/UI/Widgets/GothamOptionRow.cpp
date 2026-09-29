@@ -7,6 +7,7 @@
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
+#include "UI/GothamWidgetTick.h"
 #include "UI/Widgets/GothamButton.h"
 #include "ViewModels/SettingsViewModel.h"
 
@@ -78,6 +79,12 @@ void UGothamOptionRow::Setup(EGothamSetting InSetting, USettingsViewModel* InVie
 UWidget* UGothamOptionRow::GetPrimaryFocusTarget() const
 {
 	return NextButton;
+}
+
+void UGothamOptionRow::NativeConstruct()
+{
+	GothamUI::DisableTick(this);
+	Super::NativeConstruct();
 }
 
 void UGothamOptionRow::NativeDestruct()

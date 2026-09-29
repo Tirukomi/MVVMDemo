@@ -65,6 +65,14 @@ void UGothamUISubsystem::TogglePauseMenu()
 	}
 }
 
+void UGothamUISubsystem::SetLayoutVisible(bool bVisible)
+{
+	if (Layout)
+	{
+		Layout->SetVisibility(bVisible ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	}
+}
+
 void UGothamUISubsystem::ToggleClueLog()
 {
 	if (!PopTopScreen())

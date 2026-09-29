@@ -19,6 +19,7 @@ public:
 	UCommonActivatableWidgetStack* GetLayer(EGothamUILayer Layer) const;
 
 protected:
+	virtual void NativeConstruct() override;
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:

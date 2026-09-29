@@ -31,6 +31,7 @@ public:
 
 protected:
 	virtual bool Initialize() override;
+	virtual void NativeConstruct() override;
 
 private:
 	UPROPERTY(Transient)

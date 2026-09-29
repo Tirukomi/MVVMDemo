@@ -5,6 +5,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "UI/GothamWidgetTick.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 TSharedRef<SWidget> UGothamPrimaryLayout::RebuildWidget()
@@ -25,6 +26,12 @@ TSharedRef<SWidget> UGothamPrimaryLayout::RebuildWidget()
 		}
 	}
 	return Super::RebuildWidget();
+}
+
+void UGothamPrimaryLayout::NativeConstruct()
+{
+	GothamUI::DisableTick(this);
+	Super::NativeConstruct();
 }
 
 UCommonActivatableWidgetStack* UGothamPrimaryLayout::GetLayer(EGothamUILayer Layer) const

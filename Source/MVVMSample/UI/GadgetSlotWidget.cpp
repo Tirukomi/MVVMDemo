@@ -9,6 +9,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
+#include "UI/GothamWidgetTick.h"
 #include "ViewModels/GadgetViewModels.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.GadgetSlot"
@@ -78,6 +79,12 @@ void UGadgetSlotWidget::SetViewModel(UGadgetSlotViewModel* InViewModel)
 		ViewModel->AddFieldValueChangedDelegate(FVM::Tint, Delegate);
 	}
 	Refresh();
+}
+
+void UGadgetSlotWidget::NativeConstruct()
+{
+	GothamUI::DisableTick(this);
+	Super::NativeConstruct();
 }
 
 void UGadgetSlotWidget::NativeDestruct()

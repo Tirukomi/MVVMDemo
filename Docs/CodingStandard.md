@@ -14,7 +14,10 @@ Follows Epic's Unreal coding standard, plus these project rules.
 3. Widgets contain presentation logic only; state changes go through view-model commands.
 4. Set view-model properties with `UE_MVVM_SET_PROPERTY_VALUE` so field notifications fire.
 5. All user-facing text is `FText` from a string table (`LOCTEXT` for code-only labels).
-6. No Tick in widgets unless justified in a comment; prefer events, timers and animations.
+6. No Tick in widgets unless justified in a comment; prefer events, timers and animations. C++-only widgets tick by
+   default (no Blueprint class), so call `GothamUI::DisableTick(this)` in `NativeConstruct` (widgets deriving
+   `UGothamSettingsAwareWidget` / `UGothamScreen` already do). Custom Slate widgets animate with an active timer that
+   unregisters when settled.
 7. C++ base classes for every screen; Blueprint/UMG only for layout, styling and animation.
 
 ## Style
@@ -25,3 +28,11 @@ Follows Epic's Unreal coding standard, plus these project rules.
 - Does it build and pass automation tests?
 - Any new per-frame allocation or binding on a hot path?
 - Gamepad + keyboard navigable? Localizable? Colour-independent?
+
+## Additional rules
+
+- Colours that carry meaning come from `GothamPalette` tokens, never literals.
+- Anything with a rule worth testing is UObject-free or exposes an `Advance(DeltaTime)`-style entry point.
+- Reflection to reach a protected engine property is allowed only in one documented helper (see ADR 0005).
+- Dev-only code sits under `#if !UE_BUILD_SHIPPING` and is enabled by a `-Gotham...` flag, never by default.
+- Measure before optimising; record before/after in `Docs/Performance.md`, including changes that turned out not to help.

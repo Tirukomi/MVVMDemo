@@ -26,6 +26,7 @@ public:
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 protected:
+	virtual void NativeConstruct() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 

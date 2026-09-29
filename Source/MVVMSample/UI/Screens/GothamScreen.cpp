@@ -9,6 +9,7 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Input/CommonUIInputTypes.h"
+#include "UI/GothamWidgetTick.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamInputGlyph.h"
 
@@ -21,6 +22,12 @@ UGothamScreen::UGothamScreen(const FObjectInitializer& ObjectInitializer)
 TOptional<FUIInputConfig> UGothamScreen::GetDesiredInputConfig() const
 {
 	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
+}
+
+void UGothamScreen::NativeConstruct()
+{
+	GothamUI::DisableTick(this);
+	Super::NativeConstruct();
 }
 
 UWidget* UGothamScreen::NativeGetDesiredFocusTarget() const

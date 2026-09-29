@@ -228,6 +228,17 @@ The list view needs a Blueprint entry class in editor builds, hence `WBP_ClueEnt
 
 **Exit:** packaged build, tagged release, README/video ready to link from a CV.
 
+**As built:**
+- **Measured, not guessed:** `FGothamPerfHarness` (`-GothamPerf=<label>`) with A/B switches; results and the honest
+  reading (tick removal: no measurable change; global Slate invalidation: UI overhead down from ~0.28 to ~0.04 ms on
+  the settings screen) are in `Docs/Performance.md`. Slate Insights, GPU and memreport were not captured.
+- **Tests:** 20 automation tests; `Scripts/run_tests.py` is the CI entry point (exit code reflects failures).
+- **Docs:** README, `Docs/Architecture.md`, six ADRs, `Docs/DesignerGuide.md`, `Docs/Performance.md`.
+- **Screenshots:** `Scripts/CaptureScreens.ps1` regenerates every image in `Docs/img` from the game's own dev flags.
+- **Package:** Windows Development build cooked and run (HUD, Detective Mode, materials, German localization). A
+  Shipping build was not produced.
+- **Not delivered:** a demo video (no way to assemble one without installing extra tooling).
+
 ## 4. Timeline (part-time)
 
 | Milestone | Effort | Cumulative |

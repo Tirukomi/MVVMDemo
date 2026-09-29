@@ -45,6 +45,9 @@ public:
 	bool IsMenuOpen() const { return Tracker.IsMenuOpen(); }
 	bool IsLayerOccupied(EGothamUILayer Layer) const { return Tracker.IsLayerOccupied(Layer); }
 
+	/** Dev aid for profiling: hides or shows the entire UI layer. */
+	void SetLayoutVisible(bool bVisible);
+
 	/** Opens the case file, or closes the topmost menu if one is already up. */
 	void ToggleClueLog();
 

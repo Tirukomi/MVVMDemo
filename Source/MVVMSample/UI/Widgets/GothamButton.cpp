@@ -6,6 +6,7 @@
 #include "Components/Border.h"
 #include "Components/TextBlock.h"
 #include "Styling/SlateBrush.h"
+#include "UI/GothamWidgetTick.h"
 
 UGothamButtonStyle::UGothamButtonStyle()
 {
@@ -59,6 +60,12 @@ bool UGothamButton::Initialize()
 		Content->SetContent(Label);
 	}
 	return Super::Initialize();
+}
+
+void UGothamButton::NativeConstruct()
+{
+	GothamUI::DisableTick(this);
+	Super::NativeConstruct();
 }
 
 void UGothamButton::SetLabel(const FText& InLabel)

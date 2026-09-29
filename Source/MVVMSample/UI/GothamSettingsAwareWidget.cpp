@@ -3,9 +3,11 @@
 #include "UI/GothamSettingsAwareWidget.h"
 
 #include "Accessibility/GothamSettingsSubsystem.h"
+#include "UI/GothamWidgetTick.h"
 
 void UGothamSettingsAwareWidget::NativeConstruct()
 {
+	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
 	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
 	{

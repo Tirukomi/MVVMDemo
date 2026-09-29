@@ -12,6 +12,7 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
+#include "UI/GothamWidgetTick.h"
 #include "ViewModels/ClueViewModels.h"
 
 TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
@@ -58,6 +59,12 @@ void UClueEntryWidget::NativeOnListItemObjectSet(UObject* ListItemObject)
 {
 	IUserObjectListEntry::NativeOnListItemObjectSet(ListItemObject);
 	Bind(Cast<UClueEntryViewModel>(ListItemObject));
+}
+
+void UClueEntryWidget::NativeConstruct()
+{
+	GothamUI::DisableTick(this);
+	Super::NativeConstruct();
 }
 
 void UClueEntryWidget::NativeOnEntryReleased()

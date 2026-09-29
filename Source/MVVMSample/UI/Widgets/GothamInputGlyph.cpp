@@ -7,6 +7,7 @@
 #include "Components/Border.h"
 #include "Components/TextBlock.h"
 #include "Core/GothamPlayerController.h"
+#include "UI/GothamWidgetTick.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
@@ -31,6 +32,7 @@ TSharedRef<SWidget> UGothamInputGlyph::RebuildWidget()
 
 void UGothamInputGlyph::NativeConstruct()
 {
+	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
 	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer()))
 	{

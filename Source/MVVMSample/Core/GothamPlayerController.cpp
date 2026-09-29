@@ -20,6 +20,7 @@
 #include "UI/GothamUISettings.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Containers/Ticker.h"
+#include "Core/GothamPerfHarness.h"
 #include "ViewModels/SettingsViewModel.h"
 #include "EngineUtils.h"
 #include "Gameplay/ClueActor.h"
@@ -407,13 +408,22 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bPause = FParse::Param(Cmd, TEXT("GothamOpenPause"));
 	const bool bWheel = FParse::Param(Cmd, TEXT("GothamOpenWheel"));
 	const bool bDetective = FParse::Param(Cmd, TEXT("GothamDetective"));
-	const bool bClueLog = FParse::Param(Cmd, TEXT("GothamClueLog"));
+	int32 StressCount = 0;
+	FParse::Value(Cmd, TEXT("GothamClueLog="), StressCount);
+	// "-GothamClueLog" and "-GothamClueLog=N" both open the case file.
+	const bool bClueLog = FParse::Param(Cmd, TEXT("GothamClueLog")) || StressCount > 0;
 	const bool bSettings = FParse::Param(Cmd, TEXT("GothamOpenSettings"));
 	const bool bControls = FParse::Param(Cmd, TEXT("GothamOpenControls"));
 	const bool bCycleLanguage = FParse::Param(Cmd, TEXT("GothamCycleLanguage"));
 	const bool bRebindDemo = FParse::Param(Cmd, TEXT("GothamRebindDemo"));
-	int32 StressCount = 0;
-	FParse::Value(Cmd, TEXT("GothamClueLog="), StressCount);
+
+	// -GothamPerf=<label> runs the UI performance harness and quits (see Docs/Performance.md).
+	FString PerfLabel;
+	if (FParse::Value(Cmd, TEXT("GothamPerf="), PerfLabel) && !PerfLabel.IsEmpty())
+	{
+		FGothamPerfHarness::Start(this, PerfLabel);
+		return;
+	}
 	if (!(bPause || bWheel || bDetective || bClueLog || bSettings || bControls || bCycleLanguage || bRebindDemo || StressCount > 0))
 	{
 		return;
