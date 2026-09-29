@@ -12,10 +12,10 @@ class UDetectiveComponent;
 class UDetectiveVisionComponent;
 class UGadgetComponent;
 class UHealthComponent;
+class UPointLightComponent;
 class USpringArmComponent;
-class UStaticMeshComponent;
 
-/** Placeholder third-person hero. Gameplay is intentionally thin: it exists to drive the UI. */
+/** Third-person hero (engine mannequin). Gameplay is intentionally thin: it exists to drive the UI. */
 UCLASS()
 class MVVMSAMPLE_API AGothamCharacter : public ACharacter
 {
@@ -30,6 +30,11 @@ public:
 	UDetectiveComponent* GetDetectiveComponent() const { return Detective; }
 
 	void MoveInput(const FVector2D& Axis);
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
 	void LookInput(const FVector2D& Axis);
 
 	/** Fake melee: registers a combo hit. */
@@ -50,8 +55,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> FollowCamera;
 
+	/** Faint cold back light so the dark suit keeps a readable silhouette at night. Casts no shadows. */
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> Body;
+	TObjectPtr<UPointLightComponent> RimLight;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UHealthComponent> Health;

@@ -174,8 +174,8 @@ namespace
 
 		void WriteReport()
 		{
-			FString Md = FString::Printf(TEXT("# UI performance run: %s\n\nResolution 1280x720, uncapped, %.0fs warm-up + %.0fs sampled per scenario. Start memory %.0f MB.\n\n"),
-				*Label, WarmupSeconds, SampleSeconds, StartMB);
+			FString Md = FString::Printf(TEXT("# UI performance run: %s\n\nResolution %ux%u, uncapped, %.0fs warm-up + %.0fs sampled per scenario. Start memory %.0f MB.\n\n"),
+				*Label, GSystemResolution.ResX, GSystemResolution.ResY, WarmupSeconds, SampleSeconds, StartMB);
 			Md += TEXT("| Scenario | Frames | Avg frame (ms) | P95 frame (ms) | Avg game thread (ms) | UUserWidgets | ticking | UObjects | Used MB |\n|---|---|---|---|---|---|---|---|---|\n");
 			for (const FResult& R : Results)
 			{

@@ -12,3 +12,9 @@ Saved/
 *.xcodeproj
 *.xcworkspace
 Build/
+# Third Person template content we do not use (only Characters/ and LevelPrototyping/ are referenced).
+Content/ThirdPerson/
+Content/Variant_*/
+Content/Input/
+Content/__ExternalActors__/
+Content/__ExternalObjects__/

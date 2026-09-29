@@ -72,6 +72,21 @@ Run-to-run noise is about 0.05 ms (compare the two "before" runs), so difference
   animating and unregister once settled; they never tick.
 - **Detective overlay collapses when off**, so it costs nothing outside the mode.
 
+## V1 night scene
+
+The night rooftop (volumetric fog, many shadowed spot lights, SSR on wet surfaces, post-process rain) and the
+animated mannequin raise the baseline. Lumen stays off by project decision.
+
+| | Grey box (M6) | Night scene, 720p | Night scene, 1080p |
+|---|---|---|---|
+| Avg frame, no UI | 2.35 ms | 5.15 ms | 6.01 ms |
+| Avg game thread, no UI | 0.74 ms | 1.53 ms | 1.45 ms |
+| Worst UI game-thread overhead (any screen) | 0.09 ms | 0.09 ms (hud-animating) | 0.16 ms (hud-animating) |
+| Detective Mode extra frame cost | ~0.1 ms | ~0.47 ms | ~0.44 ms |
+
+1080p stays near 166 fps on the dev machine. The game-thread rise is the skeletal mesh and animation Blueprint, not
+the UI. The Detective Mode cost grew because its post-process now runs over a heavier scene; V3 rewrites that pass.
+
 ## Budgets
 
 | Budget | Target | Status |

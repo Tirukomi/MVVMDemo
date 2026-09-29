@@ -1,4 +1,4 @@
-# Gotham Ops — UI Showcase Project Plan
+# Blackwater Ops — UI Showcase Project Plan
 
 A portfolio project targeting a **Senior UI Programmer** role on AAA titles. The product is a
 production-style UI layer for a small third-person combat/detective sandbox in **Unreal Engine 5.8**.

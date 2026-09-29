@@ -8,6 +8,7 @@ $out = Join-Path $root "Docs\img"
 New-Item -ItemType Directory -Force $out | Out-Null
 
 $shots = @(
+    @{ name = "hud";              flags = "-GothamShot";                                   shot = "gotham_hud";       res = "1280 720" },
     @{ name = "hud-wheel";        flags = "-GothamOpenWheel";                              shot = "gotham_wheel";     res = "1280 720" },
     @{ name = "detective";        flags = "-GothamDetective";                              shot = "gotham_detective"; res = "1280 720" },
     @{ name = "case-file";        flags = "-GothamClueLog=200";                            shot = "gotham_cluelog";   res = "1280 720" },

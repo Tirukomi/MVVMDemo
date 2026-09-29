@@ -18,7 +18,7 @@ UGadgetComponent::UGadgetComponent()
 		return Def;
 	};
 	Gadgets = {
-		Make(LOCTEXT("Batarang", "Batarang"), 3.f, FLinearColor(0.9f, 0.75f, 0.2f)),
+		Make(LOCTEXT("WingBlade", "Wing-Blade"), 3.f, FLinearColor(0.9f, 0.75f, 0.2f)),
 		Make(LOCTEXT("Grapnel", "Grapnel"), 6.f, FLinearColor(0.3f, 0.7f, 1.f)),
 		Make(LOCTEXT("Smoke", "Smoke Pellet"), 10.f, FLinearColor(0.7f, 0.4f, 1.f)),
 	};

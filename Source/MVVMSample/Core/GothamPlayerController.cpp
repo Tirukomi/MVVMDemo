@@ -4,6 +4,7 @@
 
 #include "CommonActivatableWidget.h"
 #include "Core/GothamCharacter.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -83,6 +84,14 @@ void AGothamPlayerController::BeginPlay()
 	}
 
 	RegisterRebindableContext();
+
+	// Start level and slightly looking down, and keep pitch in a range that never puts the camera under the roof.
+	SetControlRotation(FRotator(-12.f, GetControlRotation().Yaw, 0.f));
+	if (PlayerCameraManager)
+	{
+		PlayerCameraManager->ViewPitchMin = -65.f;
+		PlayerCameraManager->ViewPitchMax = 30.f;
+	}
 
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
@@ -405,6 +414,12 @@ void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
 void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 {
 	const TCHAR* Cmd = FCommandLine::Get();
+	// Screenshot runs must be deterministic: the first mouse delta after window capture would otherwise swing the camera.
+	if (FParse::Param(Cmd, TEXT("GothamShot")) || FParse::Param(Cmd, TEXT("GothamOpenWheel")) || FParse::Param(Cmd, TEXT("GothamDetective"))
+		|| FParse::Param(Cmd, TEXT("GothamOpenPause")) || FParse::Param(Cmd, TEXT("GothamOpenSettings")) || FParse::Param(Cmd, TEXT("GothamClueLog")))
+	{
+		SetIgnoreLookInput(true);
+	}
 	const bool bPause = FParse::Param(Cmd, TEXT("GothamOpenPause"));
 	const bool bWheel = FParse::Param(Cmd, TEXT("GothamOpenWheel"));
 	const bool bDetective = FParse::Param(Cmd, TEXT("GothamDetective"));
@@ -416,6 +431,7 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bControls = FParse::Param(Cmd, TEXT("GothamOpenControls"));
 	const bool bCycleLanguage = FParse::Param(Cmd, TEXT("GothamCycleLanguage"));
 	const bool bRebindDemo = FParse::Param(Cmd, TEXT("GothamRebindDemo"));
+	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot"));
 
 	// -GothamPerf=<label> runs the UI performance harness and quits (see Docs/Performance.md).
 	FString PerfLabel;
@@ -424,7 +440,7 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 		FGothamPerfHarness::Start(this, PerfLabel);
 		return;
 	}
-	if (!(bPause || bWheel || bDetective || bClueLog || bSettings || bControls || bCycleLanguage || bRebindDemo || StressCount > 0))
+	if (!(bPause || bWheel || bDetective || bClueLog || bSettings || bControls || bCycleLanguage || bRebindDemo || bPlainShot || StressCount > 0))
 	{
 		return;
 	}
@@ -445,7 +461,7 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	{
 		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
 	}
-	const FString ShotName = bRebindDemo ? TEXT("gotham_controls") : bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : bSettings ? TEXT("gotham_settings") : bControls ? TEXT("gotham_controls") : TEXT("gotham_cluelog");
+	const FString ShotName = bPlainShot ? TEXT("gotham_hud") : bRebindDemo ? TEXT("gotham_controls") : bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : bSettings ? TEXT("gotham_settings") : bControls ? TEXT("gotham_controls") : TEXT("gotham_cluelog");
 	const TWeakObjectPtr<AGothamPlayerController> WeakThis(this);
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
 

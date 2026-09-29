@@ -1,11 +1,12 @@
-# Gotham Ops: a UI showcase in Unreal Engine 5.8
+# Blackwater Ops: a UI showcase in Unreal Engine 5.8
 
 A small third-person combat and detective sandbox built to demonstrate production-style **game UI engineering**:
 MVVM view models in C++, a Common UI layer stack, custom Slate widgets, materials and post-process, accessibility,
 localization and rebinding, with tests and measured performance. Gameplay is intentionally thin (a placeholder hero, a
 grey-box arena, debug damage); the UI layer is the deliverable.
 
-> Original placeholder branding only. No third-party game assets or trademarks.
+> Original branding only: no third-party game assets, fonts, icons or trademarks. Internal C++ names keep a
+> `Gotham` prefix from early development; it never appears on screen.
 
 | | |
 |---|---|
