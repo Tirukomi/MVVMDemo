@@ -36,6 +36,11 @@ def const3(mat, r, g, b, x, y):
     return node(mat, unreal.MaterialExpressionConstant3Vector, x, y, constant=unreal.LinearColor(r, g, b, 1.0))
 
 
+def vector_param(mat, name, rgb, x, y):
+    return node(mat, unreal.MaterialExpressionVectorParameter, x, y, parameter_name=name,
+                default_value=unreal.LinearColor(rgb[0], rgb[1], rgb[2], 1.0))
+
+
 def const(mat, v, x, y):
     return node(mat, unreal.MaterialExpressionConstant, x, y, r=v)
 
@@ -109,8 +114,9 @@ def build_vision():
                       binary(mat, unreal.MaterialExpressionSubtract, around, inside, 10, 12), 11, 12)
 
     # Unscanned = orange, scanned = green. (stencil - 1) is 0 or 1.
-    orange = const3(mat, 1.0, 0.55, 0.1, 7, 9)
-    green = const3(mat, 0.2, 1.0, 0.4, 7, 10)
+    # Colours are parameters so the accessibility palette (colour-blind presets, high contrast) can recolour clues.
+    orange = vector_param(mat, "UnscannedColor", (1.0, 0.55, 0.1), 7, 9)
+    green = vector_param(mat, "ScannedColor", (0.2, 1.0, 0.4), 7, 10)
     one = const(mat, 1.0, 7, 11)
 
     def pick(stencil_value, row):
@@ -161,7 +167,10 @@ def build_overlay():
 
     # Scanlines: thin bright rows scrolling downward.
     rows = binary(mat, unreal.MaterialExpressionMultiply, uv_y, const(mat, 220.0, 1, 3), 2, 2)
-    scroll = binary(mat, unreal.MaterialExpressionMultiply, time, const(mat, -7.0, 1, 4), 2, 4)
+    # MotionScale (0 or 1) freezes the scroll for reduced-motion mode.
+    motion = scalar(mat, "MotionScale", 1.0, 0, 5)
+    scaled_time = binary(mat, unreal.MaterialExpressionMultiply, time, motion, 1, 4)
+    scroll = binary(mat, unreal.MaterialExpressionMultiply, scaled_time, const(mat, -7.0, 1, 5), 2, 4)
     phase = binary(mat, unreal.MaterialExpressionAdd, rows, scroll, 3, 3)
     wave = unary(mat, unreal.MaterialExpressionSine, phase, 4, 3)
     unit = binary(mat, unreal.MaterialExpressionAdd, binary(mat, unreal.MaterialExpressionMultiply, wave, const(mat, 0.5, 4, 4), 5, 3),
@@ -195,7 +204,7 @@ def build_overlay():
                            binary(mat, unreal.MaterialExpressionMultiply, body, progress, 11, 5),
                            binary(mat, unreal.MaterialExpressionMultiply, band_energy, const(mat, 0.7, 8, 11), 9, 10), 12, 5), 13, 5)
 
-    cyan = const3(mat, 0.25, 0.85, 1.0, 12, 8)
+    cyan = vector_param(mat, "Tint", (0.25, 0.85, 1.0), 12, 8)
     emissive = binary(mat, unreal.MaterialExpressionMultiply, cyan,
                       binary(mat, unreal.MaterialExpressionAdd, body, band_energy, 12, 9), 14, 8)
 
@@ -230,8 +239,9 @@ def build_clues():
         factory.set_editor_property("data_asset_class", unreal.ClueDataAsset)
         asset = fresh_asset(f"DA_Clue_{clue_id}", "/Game/Data/Clues", unreal.ClueDataAsset, factory)
         asset.set_editor_property("clue_id", clue_id)
-        asset.set_editor_property("title", title)
-        asset.set_editor_property("description", body)
+        # Text comes from the code-registered string table, so it is localizable (see ClueStrings.cpp).
+        asset.set_editor_property("title", unreal.TextLibrary.text_from_string_table("GothamClues", f"{clue_id}.Title"))
+        asset.set_editor_property("description", unreal.TextLibrary.text_from_string_table("GothamClues", f"{clue_id}.Body"))
         if EAL.does_asset_exist(thumb.split(".")[0]):
             asset.set_editor_property("thumbnail", EAL.load_asset(thumb.split(".")[0]))
         else:

@@ -50,7 +50,7 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 		Font.Size = 22;
 		Label->SetFont(Font);
 		Label->SetText(LOCTEXT("Mode", "DETECTIVE MODE"));
-		Label->SetColorAndOpacity(FSlateColor(FLinearColor(0.4f, 0.85f, 1.f)));
+		ModeLabel = Label;
 		Strip->AddChildToHorizontalBox(Label)->SetPadding(FMargin(0.f, 0.f, 24.f, 0.f));
 
 		UGothamInputGlyph* ScanGlyph = WidgetTree->ConstructWidget<UGothamInputGlyph>();
@@ -100,6 +100,14 @@ void UDetectiveOverlayWidget::Refresh()
 		Material->SetScalarParameterValue(TEXT("Progress"), ViewModel->GetAlpha());
 	}
 	Prompt->SetRenderOpacity(ViewModel->GetAlpha());
+	ModeLabel->SetColorAndOpacity(FSlateColor(GetToken(EGothamColorToken::Info)));
+	if (Material)
+	{
+		// The scanline scroll and wipe sweep freeze in reduced-motion mode; the tint and vignette stay.
+		Material->SetScalarParameterValue(TEXT("MotionScale"), GetGothamSettings().bReducedMotion ? 0.f : 1.f);
+		const FLinearColor Tint = GetToken(EGothamColorToken::Info);
+		Material->SetVectorParameterValue(TEXT("Tint"), Tint);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

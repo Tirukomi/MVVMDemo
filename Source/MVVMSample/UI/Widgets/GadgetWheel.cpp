@@ -10,6 +10,7 @@ TSharedRef<SWidget> UGadgetWheel::RebuildWidget()
 		.Style(WheelStyle)
 		.OnItemSelected(FOnWheelIndex::CreateWeakLambda(this, [this](int32 Index) { OnItemSelected.Broadcast(Index); }))
 		.OnItemHovered(FOnWheelIndex::CreateWeakLambda(this, [this](int32 Index) { OnItemHovered.Broadcast(Index); }));
+	SlateWheel->SetReduceMotion(bReduceMotion);
 	SlateWheel->SetItems(Items);
 	return SlateWheel.ToSharedRef();
 }
@@ -19,6 +20,7 @@ void UGadgetWheel::SynchronizeProperties()
 	Super::SynchronizeProperties();
 	if (SlateWheel.IsValid())
 	{
+		SlateWheel->SetReduceMotion(bReduceMotion);
 		SlateWheel->SetStyle(WheelStyle);
 		SlateWheel->SetItems(Items);
 	}

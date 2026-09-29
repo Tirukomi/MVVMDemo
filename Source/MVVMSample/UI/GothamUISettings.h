@@ -34,6 +34,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Screens")
 	TSoftClassPtr<UCommonActivatableWidget> ClueLogClass;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Screens")
+	TSoftClassPtr<UCommonActivatableWidget> ControlsScreenClass;
+
 	/**
 	 * Row widget for the clue log. The list view requires a Blueprint subclass of UClueEntryWidget in the editor,
 	 * which also gives designers an asset to restyle. Falls back to the native class (fine in cooked builds).

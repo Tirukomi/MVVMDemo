@@ -78,6 +78,9 @@ void UComboWidget::Refresh()
 	MultiplierText->SetText(ViewModel->GetMultiplierText());
 	HitsText->SetText(FText::Format(LOCTEXT("HitsFmt", "{0} hits"), FText::AsNumber(ViewModel->GetHitCount())));
 	DecayBar->SetPercent(ViewModel->GetDecayAlpha());
+	DecayBar->FilledColor = GetToken(EGothamColorToken::Warning);
+	DecayBar->bReduceMotion = GetGothamSettings().bReducedMotion;
+	DecayBar->SynchronizeProperties();
 }
 
 #undef LOCTEXT_NAMESPACE

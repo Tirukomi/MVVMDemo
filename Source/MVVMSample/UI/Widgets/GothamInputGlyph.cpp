@@ -7,6 +7,7 @@
 #include "Components/Border.h"
 #include "Components/TextBlock.h"
 #include "Core/GothamPlayerController.h"
+#include "UI/Layout/GothamUISubsystem.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
 
@@ -35,6 +36,13 @@ void UGothamInputGlyph::NativeConstruct()
 	{
 		InputMethodHandle = Input->OnInputMethodChangedNative.AddUObject(this, &UGothamInputGlyph::HandleInputMethodChanged);
 	}
+	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	{
+		if (auto* UI = LocalPlayer->GetSubsystem<UGothamUISubsystem>())
+		{
+			BindingsHandle = UI->OnBindingsChanged.AddUObject(this, &UGothamInputGlyph::Refresh);
+		}
+	}
 	Refresh();
 }
 
@@ -43,6 +51,13 @@ void UGothamInputGlyph::NativeDestruct()
 	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer()))
 	{
 		Input->OnInputMethodChangedNative.Remove(InputMethodHandle);
+	}
+	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	{
+		if (auto* UI = LocalPlayer->GetSubsystem<UGothamUISubsystem>())
+		{
+			UI->OnBindingsChanged.Remove(BindingsHandle);
+		}
 	}
 	FTSTicker::GetCoreTicker().RemoveTicker(RetryHandle);
 	Super::NativeDestruct();

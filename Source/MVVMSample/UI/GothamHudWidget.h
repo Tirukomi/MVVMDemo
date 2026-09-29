@@ -9,6 +9,7 @@
 class UComboWidget;
 class UDetectiveOverlayWidget;
 class UObjectiveTrackerWidget;
+class USubtitleWidget;
 class UGadgetBarViewModel;
 class UGadgetSlotWidget;
 class UHealthBarWidget;
@@ -47,6 +48,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UObjectiveTrackerWidget> ObjectiveTracker;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USubtitleWidget> Subtitles;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UComboWidget> ComboCounter;

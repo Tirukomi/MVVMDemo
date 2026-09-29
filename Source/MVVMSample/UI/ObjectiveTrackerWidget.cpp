@@ -76,5 +76,5 @@ void UObjectiveTrackerWidget::Refresh()
 	TitleText->SetText(ViewModel->GetObjectiveTitle());
 	ProgressText->SetText(ViewModel->GetProgressText());
 	Bar->SetPercent(ViewModel->GetProgressPercent());
-	Bar->SetFillColorAndOpacity(ViewModel->GetIsComplete() ? FLinearColor(0.3f, 0.9f, 0.4f) : FLinearColor(0.4f, 0.85f, 1.f));
+	Bar->SetFillColorAndOpacity(GetToken(ViewModel->GetIsComplete() ? EGothamColorToken::Good : EGothamColorToken::Info));
 }

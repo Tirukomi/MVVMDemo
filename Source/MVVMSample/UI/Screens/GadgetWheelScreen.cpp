@@ -2,6 +2,7 @@
 
 #include "UI/Screens/GadgetWheelScreen.h"
 
+#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Core/GothamCharacter.h"
@@ -58,6 +59,11 @@ void UGadgetWheelScreen::NativeConstruct()
 			}
 		}
 	}
+	if (const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		Wheel->bReduceMotion = Settings->GetSettings().bReducedMotion;
+		Wheel->SynchronizeProperties();
+	}
 	RefreshItems();
 }
 
@@ -111,11 +117,36 @@ void UGadgetWheelScreen::RefreshItems()
 	Wheel->SetItems(Items);
 }
 
+namespace
+{
+	bool IsOpenKey(const FKey& Key)
+	{
+		return Key == EKeys::Q || Key == EKeys::Gamepad_LeftShoulder;
+	}
+}
+
+FReply UGadgetWheelScreen::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	// Toggle mode: pressing the open key again commits (or closes if nothing is hovered).
+	const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this);
+	if (Settings && Settings->GetSettings().WheelMode == EGothamWheelMode::Toggle && IsOpenKey(InKeyEvent.GetKey()) && !InKeyEvent.IsRepeat())
+	{
+		if (!Wheel->CommitHovered())
+		{
+			DeactivateWidget();
+		}
+		return FReply::Handled();
+	}
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 FReply UGadgetWheelScreen::NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-	// Releasing the key that opened the wheel commits the hovered gadget.
+	// Hold mode: releasing the key that opened the wheel commits the hovered gadget.
 	const FKey Key = InKeyEvent.GetKey();
-	if (Key == EKeys::Q || Key == EKeys::Gamepad_LeftShoulder)
+	const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this);
+	const bool bHoldMode = !Settings || Settings->GetSettings().WheelMode == EGothamWheelMode::Hold;
+	if (bHoldMode && IsOpenKey(Key))
 	{
 		if (!Wheel->CommitHovered())
 		{

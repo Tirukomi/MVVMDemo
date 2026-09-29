@@ -20,6 +20,7 @@ void UComboMeter::SynchronizeProperties()
 	Super::SynchronizeProperties();
 	if (SlateMeter.IsValid())
 	{
+		SlateMeter->SetReduceMotion(bReduceMotion);
 		SlateMeter->SetSegmentCount(SegmentCount);
 		SlateMeter->SetDesiredSize(MeterSize);
 		SlateMeter->SetColors(FilledColor, EmptyColor);

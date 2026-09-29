@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/GothamSettingsAwareWidget.h"
 #include "ObjectiveTrackerWidget.generated.h"
 
 class UObjectivesViewModel;
@@ -12,7 +12,7 @@ class UTextBlock;
 
 /** Small HUD panel: current objective, "2 / 5", and a thin progress bar. */
 UCLASS()
-class MVVMSAMPLE_API UObjectiveTrackerWidget : public UUserWidget
+class MVVMSAMPLE_API UObjectiveTrackerWidget : public UGothamSettingsAwareWidget
 {
 	GENERATED_BODY()
 
@@ -22,6 +22,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
+	virtual void OnSettingsApplied() override { Refresh(); }
 
 private:
 	void Refresh();

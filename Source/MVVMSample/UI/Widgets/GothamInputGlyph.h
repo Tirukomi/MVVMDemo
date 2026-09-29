@@ -49,6 +49,7 @@ private:
 	FKey FixedKeyboardMouse;
 	FKey FixedGamepad;
 	FDelegateHandle InputMethodHandle;
+	FDelegateHandle BindingsHandle;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> Text;

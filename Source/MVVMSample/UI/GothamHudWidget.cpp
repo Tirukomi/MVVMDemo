@@ -11,6 +11,7 @@
 #include "UI/ComboWidget.h"
 #include "UI/DetectiveOverlayWidget.h"
 #include "UI/ObjectiveTrackerWidget.h"
+#include "UI/SubtitleWidget.h"
 #include "UI/GadgetSlotWidget.h"
 #include "UI/HealthBarWidget.h"
 #include "ViewModels/DetectiveViewModel.h"
@@ -53,6 +54,13 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 		TrackerSlot->SetPosition(FVector2D(48.f, 48.f));
 		TrackerSlot->SetAutoSize(true);
 
+		Subtitles = WidgetTree->ConstructWidget<USubtitleWidget>();
+		UCanvasPanelSlot* SubtitleSlot = Canvas->AddChildToCanvas(Subtitles);
+		SubtitleSlot->SetAnchors(FAnchors(0.5f, 1.f));
+		SubtitleSlot->SetAlignment(FVector2D(0.5f, 1.f));
+		SubtitleSlot->SetPosition(FVector2D(0.f, -170.f));
+		SubtitleSlot->SetAutoSize(true);
+
 		HealthBar = WidgetTree->ConstructWidget<UHealthBarWidget>();
 		UCanvasPanelSlot* HealthSlot = Canvas->AddChildToCanvas(HealthBar);
 		HealthSlot->SetAnchors(FAnchors(0.f, 1.f));
@@ -92,6 +100,7 @@ void UGothamHudWidget::NativeConstruct()
 	ComboCounter->SetViewModel(ViewModels->GetCombo());
 	DetectiveOverlay->SetViewModel(ViewModels->GetDetective());
 	ObjectiveTracker->SetViewModel(ViewModels->GetObjectives());
+	Subtitles->SetViewModel(ViewModels->GetSubtitles());
 
 	// Slots are created once and re-created only if the loadout size changes.
 	GadgetBarVM = ViewModels->GetGadgetBar();

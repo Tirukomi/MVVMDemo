@@ -2,7 +2,10 @@
 
 #include "ViewModels/GothamViewModelSubsystem.h"
 
+#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Core/GothamCharacter.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
 #include "Gameplay/ClueDataAsset.h"
 #include "Gameplay/ComboComponent.h"
 #include "Gameplay/DetectiveComponent.h"
@@ -13,6 +16,7 @@
 #include "ViewModels/ComboViewModel.h"
 #include "ViewModels/DetectiveViewModel.h"
 #include "ViewModels/ObjectivesViewModel.h"
+#include "ViewModels/SubtitleViewModel.h"
 #include "ViewModels/GadgetViewModels.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 
@@ -25,11 +29,36 @@ void UGothamViewModelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Detective = NewObject<UDetectiveViewModel>(this);
 	Objectives = NewObject<UObjectivesViewModel>(this);
 	Clues = NewObject<UClueListViewModel>(this);
+	Subtitles = NewObject<USubtitleViewModel>(this);
 	Objectives->SetProgress(0, 0);
+
+	// Subtitle size and backing panel follow accessibility settings.
+	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+	{
+		if (UGameInstance* GameInstance = LocalPlayer->GetGameInstance())
+		{
+			if (UGothamSettingsSubsystem* Settings = GameInstance->GetSubsystem<UGothamSettingsSubsystem>())
+			{
+				SettingsHandle = Settings->OnSettingsChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleSettings);
+				HandleSettings(Settings->GetSettings());
+			}
+		}
+	}
 }
 
 void UGothamViewModelSubsystem::Deinitialize()
 {
+	FTSTicker::GetCoreTicker().RemoveTicker(SubtitleHideHandle);
+	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+	{
+		if (UGameInstance* GameInstance = LocalPlayer->GetGameInstance())
+		{
+			if (UGothamSettingsSubsystem* Settings = GameInstance->GetSubsystem<UGothamSettingsSubsystem>())
+			{
+				Settings->OnSettingsChanged.Remove(SettingsHandle);
+			}
+		}
+	}
 	Unbind();
 	Super::Deinitialize();
 }
@@ -158,7 +187,25 @@ void UGothamViewModelSubsystem::HandleClueScanned(const UClueDataAsset* Clue)
 	{
 		Clues->MarkDiscovered(Clue->ClueId);
 		RefreshObjectives();
+		ShowSubtitle(NSLOCTEXT("Gotham.Subtitles", "Detective", "Detective"),
+			FText::Format(NSLOCTEXT("Gotham.Subtitles", "ClueFound", "{0}. {1}"), Clue->Title, Clue->Description), 5.f);
 	}
+}
+
+void UGothamViewModelSubsystem::HandleSettings(const FGothamSettingsData& Data)
+{
+	Subtitles->SetPresentation(Data.GetSubtitleFontSize(), Data.bSubtitleBackground);
+}
+
+void UGothamViewModelSubsystem::ShowSubtitle(const FText& Speaker, const FText& Line, float Seconds)
+{
+	Subtitles->SetLine(Speaker, Line);
+	FTSTicker::GetCoreTicker().RemoveTicker(SubtitleHideHandle);
+	SubtitleHideHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
+	{
+		Subtitles->Clear();
+		return false;
+	}), Seconds);
 }
 
 void UGothamViewModelSubsystem::RefreshObjectives()

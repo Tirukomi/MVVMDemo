@@ -30,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meter")
 	FLinearColor EmptyColor = FLinearColor(1.f, 1.f, 1.f, 0.12f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meter")
+	bool bReduceMotion = false;
+
 	UFUNCTION(BlueprintCallable, Category = "Meter")
 	void SetPercent(float InPercent);
 

@@ -192,6 +192,28 @@ The list view needs a Blueprint entry class in editor builds, hence `WBP_ClueEnt
 
 **Exit:** language and accessibility changes apply live; screenshot test set passes in all locales.
 
+**As built:**
+- **Settings:** `FGothamSettingsData` (pure, persisted in GameUserSettings.ini) is edited through `USettingsViewModel`
+  (live preview, Apply / Revert / Defaults); `UGothamSettingsSubsystem` applies side effects (culture, DPI scale via
+  `UUserInterfaceSettings::ApplicationScale`) and broadcasts to widgets. Leaving the screen reverts unapplied changes.
+- **Accessibility:** colour tokens (`GothamPalette`) resolved per colour-vision preset (Okabe-Ito based) and high
+  contrast, used by HUD widgets and the Detective post-process (clue colours are material parameters). Reduced motion
+  snaps the wheel and combo meter, freezes overlay scanlines, drops the FOV pinch and shortens the detective
+  transition. Gadget wheel supports hold or toggle. Subtitles (`USubtitleViewModel`) follow size and background
+  settings. Low health is also spelled out in text, so it never depends on colour alone. Everything is a focusable
+  button, so the settings screens are gamepad-navigable.
+- **Rebinding:** Enhanced Input user settings. Each rebindable input action carries player-mappable settings (set
+  through reflection, since the property is protected); mappings become keyboard / gamepad slots of one row.
+  `GothamBindings::PlanRebind` (pure, tested) swaps keys on conflict. Escape / gamepad B are reserved to cancel.
+- **Localization:** the standard UE pipeline (`Scripts/Localize.bat`: gather -> `TranslateLocalization.py` -> compile)
+  with English, German, Japanese and a generated pseudo-locale (`en-XA`). Clue text lives in a code-registered string
+  table (`GothamClues`) so the gatherer finds it. CJK renders through the engine's fallback font.
+- **Verified by screenshot:** German / Japanese / pseudo settings screens, a live English -> German switch, a
+  deuteranopia HUD, 150% UI scale in German at 720p, a 2560x1080 HUD, and a code-driven rebind (Scan E -> R).
+- **Known gaps:** high contrast recolours tokens and subtitle panels but not every panel; text scale is a whole-UI
+  scale rather than font-only; Arabic / RTL is not covered; key capture, gamepad focus navigation and hold/toggle
+  wheel behaviour are unit-tested in logic but not exercised with real input.
+
 ### M6 — Optimisation, tests, docs, release (1.5 weeks)
 
 1. **Budgets:** define UI frame-time and memory budgets; measure with Slate Insights, `stat slate`,

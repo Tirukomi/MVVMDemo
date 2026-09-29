@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/GothamSettingsAwareWidget.h"
 #include "DetectiveOverlayWidget.generated.h"
 
 class UDetectiveViewModel;
@@ -16,7 +16,7 @@ class UTextBlock;
  * view model's transition alpha, plus the mode label and scan prompt.
  */
 UCLASS()
-class MVVMSAMPLE_API UDetectiveOverlayWidget : public UUserWidget
+class MVVMSAMPLE_API UDetectiveOverlayWidget : public UGothamSettingsAwareWidget
 {
 	GENERATED_BODY()
 
@@ -26,6 +26,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
+	virtual void OnSettingsApplied() override { Refresh(); }
 
 private:
 	void Refresh();
@@ -42,4 +43,7 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UWidget> Prompt;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> ModeLabel;
 };

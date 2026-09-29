@@ -54,6 +54,10 @@ public:
 
 	FOnGothamInputContextChanged OnInputContextChanged;
 
+	/** Fired after the player rebinds controls, so glyphs and hints re-read their keys. */
+	FSimpleMulticastDelegate OnBindingsChanged;
+	void NotifyBindingsChanged() { OnBindingsChanged.Broadcast(); }
+
 private:
 	void HandleLayerChanged(EGothamUILayer Layer);
 

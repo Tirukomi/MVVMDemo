@@ -61,7 +61,7 @@ void UDetectiveComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 void UDetectiveComponent::Advance(float DeltaTime)
 {
 	const float Target = bActive ? 1.f : 0.f;
-	const float Step = DeltaTime / TransitionSeconds;
+	const float Step = DeltaTime / (bReducedMotion ? 0.05f : TransitionSeconds);
 	Alpha = Alpha < Target ? FMath::Min(Alpha + Step, Target) : FMath::Max(Alpha - Step, Target);
 	BroadcastCurrent();
 

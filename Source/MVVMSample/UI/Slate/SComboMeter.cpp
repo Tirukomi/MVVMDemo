@@ -22,6 +22,12 @@ int32 SComboMeter::GetLitSegments(float Fill, int32 SegmentCount)
 void SComboMeter::SetPercent(float InPercent)
 {
 	TargetFill = FMath::Clamp(InPercent, 0.f, 1.f);
+	if (bReduceMotion)
+	{
+		DisplayedFill = TargetFill;
+		Invalidate(EInvalidateWidgetReason::Paint);
+		return;
+	}
 	if (!FMath::IsNearlyEqual(TargetFill, DisplayedFill, 0.001f) && !AnimationTimer.IsValid())
 	{
 		AnimationTimer = RegisterActiveTimer(0.f, FWidgetActiveTimerDelegate::CreateSP(this, &SComboMeter::TickAnimation));

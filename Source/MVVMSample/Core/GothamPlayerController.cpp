@@ -10,12 +10,17 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
+#include "Input/GothamBindings.h"
 #include "InputModifiers.h"
+#include "PlayerMappableKeySettings.h"
+#include "UserSettings/EnhancedInputUserSettings.h"
 #include "Core/GothamCharacter.h"
 #include "Gameplay/ComboComponent.h"
 #include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/GothamUISettings.h"
+#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Containers/Ticker.h"
+#include "ViewModels/SettingsViewModel.h"
 #include "EngineUtils.h"
 #include "Gameplay/ClueActor.h"
 #include "Gameplay/DetectiveComponent.h"
@@ -35,19 +40,25 @@ namespace
 		return Action;
 	}
 
-	/** Swizzles a 1D key onto the Y axis so W/S drive forward/back on the 2D Move action. */
-	void MapAxisKey(UInputMappingContext* Context, UInputAction* Action, const FKey& Key, bool bSwizzleToY, bool bNegate)
+	/**
+	 * Marks an action as player-rebindable under Name. All mappings of the action then become slots of one row
+	 * (keyboard/mouse first, gamepad second). Enhanced Input keeps the settings object protected because it is
+	 * normally authored on the asset; these actions are created in code, so it is set through reflection.
+	 */
+	void MakeActionMappable(UInputAction* Action, FName Name)
 	{
-		FEnhancedActionKeyMapping& Mapping = Context->MapKey(Action, Key);
-		if (bSwizzleToY)
+		UPlayerMappableKeySettings* Settings = NewObject<UPlayerMappableKeySettings>(Action);
+		Settings->Name = Name;
+		for (const FGothamBindingDef& Def : GothamBindings::GetDefinitions())
 		{
-			UInputModifierSwizzleAxis* Swizzle = NewObject<UInputModifierSwizzleAxis>(Context);
-			Swizzle->Order = EInputAxisSwizzle::YXZ;
-			Mapping.Modifiers.Add(Swizzle);
+			if (Def.Name == Name)
+			{
+				Settings->DisplayName = Def.DisplayName;
+			}
 		}
-		if (bNegate)
+		if (FObjectProperty* Property = FindFProperty<FObjectProperty>(UInputAction::StaticClass(), TEXT("PlayerMappableKeySettings")))
 		{
-			Mapping.Modifiers.Add(NewObject<UInputModifierNegate>(Context));
+			Property->SetObjectPropertyValue_InContainer(Action, Settings);
 		}
 	}
 
@@ -69,6 +80,8 @@ void AGothamPlayerController::BeginPlay()
 	{
 		return;
 	}
+
+	RegisterRebindableContext();
 
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
@@ -94,6 +107,30 @@ void AGothamPlayerController::BeginPlay()
 	BindViewModelsToPawn();
 }
 
+/**
+ * Enhanced Input creates its user-settings object after SetupInputComponent runs, so the mapping context is
+ * registered for rebinding here instead. Registering is what turns mappable actions into rebindable rows.
+ */
+void AGothamPlayerController::RegisterRebindableContext()
+{
+	ULocalPlayer* LocalPlayer = GetLocalPlayer();
+	auto* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+	UEnhancedInputUserSettings* UserSettings = Input ? Input->GetUserSettings() : nullptr;
+	if (!UserSettings || !GameplayContext)
+	{
+		UE_LOG(LogGothamHud, Warning, TEXT("Enhanced Input user settings unavailable; controls cannot be rebound."));
+		return;
+	}
+	const bool bRegistered = UserSettings->RegisterInputMappingContext(GameplayContext);
+	int32 Mappable = 0;
+	for (const FEnhancedActionKeyMapping& Mapping : GameplayContext->GetMappings())
+	{
+		Mappable += Mapping.IsPlayerMappable() ? 1 : 0;
+	}
+	UE_LOG(LogGothamHud, Log, TEXT("Input mapping context registered=%d, %d of %d mappings are player-mappable"),
+		bRegistered ? 1 : 0, Mappable, GameplayContext->GetMappings().Num());
+}
+
 void AGothamPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -112,6 +149,10 @@ void AGothamPlayerController::SetupInputComponent()
 	{
 		EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMove);
 		EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGothamPlayerController::OnLook);
+		for (int32 i = 0; i < MoveDirectionActions.Num(); ++i)
+		{
+			EIC->BindAction(MoveDirectionActions[i], ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMoveDirection, MoveDirections[i]);
+		}
 		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnAttack);
 		for (int32 i = 0; i < GadgetActions.Num(); ++i)
 		{
@@ -141,40 +182,51 @@ void AGothamPlayerController::BuildInputAssets()
 	ScanAction = MakeAction(this, TEXT("IA_Scan"), EInputActionValueType::Boolean);
 	ClueLogAction = MakeAction(this, TEXT("IA_ClueLog"), EInputActionValueType::Boolean);
 
-	// Move: WASD + left stick.
-	MapAxisKey(GameplayContext, MoveAction, EKeys::W, true, false);
-	MapAxisKey(GameplayContext, MoveAction, EKeys::S, true, true);
-	MapAxisKey(GameplayContext, MoveAction, EKeys::D, false, false);
-	MapAxisKey(GameplayContext, MoveAction, EKeys::A, false, true);
+	// Move: WASD, one rebindable action per direction, plus the left stick (fixed).
+	const struct { const TCHAR* Name; FKey Key; FVector2D Direction; } MoveKeys[] = {
+		{ TEXT("MoveForward"), EKeys::W, FVector2D(0, 1) },
+		{ TEXT("MoveBack"), EKeys::S, FVector2D(0, -1) },
+		{ TEXT("MoveLeft"), EKeys::A, FVector2D(-1, 0) },
+		{ TEXT("MoveRight"), EKeys::D, FVector2D(1, 0) },
+	};
+	for (const auto& Move : MoveKeys)
+	{
+		UInputAction* Action = MakeAction(this, *FString::Printf(TEXT("IA_%s"), Move.Name), EInputActionValueType::Boolean);
+		MakeActionMappable(Action, Move.Name);
+		GameplayContext->MapKey(Action, Move.Key);
+		MoveDirectionActions.Add(Action);
+		MoveDirections.Add(Move.Direction);
+	}
 	GameplayContext->MapKey(MoveAction, EKeys::Gamepad_Left2D);
 
-	// Look: mouse + right stick.
+	// Look: mouse + right stick (fixed).
 	MapNegatedY(GameplayContext, LookAction, EKeys::Mouse2D);
 	MapNegatedY(GameplayContext, LookAction, EKeys::Gamepad_Right2D);
 
-	GameplayContext->MapKey(AttackAction, EKeys::LeftMouseButton);
-	GameplayContext->MapKey(AttackAction, EKeys::Gamepad_FaceButton_Bottom);
+	// Every rebindable action gets its keyboard/mouse key first and its gamepad button second (the two slots).
+	auto MapPair = [this](UInputAction* Action, const TCHAR* Name, const FKey& Keyboard, const FKey& Pad)
+	{
+		MakeActionMappable(Action, Name);
+		GameplayContext->MapKey(Action, Keyboard);
+		GameplayContext->MapKey(Action, Pad);
+	};
+
+	MapPair(AttackAction, TEXT("Attack"), EKeys::LeftMouseButton, EKeys::Gamepad_FaceButton_Bottom);
 
 	const FKey GadgetKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };
 	const FKey GadgetPadKeys[] = { EKeys::Gamepad_FaceButton_Left, EKeys::Gamepad_FaceButton_Top, EKeys::Gamepad_FaceButton_Right };
 	for (int32 i = 0; i < 3; ++i)
 	{
 		UInputAction* Action = MakeAction(this, *FString::Printf(TEXT("IA_Gadget%d"), i + 1), EInputActionValueType::Boolean);
-		GameplayContext->MapKey(Action, GadgetKeys[i]);
-		GameplayContext->MapKey(Action, GadgetPadKeys[i]);
+		MapPair(Action, *FString::Printf(TEXT("Gadget%d"), i + 1), GadgetKeys[i], GadgetPadKeys[i]);
 		GadgetActions.Add(Action);
 	}
 
-	GameplayContext->MapKey(DetectiveAction, EKeys::V);
-	GameplayContext->MapKey(DetectiveAction, EKeys::Gamepad_DPad_Up);
-	GameplayContext->MapKey(ScanAction, EKeys::E);
-	GameplayContext->MapKey(ScanAction, EKeys::Gamepad_DPad_Right);
-	GameplayContext->MapKey(ClueLogAction, EKeys::J);
-	GameplayContext->MapKey(ClueLogAction, EKeys::Gamepad_Special_Left);
-	GameplayContext->MapKey(GadgetWheelAction, EKeys::Q);
-	GameplayContext->MapKey(GadgetWheelAction, EKeys::Gamepad_LeftShoulder);
-	GameplayContext->MapKey(PauseAction, EKeys::Escape);
-	GameplayContext->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
+	MapPair(DetectiveAction, TEXT("Detective"), EKeys::V, EKeys::Gamepad_DPad_Up);
+	MapPair(ScanAction, TEXT("Scan"), EKeys::E, EKeys::Gamepad_DPad_Right);
+	MapPair(ClueLogAction, TEXT("ClueLog"), EKeys::J, EKeys::Gamepad_Special_Left);
+	MapPair(GadgetWheelAction, TEXT("GadgetWheel"), EKeys::Q, EKeys::Gamepad_LeftShoulder);
+	MapPair(PauseAction, TEXT("Pause"), EKeys::Escape, EKeys::Gamepad_Special_Right);
 
 	GameplayContext->MapKey(DebugDamageAction, EKeys::F1);
 	GameplayContext->MapKey(DebugHealAction, EKeys::F2);
@@ -213,6 +265,14 @@ void AGothamPlayerController::OnMove(const FInputActionValue& Value)
 	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
 	{
 		Hero->MoveInput(Value.Get<FVector2D>());
+	}
+}
+
+void AGothamPlayerController::OnMoveDirection(FVector2D Direction)
+{
+	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
+	{
+		Hero->MoveInput(Direction);
 	}
 }
 
@@ -338,6 +398,7 @@ void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
  *   -GothamOpenWheel     opens the gadget wheel, hovers a segment and builds a combo
  *   -GothamDetective     enters detective mode and scans the nearest clue
  *   -GothamClueLog[=N]   scans a clue, opens the case file, optionally with N extra fake clues
+ *   -GothamCycleLanguage steps the language once after 2s (with -GothamOpenSettings: a live switch)
  *   -GothamShotDelay=S   seconds before the screenshot (default 4; raise it on a cold shader cache)
  */
 void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
@@ -347,9 +408,13 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bWheel = FParse::Param(Cmd, TEXT("GothamOpenWheel"));
 	const bool bDetective = FParse::Param(Cmd, TEXT("GothamDetective"));
 	const bool bClueLog = FParse::Param(Cmd, TEXT("GothamClueLog"));
+	const bool bSettings = FParse::Param(Cmd, TEXT("GothamOpenSettings"));
+	const bool bControls = FParse::Param(Cmd, TEXT("GothamOpenControls"));
+	const bool bCycleLanguage = FParse::Param(Cmd, TEXT("GothamCycleLanguage"));
+	const bool bRebindDemo = FParse::Param(Cmd, TEXT("GothamRebindDemo"));
 	int32 StressCount = 0;
 	FParse::Value(Cmd, TEXT("GothamClueLog="), StressCount);
-	if (!(bPause || bWheel || bDetective || bClueLog || StressCount > 0))
+	if (!(bPause || bWheel || bDetective || bClueLog || bSettings || bControls || bCycleLanguage || bRebindDemo || StressCount > 0))
 	{
 		return;
 	}
@@ -362,7 +427,15 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	{
 		UI->OpenGadgetWheel();
 	}
-	const FString ShotName = bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : TEXT("gotham_cluelog");
+	if (bSettings)
+	{
+		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass.LoadSynchronous());
+	}
+	if (bControls)
+	{
+		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
+	}
+	const FString ShotName = bRebindDemo ? TEXT("gotham_controls") : bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : bSettings ? TEXT("gotham_settings") : bControls ? TEXT("gotham_controls") : TEXT("gotham_cluelog");
 	const TWeakObjectPtr<AGothamPlayerController> WeakThis(this);
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
 
@@ -409,6 +482,49 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 		}
 		return false;
 	}), 1.f);
+
+	if (bRebindDemo)
+	{
+		// Rebinds Scan (keyboard slot) from E to R through Enhanced Input user settings, then opens the controls
+		// screen so the result is visible. Exercises the same MapPlayerKey path the screen uses.
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, WeakUI](float)
+		{
+			if (!WeakThis.IsValid() || !WeakUI.IsValid())
+			{
+				return false;
+			}
+			auto* Input = WeakThis->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+			if (UEnhancedInputUserSettings* UserSettings = Input ? Input->GetUserSettings() : nullptr)
+			{
+				FMapPlayerKeyArgs Args;
+				Args.MappingName = TEXT("Scan");
+				Args.Slot = EPlayerMappableKeySlot::First;
+				Args.NewKey = EKeys::R;
+				FGameplayTagContainer Failure;
+				UserSettings->MapPlayerKey(Args, Failure);
+				UserSettings->ApplySettings();
+				UE_LOG(LogGothamHud, Log, TEXT("Rebind demo: Scan -> R (failure tags: %d)"), Failure.Num());
+			}
+			WeakUI->NotifyBindingsChanged();
+			WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
+			return false;
+		}), 1.5f);
+	}
+	if (bCycleLanguage)
+	{
+		// Proves live language switching: the settings screen is already open when the language changes.
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
+		{
+			if (WeakThis.IsValid())
+			{
+				if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(WeakThis.Get()))
+				{
+					Settings->GetViewModel()->Cycle(EGothamSetting::Language, 1);
+				}
+			}
+			return false;
+		}), 2.f);
+	}
 
 	// Later than the actions above so shaders (compiled on first run) and transitions have settled.
 	float ShotDelay = 4.f;

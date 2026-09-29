@@ -70,6 +70,14 @@ void SGadgetWheel::SetHovered(int32 NewIndex)
 
 void SGadgetWheel::EnsureAnimating()
 {
+	if (bReduceMotion)
+	{
+		for (int32 i = 0; i < HoverAlpha.Num(); ++i)
+		{
+			HoverAlpha[i] = (i == HoveredIndex) ? 1.f : 0.f;
+		}
+		return;
+	}
 	if (!AnimationTimer.IsValid())
 	{
 		AnimationTimer = RegisterActiveTimer(0.f, FWidgetActiveTimerDelegate::CreateSP(this, &SGadgetWheel::TickAnimation));

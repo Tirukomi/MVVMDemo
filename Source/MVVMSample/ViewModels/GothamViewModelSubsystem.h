@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GothamViewModelSubsystem.generated.h"
 
@@ -13,6 +14,8 @@ class UComboViewModel;
 class UDetectiveComponent;
 class UDetectiveViewModel;
 class UObjectivesViewModel;
+class USubtitleViewModel;
+struct FGothamSettingsData;
 class UClueDataAsset;
 class UGadgetBarViewModel;
 class UGadgetComponent;
@@ -41,6 +44,7 @@ public:
 	UDetectiveViewModel* GetDetective() const { return Detective; }
 	UObjectivesViewModel* GetObjectives() const { return Objectives; }
 	UClueListViewModel* GetClues() const { return Clues; }
+	USubtitleViewModel* GetSubtitles() const { return Subtitles; }
 
 	/** Dev aid: appends fake undiscovered clues to exercise the virtualised clue log. */
 	void AddDebugClues(int32 Count);
@@ -58,6 +62,8 @@ private:
 	void HandleClueScanned(const UClueDataAsset* Clue);
 	void RefreshObjectives();
 	void RebuildClues();
+	void HandleSettings(const FGothamSettingsData& Data);
+	void ShowSubtitle(const FText& Speaker, const FText& Line, float Seconds);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UPlayerVitalsViewModel> Vitals;
@@ -77,6 +83,9 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UClueListViewModel> Clues;
 
+	UPROPERTY(Transient)
+	TObjectPtr<USubtitleViewModel> Subtitles;
+
 	TWeakObjectPtr<UHealthComponent> BoundHealth;
 	TWeakObjectPtr<UGadgetComponent> BoundGadgets;
 	TWeakObjectPtr<UComboComponent> BoundCombo;
@@ -88,4 +97,6 @@ private:
 	FDelegateHandle DetectiveHandle;
 	FDelegateHandle ScanHandle;
 	FDelegateHandle CluesHandle;
+	FDelegateHandle SettingsHandle;
+	FTSTicker::FDelegateHandle SubtitleHideHandle;
 };

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/GothamSettingsAwareWidget.h"
 #include "HealthBarWidget.generated.h"
 
 class UPlayerVitalsViewModel;
@@ -12,7 +12,7 @@ class UTextBlock;
 
 /** Health bar + numeric readout. Presentation only: everything it shows comes from the view model. */
 UCLASS()
-class MVVMSAMPLE_API UHealthBarWidget : public UUserWidget
+class MVVMSAMPLE_API UHealthBarWidget : public UGothamSettingsAwareWidget
 {
 	GENERATED_BODY()
 
@@ -22,6 +22,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
+	virtual void OnSettingsApplied() override { Refresh(); }
 
 private:
 	void Refresh();

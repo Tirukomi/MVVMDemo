@@ -38,6 +38,9 @@ public:
 	bool TryScan();
 
 	bool IsActive() const { return bActive; }
+
+	/** Reduced motion makes the transition near-instant. */
+	void SetReducedMotion(bool bInReduced) { bReducedMotion = bInReduced; }
 	float GetAlpha() const { return Alpha; }
 
 	/** Every clue definition in the level, in placement order. */
@@ -72,6 +75,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Detective", meta = (ClampMin = "0"))
 	float ScanRadius = 600.f;
 
+	bool bReducedMotion = false;
 	bool bActive = false;
 	float Alpha = 0.f;
 

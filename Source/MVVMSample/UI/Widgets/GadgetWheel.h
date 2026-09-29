@@ -31,6 +31,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Wheel|Events")
 	FOnGadgetWheelIndexEvent OnItemHovered;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheel")
+	bool bReduceMotion = false;
+
 	UFUNCTION(BlueprintCallable, Category = "Wheel")
 	void SetItems(const TArray<FGothamWheelItem>& InItems);
 

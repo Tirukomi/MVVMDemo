@@ -29,6 +29,8 @@ public:
 
 	void SetItems(const TArray<FGothamWheelItem>& InItems);
 	void SetStyle(const FGothamGadgetWheelStyle& InStyle);
+	/** Snap hover changes instead of easing when reduced motion is on. */
+	void SetReduceMotion(bool bInReduce) { bReduceMotion = bInReduce; }
 
 	/** Analog stick input, +Y up as gamepads report it. Selects by direction once past the dead zone. */
 	void SetStickInput(const FVector2D& Stick);
@@ -56,6 +58,7 @@ private:
 	FGothamGadgetWheelStyle Style;
 	TArray<FGothamWheelItem> Items;
 
+	bool bReduceMotion = false;
 	int32 HoveredIndex = INDEX_NONE;
 	TArray<float> HoverAlpha;
 	FVector2D StickValue = FVector2D::ZeroVector;

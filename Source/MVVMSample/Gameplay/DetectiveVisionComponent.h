@@ -25,6 +25,7 @@ protected:
 
 private:
 	void HandleDetectiveChanged(bool bActive, float Alpha);
+	void ApplySettings(const struct FGothamSettingsData& Data);
 
 	/** FOV the camera eases toward at full detective alpha. */
 	UPROPERTY(EditDefaultsOnly, Category = "Detective", meta = (ClampMin = "30", ClampMax = "120"))
@@ -40,5 +41,7 @@ private:
 	TObjectPtr<UDetectiveComponent> Detective;
 
 	float BaseFOV = 90.f;
+	bool bReducedMotion = false;
+	FDelegateHandle SettingsHandle;
 	FDelegateHandle Handle;
 };

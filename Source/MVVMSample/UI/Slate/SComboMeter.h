@@ -29,6 +29,8 @@ public:
 	/** Target fill in [0,1]; the shown fill animates toward it. */
 	void SetPercent(float InPercent);
 	void SetSegmentCount(int32 InCount);
+	/** Snap instead of easing when reduced motion is on. */
+	void SetReduceMotion(bool bInReduce) { bReduceMotion = bInReduce; }
 	void SetColors(const FLinearColor& Filled, const FLinearColor& Empty);
 	void SetDesiredSize(const FVector2D& InSize);
 
@@ -42,6 +44,7 @@ public:
 private:
 	EActiveTimerReturnType TickAnimation(double InCurrentTime, float InDeltaTime);
 
+	bool bReduceMotion = false;
 	int32 SegmentCount = 10;
 	FVector2D DesiredSize = FVector2D(180.f, 12.f);
 	FLinearColor FilledColor;

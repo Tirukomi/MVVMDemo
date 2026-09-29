@@ -71,8 +71,10 @@ void UHealthBarWidget::Refresh()
 		return;
 	}
 	Bar->SetPercent(ViewModel->GetHealthPercent());
-	Bar->SetFillColorAndOpacity(ViewModel->GetIsLowHealth() ? FLinearColor(0.9f, 0.1f, 0.1f) : FLinearColor(0.2f, 0.8f, 0.3f));
-	Label->SetText(FText::Format(LOCTEXT("HealthFmt", "{0} / {1}"),
+	const bool bLow = ViewModel->GetIsLowHealth();
+	Bar->SetFillColorAndOpacity(GetToken(bLow ? EGothamColorToken::Danger : EGothamColorToken::Good));
+	// Low health is also spelled out in text, so the warning never depends on colour alone.
+	Label->SetText(FText::Format(bLow ? LOCTEXT("LowHealthFmt", "LOW  {0} / {1}") : LOCTEXT("HealthFmt", "{0} / {1}"),
 		FText::AsNumber(FMath::CeilToInt(ViewModel->GetHealth())), FText::AsNumber(FMath::RoundToInt(ViewModel->GetMaxHealth()))));
 }
 

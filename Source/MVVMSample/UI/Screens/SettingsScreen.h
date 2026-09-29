@@ -6,7 +6,14 @@
 #include "UI/Screens/GothamScreen.h"
 #include "SettingsScreen.generated.h"
 
-/** Placeholder until M5 (rebinding, accessibility, language). Exists so the navigation flow is complete. */
+class UGothamOptionRow;
+class USettingsViewModel;
+class UTextBlock;
+
+/**
+ * Language and accessibility options. Changes preview live; Apply keeps them, and leaving the screen any other way
+ * (Back, Esc, B) discards unapplied changes. Every control is a focusable button, so it is fully gamepad-navigable.
+ */
 UCLASS()
 class MVVMSAMPLE_API USettingsScreen : public UGothamScreen
 {
@@ -14,4 +21,21 @@ class MVVMSAMPLE_API USettingsScreen : public UGothamScreen
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+	virtual void NativeOnDeactivated() override;
+
+private:
+	void RefreshDirtyNote();
+	void OnViewModelChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { RefreshDirtyNote(); }
+	void OpenControls();
+
+	UPROPERTY(Transient)
+	TObjectPtr<USettingsViewModel> ViewModel;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UGothamOptionRow>> Rows;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> DirtyNote;
 };

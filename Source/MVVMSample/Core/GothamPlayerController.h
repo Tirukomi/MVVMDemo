@@ -32,10 +32,12 @@ protected:
 
 private:
 	void BuildInputAssets();
+	void RegisterRebindableContext();
 	void BindViewModelsToPawn();
 
 	void OnMove(const FInputActionValue& Value);
 	void OnLook(const FInputActionValue& Value);
+	void OnMoveDirection(FVector2D Direction);
 	void OnAttack();
 	void OnGadget(int32 SlotIndex);
 	void OnDebugDamage();
@@ -55,6 +57,9 @@ private:
 	TObjectPtr<UInputAction> MoveAction;
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> LookAction;
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UInputAction>> MoveDirectionActions;
+	TArray<FVector2D> MoveDirections;
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> AttackAction;
 	UPROPERTY(Transient)
