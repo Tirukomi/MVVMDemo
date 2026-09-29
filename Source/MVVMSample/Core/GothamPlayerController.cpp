@@ -2,7 +2,7 @@
 
 #include "Core/GothamPlayerController.h"
 
-#include "Blueprint/UserWidget.h"
+#include "CommonActivatableWidget.h"
 #include "Core/GothamCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
@@ -12,6 +12,9 @@
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
 #include "UI/GothamUISettings.h"
+#include "Containers/Ticker.h"
+#include "UnrealClient.h"
+#include "UI/Layout/GothamUISubsystem.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGothamHud, Log, All);
@@ -60,15 +63,36 @@ void AGothamPlayerController::BeginPlay()
 		return;
 	}
 
-	if (const TSubclassOf<UUserWidget> HudClass = GetDefault<UGothamUISettings>()->HudWidgetClass.LoadSynchronous())
+	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
-		HudWidget = CreateWidget<UUserWidget>(this, HudClass);
-		HudWidget->AddToViewport();
-		UE_LOG(LogGothamHud, Log, TEXT("HUD created: %s"), *GetNameSafe(HudClass));
-	}
-	else
-	{
-		UE_LOG(LogGothamHud, Warning, TEXT("No HUD widget class configured in Gotham UI settings"));
+		if (auto* UI = LocalPlayer->GetSubsystem<UGothamUISubsystem>())
+		{
+			UI->EnsureLayout(this);
+			UI->OnInputContextChanged.AddUObject(this, &AGothamPlayerController::ApplyInputContext);
+
+			if (const TSubclassOf<UCommonActivatableWidget> HudClass = GetDefault<UGothamUISettings>()->HudScreenClass.LoadSynchronous())
+			{
+				UI->PushScreen(EGothamUILayer::Game, HudClass);
+				UE_LOG(LogGothamHud, Log, TEXT("HUD screen pushed: %s"), *GetNameSafe(HudClass));
+#if !UE_BUILD_SHIPPING
+				// Dev aid for headless verification: -GothamOpenPause opens the pause menu and saves a screenshot.
+				if (FParse::Param(FCommandLine::Get(), TEXT("GothamOpenPause")))
+				{
+					UI->TogglePauseMenu();
+					// Core ticker, not a world timer: the world is paused while the menu is open.
+					FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([](float)
+					{
+						FScreenshotRequest::RequestScreenshot(TEXT("gotham_pause"), true, false);
+						return false;
+					}), 3.f);
+				}
+#endif
+			}
+			else
+			{
+				UE_LOG(LogGothamHud, Warning, TEXT("No HUD screen class configured in Gotham UI settings"));
+			}
+		}
 	}
 	BindViewModelsToPawn();
 }
@@ -96,6 +120,7 @@ void AGothamPlayerController::SetupInputComponent()
 		{
 			EIC->BindAction(GadgetActions[i], ETriggerEvent::Started, this, &AGothamPlayerController::OnGadget, i);
 		}
+		EIC->BindAction(PauseAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnPause);
 		EIC->BindAction(DebugDamageAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugDamage);
 		EIC->BindAction(DebugHealAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugHeal);
 	}
@@ -109,6 +134,7 @@ void AGothamPlayerController::BuildInputAssets()
 	AttackAction = MakeAction(this, TEXT("IA_Attack"), EInputActionValueType::Boolean);
 	DebugDamageAction = MakeAction(this, TEXT("IA_DebugDamage"), EInputActionValueType::Boolean);
 	DebugHealAction = MakeAction(this, TEXT("IA_DebugHeal"), EInputActionValueType::Boolean);
+	PauseAction = MakeAction(this, TEXT("IA_Pause"), EInputActionValueType::Boolean);
 
 	// Move: WASD + left stick.
 	MapAxisKey(GameplayContext, MoveAction, EKeys::W, true, false);
@@ -133,6 +159,9 @@ void AGothamPlayerController::BuildInputAssets()
 		GameplayContext->MapKey(Action, GadgetPadKeys[i]);
 		GadgetActions.Add(Action);
 	}
+
+	GameplayContext->MapKey(PauseAction, EKeys::Escape);
+	GameplayContext->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
 
 	GameplayContext->MapKey(DebugDamageAction, EKeys::F1);
 	GameplayContext->MapKey(DebugHealAction, EKeys::F2);
@@ -211,5 +240,44 @@ void AGothamPlayerController::OnDebugHeal()
 	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
 	{
 		Hero->DebugHeal();
+	}
+}
+
+void AGothamPlayerController::OnPause()
+{
+	if (auto* UI = GetLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
+	{
+		UI->TogglePauseMenu();
+	}
+}
+
+const UInputAction* AGothamPlayerController::FindAction(FName Name) const
+{
+	if (Name == TEXT("Move")) return MoveAction;
+	if (Name == TEXT("Look")) return LookAction;
+	if (Name == TEXT("Attack")) return AttackAction;
+	if (Name == TEXT("Pause")) return PauseAction;
+	if (Name == TEXT("Gadget1")) return GadgetActions.IsValidIndex(0) ? GadgetActions[0].Get() : nullptr;
+	if (Name == TEXT("Gadget2")) return GadgetActions.IsValidIndex(1) ? GadgetActions[1].Get() : nullptr;
+	if (Name == TEXT("Gadget3")) return GadgetActions.IsValidIndex(2) ? GadgetActions[2].Get() : nullptr;
+	return nullptr;
+}
+
+/** The gameplay mapping context is live only while no menu owns input. */
+void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
+{
+	ULocalPlayer* LocalPlayer = GetLocalPlayer();
+	auto* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+	if (!Input)
+	{
+		return;
+	}
+	if (Context == EGothamInputContext::Gameplay)
+	{
+		Input->AddMappingContext(GameplayContext, 0);
+	}
+	else
+	{
+		Input->RemoveMappingContext(GameplayContext);
 	}
 }

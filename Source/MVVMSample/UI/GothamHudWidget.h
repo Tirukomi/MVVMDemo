@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/Screens/GothamScreen.h"
 #include "GothamHudWidget.generated.h"
 
 class UComboWidget;
@@ -14,14 +14,19 @@ class UHorizontalBox;
 
 /** Combat HUD root. Lays out the three HUD widgets and hands each its view model. */
 UCLASS()
-class MVVMSAMPLE_API UGothamHudWidget : public UUserWidget
+class MVVMSAMPLE_API UGothamHudWidget : public UGothamScreen
 {
 	GENERATED_BODY()
 
 public:
+	UGothamHudWidget(const FObjectInitializer& ObjectInitializer);
+
 	/** Set from tests or content to override which widgets are spawned. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HUD")
 	TSubclassOf<UGadgetSlotWidget> GadgetSlotClass;
+
+	/** The HUD keeps the game in control: mouse captured, no cursor. */
+	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "UI/Layout/GothamUITypes.h"
 #include "GothamPlayerController.generated.h"
 
 class UInputAction;
@@ -18,6 +19,10 @@ UCLASS()
 class MVVMSAMPLE_API AGothamPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	/** Looks up a gameplay action by name ("Attack", "Gadget1", "Pause"...) for glyphs and rebinding UIs. */
+	const UInputAction* FindAction(FName Name) const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -35,6 +40,8 @@ private:
 	void OnGadget(int32 SlotIndex);
 	void OnDebugDamage();
 	void OnDebugHeal();
+	void OnPause();
+	void ApplyInputContext(EGothamInputContext Context);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInputMappingContext> GameplayContext;
@@ -51,7 +58,7 @@ private:
 	TObjectPtr<UInputAction> DebugDamageAction;
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> DebugHealAction;
-
 	UPROPERTY(Transient)
-	TObjectPtr<UUserWidget> HudWidget;
+	TObjectPtr<UInputAction> PauseAction;
+
 };

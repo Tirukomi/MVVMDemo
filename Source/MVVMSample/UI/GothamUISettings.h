@@ -6,7 +6,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "GothamUISettings.generated.h"
 
-class UUserWidget;
+class UCommonActivatableWidget;
 
 /** Project UI configuration (Project Settings > Game > Gotham UI). Lets content swap the HUD without code. */
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Gotham UI"))
@@ -17,6 +17,12 @@ class MVVMSAMPLE_API UGothamUISettings : public UDeveloperSettings
 public:
 	UGothamUISettings();
 
-	UPROPERTY(Config, EditAnywhere, Category = "HUD")
-	TSoftClassPtr<UUserWidget> HudWidgetClass;
+	UPROPERTY(Config, EditAnywhere, Category = "Screens")
+	TSoftClassPtr<UCommonActivatableWidget> HudScreenClass;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Screens")
+	TSoftClassPtr<UCommonActivatableWidget> PauseMenuClass;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Screens")
+	TSoftClassPtr<UCommonActivatableWidget> SettingsScreenClass;
 };

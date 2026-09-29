@@ -14,6 +14,18 @@
 #include "ViewModels/GadgetViewModels.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 
+UGothamHudWidget::UGothamHudWidget(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bCanDismissWithBack = false;
+	SetIsFocusable(false);
+}
+
+TOptional<FUIInputConfig> UGothamHudWidget::GetDesiredInputConfig() const
+{
+	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently, false);
+}
+
 TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 {
 	if (!GadgetSlotClass)
