@@ -34,6 +34,23 @@ FGothamScript& FGothamScript::Expect(TFunction<bool()> Predicate, const FString&
 	return Do([this, Predicate = MoveTemp(Predicate), Rule]() { Check(Predicate(), Rule); });
 }
 
+FGothamScript& FGothamScript::WaitUntil(TFunction<bool()> Predicate, float TimeoutSeconds, const FString& Rule)
+{
+	FStep Step;
+	Step.Kind = EKind::WaitUntil;
+	Step.Seconds = TimeoutSeconds;
+	Step.Predicate = MoveTemp(Predicate);
+	Step.Rule = Rule;
+	Steps.Add(MoveTemp(Step));
+	return *this;
+}
+
+FGothamScript& FGothamScript::WaitFrames(int32 Frames)
+{
+	Steps.Add({ EKind::Frames, static_cast<float>(FMath::Max(Frames, 1)) });
+	return *this;
+}
+
 FGothamScript& FGothamScript::Sample(float Seconds, FFrame EachFrame)
 {
 	FStep Step;
@@ -56,14 +73,45 @@ FGothamScript& FGothamScript::Quit()
 
 void FGothamScript::Check(bool bPassed, const FString& Rule)
 {
-	(bPassed ? Passed : Failed)++;
+	Report(bPassed ? EGothamCheck::Passed : EGothamCheck::Failed, Rule);
+}
+
+void FGothamScript::CheckKnownBug(bool bCorrect, const FString& Rule, bool bIntermittent)
+{
+	if (bIntermittent)
+	{
+		Report(EGothamCheck::KnownBug, FString::Printf(TEXT("%s [intermittent; this run: %s]"), *Rule, bCorrect ? TEXT("fine") : TEXT("seen")));
+		return;
+	}
+	Report(bCorrect ? EGothamCheck::KnownBugFixed : EGothamCheck::KnownBug, Rule);
+}
+
+const TCHAR* FGothamScript::ResultLabel(EGothamCheck Result)
+{
+	switch (Result)
+	{
+	case EGothamCheck::Passed:        return TEXT("PASS");
+	case EGothamCheck::Failed:        return TEXT("FAIL");
+	case EGothamCheck::KnownBug:      return TEXT("KNOWN BUG");
+	default:                          return TEXT("KNOWN BUG FIXED (promote to a rule)");
+	}
+}
+
+void FGothamScript::Report(EGothamCheck Result, const FString& Rule)
+{
+	switch (Result)
+	{
+	case EGothamCheck::Passed:   ++Passed; break;
+	case EGothamCheck::KnownBug: ++KnownBugs; break;
+	default:                     ++Failed; break;
+	}
 	if (Reporter)
 	{
-		Reporter(bPassed, Rule);
+		Reporter(Result, Rule);
 	}
 	else
 	{
-		UE_LOG(LogGothamScript, Display, TEXT("%s: %s"), bPassed ? TEXT("PASS") : TEXT("FAIL"), *Rule);
+		UE_LOG(LogGothamScript, Display, TEXT("%s: %s"), ResultLabel(Result), *Rule);
 	}
 }
 
@@ -100,6 +148,42 @@ bool FGothamScript::Advance(float DeltaSeconds)
 			}
 			++Next;
 			continue;
+		case EKind::Frames:
+			if (StepStartFrame < 0)
+			{
+				StepStartFrame = Frame;
+				return true;
+			}
+			if (Frame - StepStartFrame < static_cast<int64>(Step.Seconds))
+			{
+				return true;
+			}
+			StepStartFrame = -1;
+			++Next;
+			continue;
+		case EKind::WaitUntil:
+		{
+			const bool bFirstFrame = StepStartFrame < 0;
+			if (bFirstFrame)
+			{
+				StepStartFrame = Frame;
+				StepTime = 0.f;
+			}
+			else
+			{
+				StepTime += DeltaSeconds;
+			}
+			const bool bMet = Step.Predicate && Step.Predicate();
+			if (!bMet && StepTime + KINDA_SMALL_NUMBER < Step.Seconds)
+			{
+				return true;
+			}
+			const FString Rule = Step.Rule;
+			StepStartFrame = -1;
+			++Next;
+			Check(bMet, Rule);
+			continue;
+		}
 		case EKind::Wait:
 		case EKind::Sample:
 			if (StepStartFrame < 0)

@@ -22,19 +22,36 @@
  * - At(T) waits until T seconds after the script started (the first frame's delta counts).
  * - Wait(S) and Sample(S) start counting on the frame after they begin, and end on the frame their own time reaches S;
  *   the steps after them run in that same frame. Sample calls its function on each of those frames.
+ * - WaitFrames(N) ends on the Nth frame after the one it begins in.
+ * - WaitUntil(P, S, Rule) checks P on the frame it begins and every frame after; it passes as soon as P holds and
+ *   fails Rule if S seconds of its own time pass first. Either way the script goes on in that frame.
  */
+
+/** One check's outcome. A known bug is expected to fail until it is fixed; when it starts passing, that is reported
+ *  as a failure too, so the check gets promoted to a normal rule instead of staying marked. */
+enum class EGothamCheck : uint8
+{
+	Passed,
+	Failed,
+	KnownBug,
+	KnownBugFixed,
+};
 class MVVMSAMPLE_API FGothamScript : public TSharedFromThis<FGothamScript>
 {
 public:
 	using FAction = TFunction<void()>;
 	using FFrame = TFunction<void(float StepSeconds, float DeltaSeconds)>;
-	/** Where Expect / Check results go; by default "PASS: rule" / "FAIL: rule" in LogGothamScript. */
-	using FReporter = TFunction<void(bool bPassed, const FString& Rule)>;
+	/** Where check results go; by default "PASS: rule", "FAIL: rule", "KNOWN BUG: rule" or "KNOWN BUG FIXED: rule" in
+	 *  LogGothamScript (see ResultLabel). */
+	using FReporter = TFunction<void(EGothamCheck Result, const FString& Rule)>;
 
 	FGothamScript& Wait(float Seconds);
 	FGothamScript& At(float SecondsFromStart);
 	FGothamScript& Do(FAction Action);
 	FGothamScript& Expect(TFunction<bool()> Predicate, const FString& Rule);
+	FGothamScript& WaitUntil(TFunction<bool()> Predicate, float TimeoutSeconds, const FString& Rule);
+	/** Waits N whole frames (counting from the next one), e.g. for layout to catch up after a change that moves it. */
+	FGothamScript& WaitFrames(int32 Frames);
 	FGothamScript& Sample(float Seconds, FFrame EachFrame);
 	FGothamScript& Screenshot(const FString& Name);
 	FGothamScript& Quit();
@@ -42,6 +59,14 @@ public:
 	void SetReporter(FReporter InReporter) { Reporter = MoveTemp(InReporter); }
 	/** Records one result (for checks inside a Do). */
 	void Check(bool bPassed, const FString& Rule);
+	/**
+	 * Records a check that is known to fail today (bCorrect is what the fixed behaviour would give). An intermittent bug
+	 * sometimes behaves correctly, so it is always recorded as known (with what this run saw) and never reported as
+	 * fixed by chance; the fix removes the flag.
+	 */
+	void CheckKnownBug(bool bCorrect, const FString& Rule, bool bIntermittent = false);
+
+	static const TCHAR* ResultLabel(EGothamCheck Result);
 
 	/** Runs on the core ticker until the last step; the ticker keeps the script alive until then. */
 	void Start();
@@ -52,16 +77,21 @@ public:
 	double GetTime() const { return Time; }
 	int32 GetPassed() const { return Passed; }
 	int32 GetFailed() const { return Failed; }
+	int32 GetKnownBugs() const { return KnownBugs; }
 
 private:
-	enum class EKind : uint8 { Do, At, Wait, Sample };
+	enum class EKind : uint8 { Do, At, Wait, Sample, WaitUntil, Frames };
 	struct FStep
 	{
 		EKind Kind = EKind::Do;
 		float Seconds = 0.f;
 		FAction Action;
 		FFrame EachFrame;
+		TFunction<bool()> Predicate;
+		FString Rule;
 	};
+
+	void Report(EGothamCheck Result, const FString& Rule);
 
 	TArray<FStep> Steps;
 	int32 Next = 0;
@@ -72,6 +102,7 @@ private:
 	int64 StepStartFrame = -1;
 	int32 Passed = 0;
 	int32 Failed = 0;
+	int32 KnownBugs = 0;
 	FReporter Reporter;
 	FTSTicker::FDelegateHandle Handle;
 };

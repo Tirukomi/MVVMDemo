@@ -48,12 +48,45 @@ bool FGothamScriptTimingTest::RunTest(const FString& Parameters)
 	// Expect / Check count results and go to the reporter.
 	TSharedRef<FGothamScript> Checks = MakeShared<FGothamScript>();
 	TArray<FString> Reported;
-	Checks->SetReporter([&Reported](bool bPassed, const FString& Rule) { Reported.Add(FString::Printf(TEXT("%s: %s"), bPassed ? TEXT("PASS") : TEXT("FAIL"), *Rule)); });
+	Checks->SetReporter([&Reported](EGothamCheck Result, const FString& Rule) { Reported.Add(FString::Printf(TEXT("%s: %s"), FGothamScript::ResultLabel(Result), *Rule)); });
 	Checks->Expect([] { return true; }, TEXT("yes")).Expect([] { return false; }, TEXT("no"));
+	Checks->Do([&Checks] { Checks->CheckKnownBug(false, TEXT("still broken")); Checks->CheckKnownBug(true, TEXT("now works")); Checks->CheckKnownBug(true, TEXT("flaky"), true); });
 	Checks->Advance(0.f);
 	TestEqual("passed", Checks->GetPassed(), 1);
-	TestEqual("failed", Checks->GetFailed(), 1);
-	TestEqual("reported word for word", Reported, TArray<FString>{ TEXT("PASS: yes"), TEXT("FAIL: no") });
+	TestEqual("failed (a fixed known bug counts: it must be promoted)", Checks->GetFailed(), 2);
+	TestEqual("known bugs (an intermittent one never counts as fixed)", Checks->GetKnownBugs(), 2);
+	TestEqual("reported word for word", Reported, TArray<FString>{ TEXT("PASS: yes"), TEXT("FAIL: no"),
+		TEXT("KNOWN BUG: still broken"), TEXT("KNOWN BUG FIXED (promote to a rule): now works"),
+		TEXT("KNOWN BUG: flaky [intermittent; this run: fine]") });
+
+	// WaitUntil: passes the frame its condition holds (the frame it begins included), fails on its own timeout, and
+	// the script carries on either way.
+	TSharedRef<FGothamScript> Waits = MakeShared<FGothamScript>();
+	bool bReady = false;
+	int32 WaitFrame = 0;
+	TArray<FString> WaitLog;
+	Waits->SetReporter([&WaitLog, &WaitFrame](EGothamCheck Result, const FString& Rule) { WaitLog.Add(FString::Printf(TEXT("%s %s@%d"), FGothamScript::ResultLabel(Result), *Rule, WaitFrame)); });
+	Waits->WaitUntil([] { return true; }, 1.f, TEXT("already true"))
+		.WaitUntil([&bReady] { return bReady; }, 1.f, TEXT("becomes true"))
+		.WaitUntil([] { return false; }, 0.25f, TEXT("never true"))
+		.Do([&WaitLog, &WaitFrame] { WaitLog.Add(FString::Printf(TEXT("after@%d"), WaitFrame)); });
+	for (WaitFrame = 0; WaitFrame < 20 && Waits->Advance(0.1f); ++WaitFrame)
+	{
+		bReady = WaitFrame >= 2; // true from the frame after frame 2's check
+	}
+	TestEqual("WaitUntil timing", WaitLog, TArray<FString>{
+		TEXT("PASS already true@0"),   // true on the frame it begins
+		TEXT("PASS becomes true@3"),   // checked every frame; bReady is set after frame 2 ran
+		TEXT("FAIL never true@6"),     // begins on frame 3, times out once its own 0.25 s have passed (frames 4, 5, 6)
+		TEXT("after@6") });            // the script goes on in the same frame
+
+	// WaitFrames counts whole frames from the next one.
+	TSharedRef<FGothamScript> Frames = MakeShared<FGothamScript>();
+	int32 FrameCount = 0;
+	int32 DoneAt = -1;
+	Frames->WaitFrames(2).Do([&DoneAt, &FrameCount] { DoneAt = FrameCount; });
+	for (FrameCount = 0; FrameCount < 10 && Frames->Advance(0.1f); ++FrameCount) {}
+	TestEqual("WaitFrames(2) begins on frame 0 and ends on frame 2", DoneAt, 2);
 
 	// A step may add steps while it runs.
 	TSharedRef<FGothamScript> Growing = MakeShared<FGothamScript>();
