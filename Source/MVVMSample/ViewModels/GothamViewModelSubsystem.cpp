@@ -18,6 +18,7 @@
 #include "ViewModels/ObjectivesViewModel.h"
 #include "ViewModels/SubtitleViewModel.h"
 #include "ViewModels/GadgetViewModels.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 #include "ViewModels/ThreatViewModel.h"
 #include "Gameplay/ThreatSubsystem.h"
@@ -32,6 +33,8 @@ void UGothamViewModelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Detective = NewObject<UDetectiveViewModel>(this);
 	Objectives = NewObject<UObjectivesViewModel>(this);
 	Clues = NewObject<UClueListViewModel>(this);
+	// The objective follows the list, whoever changes it (the level's clues, or a dev aid adding or removing fakes).
+	GothamMVVM::Bind(Clues, this, &UGothamViewModelSubsystem::OnCluesChanged, { UClueListViewModel::FFieldNotificationClassDescriptor::Entries });
 	Subtitles = NewObject<USubtitleViewModel>(this);
 	Threats = NewObject<UThreatViewModel>(this);
 	Objectives->SetProgress(0, 0);
@@ -189,7 +192,6 @@ void UGothamViewModelSubsystem::RebuildClues()
 		}
 		Entries.Add(Entry);
 	}
-	DebugClueCount = 0;
 	Clues->SetEntries(MoveTemp(Entries));
 	RefreshObjectives();
 }
@@ -228,8 +230,18 @@ void UGothamViewModelSubsystem::ShowSubtitle(const FText& Speaker, const FText& 
 
 void UGothamViewModelSubsystem::RefreshObjectives()
 {
-	// Debug clues are never discovered, so only the total needs correcting.
-	Objectives->SetProgress(Clues->GetDiscoveredCount(), FMath::Max(0, Clues->GetTotalCount() - DebugClueCount));
+	int32 RealClues = 0;
+	for (const UClueEntryViewModel* Entry : Clues->GetEntries())
+	{
+		RealClues += (Entry && !Entry->IsDebug()) ? 1 : 0;
+	}
+	// Debug clues are never discovered, so only the total needs filtering.
+	Objectives->SetProgress(Clues->GetDiscoveredCount(), RealClues);
+}
+
+void UGothamViewModelSubsystem::OnCluesChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId)
+{
+	RefreshObjectives();
 }
 
 void UGothamViewModelSubsystem::AddDebugClues(int32 Count)
@@ -241,22 +253,8 @@ void UGothamViewModelSubsystem::AddDebugClues(int32 Count)
 		Entry->Initialize(*FString::Printf(TEXT("Debug_%d"), i),
 			FText::Format(NSLOCTEXT("Gotham.Clues", "DebugTitle", "Debug clue {0}"), FText::AsNumber(i + 1)),
 			NSLOCTEXT("Gotham.Clues", "DebugBody", "Generated to stress the virtualised list."), TSoftObjectPtr<UTexture2D>());
+		Entry->SetIsDebug(true);
 		Entries.Add(Entry);
 	}
-	DebugClueCount += Count;
 	Clues->SetEntries(MoveTemp(Entries));
-	RefreshObjectives();
-}
-
-void UGothamViewModelSubsystem::RemoveDebugClues()
-{
-	if (DebugClueCount <= 0)
-	{
-		return;
-	}
-	TArray<TObjectPtr<UClueEntryViewModel>> Entries = Clues->GetEntries();
-	Entries.SetNum(FMath::Max(0, Entries.Num() - DebugClueCount));
-	DebugClueCount = 0;
-	Clues->SetEntries(MoveTemp(Entries));
-	RefreshObjectives();
 }

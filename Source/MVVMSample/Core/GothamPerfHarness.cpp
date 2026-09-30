@@ -20,6 +20,7 @@
 #include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamUISubsystem.h"
+#include "ViewModels/ClueViewModels.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGothamPerf, Log, All);
@@ -300,7 +301,10 @@ void FGothamPerfHarness::Start(AGothamPlayerController* Controller, const FStrin
 		{
 			if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); }
 			// Later scenarios (and the HUD's objective) must see the level's real clues again, not 505.
-			if (WeakVMs.IsValid()) { WeakVMs->RemoveDebugClues(); }
+			if (UClueListViewModel* Clues = WeakVMs.IsValid() ? WeakVMs->GetClues() : nullptr)
+			{
+				Clues->SetEntries(Clues->GetEntries().FilterByPredicate([](const UClueEntryViewModel* Entry) { return Entry && !Entry->IsDebug(); }));
+			}
 		} });
 
 	// 6. Settings screen open (rows, scroll box, buttons).

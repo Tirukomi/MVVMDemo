@@ -21,6 +21,9 @@ public:
 	/** Where the clue sits in the world, for markers anchored to it. */
 	void SetWorldLocation(const FVector& InLocation) { WorldLocation = InLocation; bHasWorldLocation = true; }
 	bool GetWorldLocation(FVector& OutLocation) const { OutLocation = WorldLocation; return bHasWorldLocation; }
+	/** A fake clue added by a dev aid to stress the list: never counts toward the objective. */
+	void SetIsDebug(bool bInDebug) { bIsDebug = bInDebug; }
+	bool IsDebug() const { return bIsDebug; }
 
 	/** Starts streaming the thumbnail if it is not loaded yet. Safe to call repeatedly. */
 	void RequestThumbnail();
@@ -58,6 +61,7 @@ private:
 	FName ClueId;
 	FVector WorldLocation = FVector::ZeroVector;
 	bool bHasWorldLocation = false;
+	bool bIsDebug = false;
 	FText Title;
 	FText Description;
 	TSoftObjectPtr<UTexture2D> ThumbnailPath;
