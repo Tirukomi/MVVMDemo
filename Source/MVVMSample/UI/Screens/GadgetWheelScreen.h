@@ -29,11 +29,14 @@ protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual void NativeOnActivated() override;
-	virtual void NativeOnDeactivated() override;
+	virtual void NativeOnClosed() override;
+	virtual void OnPaletteChanged() override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual FReply NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 private:
+	/** A key bound to the GadgetWheel action (rebinding included). */
+	bool IsOpenKey(const FKey& Key) const;
 	UFUNCTION()
 	void HandleItemSelected(int32 ItemIndex);
 

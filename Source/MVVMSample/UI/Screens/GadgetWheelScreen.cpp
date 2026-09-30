@@ -2,6 +2,9 @@
 
 #include "UI/Screens/GadgetWheelScreen.h"
 
+#include "Gameplay/TimeScaleSubsystem.h"
+#include "UI/Style/GothamMotion.h"
+
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -60,11 +63,6 @@ void UGadgetWheelScreen::NativeConstruct()
 			}
 		}
 	}
-	if (const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Wheel->bReduceMotion = Settings->GetSettings().bReducedMotion;
-		Wheel->SynchronizeProperties();
-	}
 	RefreshItems();
 }
 
@@ -83,13 +81,19 @@ void UGadgetWheelScreen::NativeDestruct()
 void UGadgetWheelScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
-	UGameplayStatics::SetGlobalTimeDilation(this, WheelTimeDilation);
+	if (UGothamTimeScaleSubsystem* TimeScale = UGothamTimeScaleSubsystem::Get(this))
+	{
+		TimeScale->Request(TEXT("GadgetWheel"), WheelTimeDilation);
+	}
 }
 
-void UGadgetWheelScreen::NativeOnDeactivated()
+void UGadgetWheelScreen::NativeOnClosed()
 {
-	UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
-	Super::NativeOnDeactivated();
+	if (UGothamTimeScaleSubsystem* TimeScale = UGothamTimeScaleSubsystem::Get(this))
+	{
+		TimeScale->Clear(TEXT("GadgetWheel"));
+	}
+	Super::NativeOnClosed();
 }
 
 void UGadgetWheelScreen::SetStickInput(FVector2D Stick)
@@ -118,12 +122,21 @@ void UGadgetWheelScreen::RefreshItems()
 	Wheel->SetItems(Items);
 }
 
-namespace
+void UGadgetWheelScreen::OnPaletteChanged()
 {
-	bool IsOpenKey(const FKey& Key)
+	Super::OnPaletteChanged();
+	// Runs on every settings change, so reduced motion applies to an open wheel too.
+	if (Wheel)
 	{
-		return Key == EKeys::Q || Key == EKeys::Gamepad_LeftShoulder;
+		Wheel->bReduceMotion = GothamMotion::IsReduced(this);
+		Wheel->SynchronizeProperties();
 	}
+}
+
+bool UGadgetWheelScreen::IsOpenKey(const FKey& Key) const
+{
+	// Whatever the player bound the wheel to (either device), not the default keys.
+	return IsKeyBoundToAction(Key, TEXT("GadgetWheel"));
 }
 
 FReply UGadgetWheelScreen::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)

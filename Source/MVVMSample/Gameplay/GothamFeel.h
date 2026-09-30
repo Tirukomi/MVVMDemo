@@ -12,8 +12,8 @@ namespace GothamFeel
 	inline constexpr float HitStopDilation = 0.03f;
 
 	/**
-	 * Freezes the world briefly (global time dilation), then restores it. Skipped if something else already owns
-	 * time dilation (the gadget wheel's slow-mo), and under reduced motion. A second hit-stop extends the first.
+	 * Freezes the world briefly through UGothamTimeScaleSubsystem, then gives time back to whatever else asks for it
+	 * (the gadget wheel's slow motion, say). Skipped under reduced motion. A second hit-stop extends the first.
 	 */
 	MVVMSAMPLE_API void HitStop(const UObject* WorldContext, float Seconds);
 }
