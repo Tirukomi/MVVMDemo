@@ -13,6 +13,7 @@
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "UI/GothamWidgetTick.h"
+#include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamSelectorDecor.h"
 #include "UI/Widgets/GothamText.h"
 #include "ViewModels/GothamMVVM.h"
@@ -26,13 +27,16 @@ namespace
 UGothamOptionRow::UGothamOptionRow(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	Style = UGothamButtonStyle::StaticClass();
 	SetIsFocusable(true);
 }
 
-TSharedRef<SWidget> UGothamOptionRow::RebuildWidget()
+bool UGothamOptionRow::Initialize()
 {
-	if (!WidgetTree->RootWidget)
+	// Like UGothamButton: Common UI only wires its internal button if the tree has a root when it initializes.
+	if (!WidgetTree && !HasAnyFlags(RF_ClassDefaultObject))
 	{
+		WidgetTree = NewObject<UWidgetTree>(this, TEXT("WidgetTree"), RF_Transient);
 		// A transparent border so the whole row (not just its text) takes hover and clicks.
 		UBorder* Hit = WidgetTree->ConstructWidget<UBorder>();
 		Hit->SetBrushColor(FLinearColor::Transparent);
@@ -69,7 +73,7 @@ TSharedRef<SWidget> UGothamOptionRow::RebuildWidget()
 		ValueSlot->SetVerticalAlignment(VAlign_Center);
 		ValueSlot->SetPadding(FMargin(24.f, 2.f, 24.f, 8.f));
 	}
-	return Super::RebuildWidget();
+	return Super::Initialize();
 }
 
 void UGothamOptionRow::Setup(EGothamSetting InSetting, USettingsViewModel* InViewModel)
@@ -108,53 +112,50 @@ FNavigationReply UGothamOptionRow::NativeOnNavigation(const FGeometry& MyGeometr
 	}
 }
 
-FReply UGothamOptionRow::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+FReply UGothamOptionRow::NativeOnPreviewMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	const FKey Key = InKeyEvent.GetKey();
-	if (Key == EKeys::Enter || Key == EKeys::SpaceBar || Key == EKeys::Gamepad_FaceButton_Bottom)
+	// The internal button takes the press itself, so read where it lands on the way down (preview) and let it pass:
+	// the left half of the selector steps back, anything to the right of its centre (or the label) steps forward.
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && Decor)
 	{
-		Step(+1);
-		return FReply::Handled();
+		const FGeometry& DecorGeometry = Decor->GetCachedGeometry();
+		const float CentreX = DecorGeometry.GetAbsolutePosition().X + DecorGeometry.GetAbsoluteSize().X * 0.5f;
+		const float X = InMouseEvent.GetScreenSpacePosition().X;
+		const bool bOverSelector = X >= DecorGeometry.GetAbsolutePosition().X;
+		PointerDirection = bOverSelector && X < CentreX ? -1 : +1;
 	}
-	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+	return Super::NativeOnPreviewMouseButtonDown(InGeometry, InMouseEvent);
 }
 
-FReply UGothamOptionRow::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+void UGothamOptionRow::NativeOnClicked()
 {
-	if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
-	{
-		return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-	}
-	// Left half of the selector steps back, anything to the right of its centre (or the label) steps forward.
-	const FGeometry& DecorGeometry = Decor->GetCachedGeometry();
-	const float CentreX = DecorGeometry.GetAbsolutePosition().X + DecorGeometry.GetAbsoluteSize().X * 0.5f;
-	const float X = InMouseEvent.GetScreenSpacePosition().X;
-	const bool bOverSelector = X >= DecorGeometry.GetAbsolutePosition().X;
-	Step(bOverSelector && X < CentreX ? -1 : +1);
-	return FReply::Handled().SetUserFocus(TakeWidget(), EFocusCause::Mouse);
+	Super::NativeOnClicked();
+	Step(PointerDirection.Get(+1));
+	PointerDirection.Reset();
 }
 
-void UGothamOptionRow::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+void UGothamOptionRow::NativeOnHovered()
 {
-	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+	Super::NativeOnHovered();
+	// The mouse moves focus too, so there is only ever one "current" row and the highlight follows the pointer.
 	if (!bFocused && GothamUI::HoverEnabled())
 	{
 		SetFocus();
 	}
 }
 
-FReply UGothamOptionRow::NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent)
+void UGothamOptionRow::HandleFocusReceived()
 {
+	Super::HandleFocusReceived();
 	bFocused = true;
 	ApplyColors();
-	return Super::NativeOnFocusReceived(InGeometry, InFocusEvent);
 }
 
-void UGothamOptionRow::NativeOnFocusLost(const FFocusEvent& InFocusEvent)
+void UGothamOptionRow::HandleFocusLost()
 {
+	Super::HandleFocusLost();
 	bFocused = false;
 	ApplyColors();
-	Super::NativeOnFocusLost(InFocusEvent);
 }
 
 void UGothamOptionRow::Step(int32 Direction)
@@ -189,7 +190,7 @@ void UGothamOptionRow::ApplyColors()
 	using namespace GothamStyle;
 	const FLinearColor Primary = Token(this, EGothamColorToken::TextPrimary);
 	const FLinearColor Muted = Token(this, EGothamColorToken::TextMuted);
-	LabelText->SetColorAndOpacity(bFocused ? Primary : Muted);
+	LabelText->SetColorAndOpacity(ItemText(this, bFocused));
 	ValueText->SetColorAndOpacity(Primary);
 	Decor->SetColors(Token(this, EGothamColorToken::Accent), Muted, bFocused);
 }

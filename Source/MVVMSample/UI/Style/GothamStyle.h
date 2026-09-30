@@ -38,6 +38,8 @@ namespace GothamStyle
 
 	/** A palette token under the player's current colour and contrast settings (defaults without a game instance). */
 	MVVMSAMPLE_API FLinearColor Token(const UObject* Context, EGothamColorToken InToken, float Alpha = 1.f);
+	/** The label colour every menu item shares: primary while focused or hovered ("hot"), muted otherwise. */
+	MVVMSAMPLE_API FLinearColor ItemText(const UObject* Context, bool bHot);
 
 	/** Panel fill alpha under the current contrast setting. */
 	MVVMSAMPLE_API float PanelAlpha(const UObject* Context);

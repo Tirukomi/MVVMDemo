@@ -135,7 +135,7 @@ void UGothamButton::ApplyState()
 		Frame->SetColors(Clear, Clear, 0.f);
 		Frame->SetAccent(Clear, 0.f);
 		Frame->SetGlow(Clear, 0.f);
-		Label->SetColorAndOpacity(Token(this, bHot ? EGothamColorToken::TextPrimary : EGothamColorToken::TextMuted));
+		Label->SetColorAndOpacity(ItemText(this, bHot));
 		break;
 
 	case EGothamButtonKind::Tab:
@@ -145,7 +145,7 @@ void UGothamButton::ApplyState()
 		Frame->SetGlow(Clear, 0.f);
 		// Dark text on the selected (accent) tab, so selection never relies on colour alone: it is also a filled block.
 		Label->SetColorAndOpacity(bSelectedNow ? Token(this, EGothamColorToken::Panel)
-			: Token(this, bHot ? EGothamColorToken::TextPrimary : EGothamColorToken::TextMuted));
+			: ItemText(this, bHot));
 		break;
 
 	default:
@@ -167,7 +167,7 @@ void UGothamButton::ApplyState()
 		Frame->SetColors(Fill, Edge, bHot ? 1.5f : 1.f);
 		Frame->SetAccent(Accent, bHot ? 3.f : 0.f);
 		Frame->SetGlow(FLinearColor(Accent.R, Accent.G, Accent.B, 0.3f), bHot ? 6.f : 0.f);
-		Label->SetColorAndOpacity(Token(this, bHot ? EGothamColorToken::TextPrimary : EGothamColorToken::TextMuted));
+		Label->SetColorAndOpacity(ItemText(this, bHot));
 		break;
 	}
 	}

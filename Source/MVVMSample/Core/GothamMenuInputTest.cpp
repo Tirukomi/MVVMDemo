@@ -15,6 +15,7 @@
 #include "UI/Screens/PauseMenuScreen.h"
 #include "UI/Screens/SettingsScreen.h"
 #include "UI/Widgets/GothamHintButton.h"
+#include "UI/Widgets/GothamOptionRow.h"
 #include "UI/Widgets/GothamTabList.h"
 #include "UObject/UObjectIterator.h"
 #include "ViewModels/SettingsViewModel.h"
@@ -44,15 +45,15 @@ namespace GothamMenuInputTestPrivate
 		App.ProcessKeyUpEvent(FKeyEvent(Key, App.GetModifierKeys(), 0, false, 0, 0));
 	}
 
-	/** A left click at the widget's centre through Slate's hit-testing (move, press, release). */
-	bool Click(const UWidget* Widget)
+	/** A left click through Slate's hit-testing (move, press, release), at a point given as a fraction of the widget. */
+	bool Click(const UWidget* Widget, const FVector2D& Fraction = FVector2D(0.5, 0.5))
 	{
 		if (!Widget || !Widget->GetCachedWidget().IsValid())
 		{
 			return false;
 		}
 		const FGeometry& Geometry = Widget->GetCachedGeometry();
-		const FVector2D Centre = Geometry.GetAbsolutePosition() + Geometry.GetAbsoluteSize() * 0.5f;
+		const FVector2D Centre = Geometry.GetAbsolutePosition() + Geometry.GetAbsoluteSize() * Fraction;
 		FSlateApplication& App = FSlateApplication::Get();
 		const TSet<FKey> Pressed = { EKeys::LeftMouseButton };
 		const TSet<FKey> Released;
@@ -68,6 +69,19 @@ namespace GothamMenuInputTestPrivate
 		for (TObjectIterator<UGothamHintButton> It; It; ++It)
 		{
 			if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->GetKeyboardKey() == Key && It->IsIn(Screen))
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+
+	/** The settings row for one option, inside Screen. */
+	UGothamOptionRow* FindRow(const UObject* Screen, EGothamSetting Setting)
+	{
+		for (TObjectIterator<UGothamOptionRow> It; It; ++It)
+		{
+			if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->GetSetting() == Setting && It->IsIn(Screen))
 			{
 				return *It;
 			}
@@ -142,6 +156,22 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	Script->At(7.3f).Do([Self, Settings, ScaleBefore]()
 	{
 		Self->Check(Settings() && Settings()->GetCurrent().UIScaleIndex != *ScaleBefore, TEXT("Enter on a focused option row steps it"));
+		if (Settings()) { Settings()->Revert(); }
+	});
+	// The selector's left half steps back. The selector (260 wide, inset 14) sits at the row's right edge; click a
+	// quarter of the way into it.
+	Script->At(7.35f).Do([Self, Settings, ScaleBefore]()
+	{
+		*ScaleBefore = Settings() ? Settings()->GetCurrent().UIScaleIndex : -1;
+		UGothamOptionRow* Row = FindRow(ActiveScreen<USettingsScreen>(), EGothamSetting::UIScale);
+		const FGeometry Geometry = Row ? Row->GetCachedGeometry() : FGeometry();
+		const float SelectorLeft = Geometry.GetLocalSize().X - 14.f - 260.f;
+		const float LeftQuarter = Geometry.GetLocalSize().X > 0.f ? (SelectorLeft + 260.f * 0.25f) / Geometry.GetLocalSize().X : 0.5f;
+		Self->Check(Click(Row, FVector2D(LeftQuarter, 0.5)), TEXT("the UI scale row is clickable"));
+	});
+	Script->At(7.45f).Do([Self, Settings, ScaleBefore]()
+	{
+		Self->Check(Settings() && Settings()->GetCurrent().UIScaleIndex == *ScaleBefore - 1, TEXT("clicking the left half of a selector steps it back"));
 		if (Settings()) { Settings()->Revert(); }
 	});
 	Script->At(7.5f).Do([Self, Settings, ScaleBefore]()

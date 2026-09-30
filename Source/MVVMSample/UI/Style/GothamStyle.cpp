@@ -121,6 +121,11 @@ namespace GothamStyle
 		return Color;
 	}
 
+	FLinearColor ItemText(const UObject* Context, bool bHot)
+	{
+		return Token(Context, bHot ? EGothamColorToken::TextPrimary : EGothamColorToken::TextMuted);
+	}
+
 	float PanelAlpha(const UObject* Context)
 	{
 		const UGothamSettingsSubsystem* Settings = Context ? UGothamSettingsSubsystem::Get(Context) : nullptr;
