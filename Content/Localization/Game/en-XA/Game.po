@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Game\n"
-"POT-Creation-Date: 2026-09-30 21:51\n"
-"PO-Revision-Date: 2026-09-30 21:51\n"
+"POT-Creation-Date: 2026-09-30 23:51\n"
+"PO-Revision-Date: 2026-09-30 23:51\n"
 "Language-Team: \n"
 "Language: en-XA\n"
 "MIME-Version: 1.0\n"
@@ -426,6 +426,279 @@ msgctxt "Gotham.Bindings,Pause"
 msgid "Pause"
 msgstr "[Páúšé ~~]"
 
+#. Key:	Esc
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(28)
+#: Source/MVVMSample/Input/GothamBindings.cpp(28)
+msgctxt "Gotham.Keys,Esc"
+msgid "Esc"
+msgstr "[Éšç ~~]"
+
+#. Key:	Enter
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(29)
+#: Source/MVVMSample/Input/GothamBindings.cpp(29)
+msgctxt "Gotham.Keys,Enter"
+msgid "Enter"
+msgstr "[Éñtér ~~]"
+
+#. Key:	LMB
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(30)
+#: Source/MVVMSample/Input/GothamBindings.cpp(30)
+msgctxt "Gotham.Keys,LMB"
+msgid "LMB"
+msgstr "[LMB ~~]"
+
+#. Key:	RMB
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(31)
+#: Source/MVVMSample/Input/GothamBindings.cpp(31)
+msgctxt "Gotham.Keys,RMB"
+msgid "RMB"
+msgstr "[RMB ~~]"
+
+#. Key:	MMB
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(32)
+#: Source/MVVMSample/Input/GothamBindings.cpp(32)
+msgctxt "Gotham.Keys,MMB"
+msgid "MMB"
+msgstr "[MMB ~~]"
+
+#. Key:	DPadUp
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(33)
+#: Source/MVVMSample/Input/GothamBindings.cpp(33)
+msgctxt "Gotham.Keys,DPadUp"
+msgid "D-pad Up"
+msgstr "[D-pád Úp ~~~]"
+
+#. Key:	DPadDown
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(34)
+#: Source/MVVMSample/Input/GothamBindings.cpp(34)
+msgctxt "Gotham.Keys,DPadDown"
+msgid "D-pad Down"
+msgstr "[D-pád Dówñ ~~~~]"
+
+#. Key:	DPadLeft
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(35)
+#: Source/MVVMSample/Input/GothamBindings.cpp(35)
+msgctxt "Gotham.Keys,DPadLeft"
+msgid "D-pad Left"
+msgstr "[D-pád Léft ~~~~]"
+
+#. Key:	DPadRight
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(36)
+#: Source/MVVMSample/Input/GothamBindings.cpp(36)
+msgctxt "Gotham.Keys,DPadRight"
+msgid "D-pad Right"
+msgstr "[D-pád Ríght ~~~~]"
+
+#. Key:	PSCross
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(41)
+#: Source/MVVMSample/Input/GothamBindings.cpp(41)
+msgctxt "Gotham.Keys,PSCross"
+msgid "Cross"
+msgstr "[Çróšš ~~]"
+
+#. Key:	PSCircle
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(42)
+#: Source/MVVMSample/Input/GothamBindings.cpp(42)
+msgctxt "Gotham.Keys,PSCircle"
+msgid "Circle"
+msgstr "[Çírçlé ~~]"
+
+#. Key:	PSSquare
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(43)
+#: Source/MVVMSample/Input/GothamBindings.cpp(43)
+msgctxt "Gotham.Keys,PSSquare"
+msgid "Square"
+msgstr "[Šqúáré ~~]"
+
+#. Key:	PSTriangle
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(44)
+#: Source/MVVMSample/Input/GothamBindings.cpp(44)
+msgctxt "Gotham.Keys,PSTriangle"
+msgid "Triangle"
+msgstr "[Tríáñglé ~~~]"
+
+#. Key:	PSL1
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(45)
+#: Source/MVVMSample/Input/GothamBindings.cpp(45)
+msgctxt "Gotham.Keys,PSL1"
+msgid "L1"
+msgstr "[L1 ~~]"
+
+#. Key:	PSR1
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(46)
+#: Source/MVVMSample/Input/GothamBindings.cpp(46)
+msgctxt "Gotham.Keys,PSR1"
+msgid "R1"
+msgstr "[R1 ~~]"
+
+#. Key:	PSL2
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(47)
+#: Source/MVVMSample/Input/GothamBindings.cpp(47)
+msgctxt "Gotham.Keys,PSL2"
+msgid "L2"
+msgstr "[L2 ~~]"
+
+#. Key:	PSR2
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(48)
+#: Source/MVVMSample/Input/GothamBindings.cpp(48)
+msgctxt "Gotham.Keys,PSR2"
+msgid "R2"
+msgstr "[R2 ~~]"
+
+#. Key:	PSCreate
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(49)
+#: Source/MVVMSample/Input/GothamBindings.cpp(49)
+msgctxt "Gotham.Keys,PSCreate"
+msgid "Create"
+msgstr "[Çréáté ~~]"
+
+#. Key:	PSOptions
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(50)
+#: Source/MVVMSample/Input/GothamBindings.cpp(50)
+msgctxt "Gotham.Keys,PSOptions"
+msgid "Options"
+msgstr "[Óptíóñš ~~]"
+
+#. Key:	NintendoB
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(54)
+#: Source/MVVMSample/Input/GothamBindings.cpp(54)
+msgctxt "Gotham.Keys,NintendoB"
+msgid "B"
+msgstr "[B ~~]"
+
+#. Key:	NintendoA
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(55)
+#: Source/MVVMSample/Input/GothamBindings.cpp(55)
+msgctxt "Gotham.Keys,NintendoA"
+msgid "A"
+msgstr "[Å ~~]"
+
+#. Key:	NintendoY
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(56)
+#: Source/MVVMSample/Input/GothamBindings.cpp(56)
+msgctxt "Gotham.Keys,NintendoY"
+msgid "Y"
+msgstr "[Ý ~~]"
+
+#. Key:	NintendoX
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(57)
+#: Source/MVVMSample/Input/GothamBindings.cpp(57)
+msgctxt "Gotham.Keys,NintendoX"
+msgid "X"
+msgstr "[X ~~]"
+
+#. Key:	NintendoL
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(58)
+#: Source/MVVMSample/Input/GothamBindings.cpp(58)
+msgctxt "Gotham.Keys,NintendoL"
+msgid "L"
+msgstr "[L ~~]"
+
+#. Key:	NintendoR
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(59)
+#: Source/MVVMSample/Input/GothamBindings.cpp(59)
+msgctxt "Gotham.Keys,NintendoR"
+msgid "R"
+msgstr "[R ~~]"
+
+#. Key:	NintendoZL
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(60)
+#: Source/MVVMSample/Input/GothamBindings.cpp(60)
+msgctxt "Gotham.Keys,NintendoZL"
+msgid "ZL"
+msgstr "[ZL ~~]"
+
+#. Key:	NintendoZR
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(61)
+#: Source/MVVMSample/Input/GothamBindings.cpp(61)
+msgctxt "Gotham.Keys,NintendoZR"
+msgid "ZR"
+msgstr "[ZR ~~]"
+
+#. Key:	NintendoMinus
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(62)
+#: Source/MVVMSample/Input/GothamBindings.cpp(62)
+msgctxt "Gotham.Keys,NintendoMinus"
+msgid "-"
+msgstr "[- ~~]"
+
+#. Key:	NintendoPlus
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(63)
+#: Source/MVVMSample/Input/GothamBindings.cpp(63)
+msgctxt "Gotham.Keys,NintendoPlus"
+msgid "+"
+msgstr "[+ ~~]"
+
+#. Key:	XboxA
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(66)
+#: Source/MVVMSample/Input/GothamBindings.cpp(66)
+msgctxt "Gotham.Keys,XboxA"
+msgid "A"
+msgstr "[Å ~~]"
+
+#. Key:	XboxB
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(67)
+#: Source/MVVMSample/Input/GothamBindings.cpp(67)
+msgctxt "Gotham.Keys,XboxB"
+msgid "B"
+msgstr "[B ~~]"
+
+#. Key:	XboxX
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(68)
+#: Source/MVVMSample/Input/GothamBindings.cpp(68)
+msgctxt "Gotham.Keys,XboxX"
+msgid "X"
+msgstr "[X ~~]"
+
+#. Key:	XboxY
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(69)
+#: Source/MVVMSample/Input/GothamBindings.cpp(69)
+msgctxt "Gotham.Keys,XboxY"
+msgid "Y"
+msgstr "[Ý ~~]"
+
+#. Key:	XboxLB
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(70)
+#: Source/MVVMSample/Input/GothamBindings.cpp(70)
+msgctxt "Gotham.Keys,XboxLB"
+msgid "LB"
+msgstr "[LB ~~]"
+
+#. Key:	XboxRB
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(71)
+#: Source/MVVMSample/Input/GothamBindings.cpp(71)
+msgctxt "Gotham.Keys,XboxRB"
+msgid "RB"
+msgstr "[RB ~~]"
+
+#. Key:	XboxLT
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(72)
+#: Source/MVVMSample/Input/GothamBindings.cpp(72)
+msgctxt "Gotham.Keys,XboxLT"
+msgid "LT"
+msgstr "[LT ~~]"
+
+#. Key:	XboxRT
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(73)
+#: Source/MVVMSample/Input/GothamBindings.cpp(73)
+msgctxt "Gotham.Keys,XboxRT"
+msgid "RT"
+msgstr "[RT ~~]"
+
+#. Key:	XboxView
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(74)
+#: Source/MVVMSample/Input/GothamBindings.cpp(74)
+msgctxt "Gotham.Keys,XboxView"
+msgid "View"
+msgstr "[Víéw ~~]"
+
+#. Key:	XboxMenu
+#. SourceLocation:	Source/MVVMSample/Input/GothamBindings.cpp(75)
+#: Source/MVVMSample/Input/GothamBindings.cpp(75)
+msgctxt "Gotham.Keys,XboxMenu"
+msgid "Menu"
+msgstr "[Méñú ~~]"
+
 #. Key:	CaseNumberFmt
 #. SourceLocation:	Source/MVVMSample/UI/ClueEntryWidget.cpp(28)
 #: Source/MVVMSample/UI/ClueEntryWidget.cpp(28)
@@ -525,15 +798,15 @@ msgid "{0} of {1} clues discovered"
 msgstr "[{0} óf {1} çlúéš díšçóvéréd ~~~~~~~~]"
 
 #. Key:	Analysed
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
 msgctxt "Gotham.ClueLog,Analysed"
 msgid "Analysed"
 msgstr "[Åñálýšéd ~~~]"
 
 #. Key:	Unknown
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
 msgctxt "Gotham.ClueLog,Unknown"
 msgid "Not yet found"
 msgstr "[Ñót ýét fóúñd ~~~~~]"
@@ -567,22 +840,22 @@ msgid "Browse"
 msgstr "[Brówšé ~~]"
 
 #. Key:	Caution
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(56)
-#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(56)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(58)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(58)
 msgctxt "Gotham.ConfirmModal,Caution"
 msgid "Caution"
 msgstr "[Çáútíóñ ~~]"
 
 #. Key:	Yes
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(72)
-#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(72)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(74)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(74)
 msgctxt "Gotham.ConfirmModal,Yes"
 msgid "Yes"
 msgstr "[Ýéš ~~]"
 
 #. Key:	No
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(77)
-#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(77)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(79)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(79)
 msgctxt "Gotham.ConfirmModal,No"
 msgid "No"
 msgstr "[Ñó ~~]"
@@ -679,22 +952,22 @@ msgid "Gamepad"
 msgstr "[Gámépád ~~]"
 
 #. Key:	EvidenceFmt
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(140)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(140)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(141)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(141)
 msgctxt "Gotham.PauseMenu,EvidenceFmt"
 msgid "{0} / {1}"
 msgstr "[{0} / {1} ~~]"
 
 #. Key:	QuitBody
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
 msgctxt "Gotham.PauseMenu,QuitBody"
 msgid "Unsaved progress will be lost."
 msgstr "[Úñšávéd prógréšš wíll bé lóšt. ~~~~~~~~~~~~]"
 
 #. Key:	QuitTitle
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
 msgctxt "Gotham.PauseMenu,QuitTitle"
 msgid "Quit game?"
 msgstr "[Qúít gámé? ~~~~]"
@@ -812,15 +1085,15 @@ msgid "Change"
 msgstr "[Çháñgé ~~]"
 
 #. Key:	KeyBindingsDesc
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(217)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(217)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(231)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(231)
 msgctxt "Gotham.SettingsScreen,KeyBindingsDesc"
 msgid "Change the key or button for every action, separately for keyboard and mouse and for gamepad."
 msgstr "[Çháñgé thé kéý ór búttóñ fór évérý áçtíóñ, šépárátélý fór kéýbóárd áñd móúšé áñd fór gámépád. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]"
 
 #. Key:	Unapplied
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(246)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(246)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(260)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(260)
 msgctxt "Gotham.SettingsScreen,Unapplied"
 msgid "Unapplied changes. Choose Apply to keep them."
 msgstr "[Úñápplíéd çháñgéš. Çhóóšé Åpplý tó kéép thém. ~~~~~~~~~~~~~~~~~~]"
@@ -896,29 +1169,29 @@ msgid "That key was already in use; the two actions swapped keys."
 msgstr "[Thát kéý wáš álréádý íñ úšé; thé twó áçtíóñš šwáppéd kéýš. ~~~~~~~~~~~~~~~~~~~~~~~]"
 
 #. Key:	Detective
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(210)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(210)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
 msgctxt "Gotham.Subtitles,Detective"
 msgid "Detective"
 msgstr "[Détéçtívé ~~~]"
 
 #. Key:	ClueFound
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(211)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(211)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(256)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(256)
 msgctxt "Gotham.Subtitles,ClueFound"
 msgid "{0}. {1}"
 msgstr "[{0}. {1} ~~]"
 
 #. Key:	DebugTitle
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(254)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(254)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(299)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(299)
 msgctxt "Gotham.Clues,DebugTitle"
 msgid "Debug clue {0}"
 msgstr "[Débúg çlúé {0} ~~~~]"
 
 #. Key:	DebugBody
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(300)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(300)
 msgctxt "Gotham.Clues,DebugBody"
 msgid "Generated to stress the virtualised list."
 msgstr "[Géñérátéd tó štréšš thé vírtúálíšéd líšt. ~~~~~~~~~~~~~~~~]"
