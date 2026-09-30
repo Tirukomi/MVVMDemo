@@ -19,6 +19,20 @@
 #include "UI/Widgets/GothamTabList.h"
 #include "UObject/UObjectIterator.h"
 #include "ViewModels/SettingsViewModel.h"
+#include "Algo/Reverse.h"
+#include "EnhancedInputSubsystems.h"
+#include "Gameplay/GothamFeel.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/ClueEntryWidget.h"
+#include "UI/Screens/ControlsScreen.h"
+#include "UI/Screens/GadgetWheelScreen.h"
+#include "UI/Widgets/GadgetWheel.h"
+#include "UI/Widgets/GothamInputGlyph.h"
+#include "UserSettings/EnhancedInputUserSettings.h"
+#include "ViewModels/ClueViewModels.h"
+#include "ViewModels/GadgetViewModels.h"
+#include "ViewModels/GothamViewModelSubsystem.h"
+#include "ViewModels/SubtitleViewModel.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGothamMenuTest, Log, All);
 
@@ -45,22 +59,53 @@ namespace GothamMenuInputTestPrivate
 		App.ProcessKeyUpEvent(FKeyEvent(Key, App.GetModifierKeys(), 0, false, 0, 0));
 	}
 
-	/** A left click through Slate's hit-testing (move, press, release), at a point given as a fraction of the widget. */
-	bool Click(const UWidget* Widget, const FVector2D& Fraction = FVector2D(0.5, 0.5))
+	void MouseEvent(const FVector2D& At, bool bDown, bool bUp)
 	{
-		if (!Widget || !Widget->GetCachedWidget().IsValid())
-		{
-			return false;
-		}
-		const FGeometry& Geometry = Widget->GetCachedGeometry();
-		const FVector2D Centre = Geometry.GetAbsolutePosition() + Geometry.GetAbsoluteSize() * Fraction;
 		FSlateApplication& App = FSlateApplication::Get();
 		const TSet<FKey> Pressed = { EKeys::LeftMouseButton };
 		const TSet<FKey> Released;
-		App.ProcessMouseMoveEvent(FPointerEvent(0, 0, Centre, Centre, Released, EKeys::Invalid, 0.f, App.GetModifierKeys()));
-		App.ProcessMouseButtonDownEvent(nullptr, FPointerEvent(0, 0, Centre, Centre, Pressed, EKeys::LeftMouseButton, 0.f, App.GetModifierKeys()));
-		App.ProcessMouseButtonUpEvent(FPointerEvent(0, 0, Centre, Centre, Released, EKeys::LeftMouseButton, 0.f, App.GetModifierKeys()));
-		return true;
+		if (bDown)
+		{
+			App.ProcessMouseButtonDownEvent(nullptr, FPointerEvent(0, 0, At, At, Pressed, EKeys::LeftMouseButton, 0.f, App.GetModifierKeys()));
+		}
+		else if (bUp)
+		{
+			App.ProcessMouseButtonUpEvent(FPointerEvent(0, 0, At, At, Released, EKeys::LeftMouseButton, 0.f, App.GetModifierKeys()));
+		}
+		else
+		{
+			App.ProcessMouseMoveEvent(FPointerEvent(0, 0, At, At, Released, EKeys::Invalid, 0.f, App.GetModifierKeys()));
+		}
+	}
+
+	/**
+	 * A left click the way a mouse makes one, through Slate's hit-testing: the pointer arrives, the button goes down on
+	 * the next frame and up on the frame after. (Move, press and release in one instant is not something real input
+	 * does, and Common UI buttons then miss the click now and then.) Fraction picks the point inside Target.
+	 */
+	void AddClick(FGothamScript& Script, TFunction<const UWidget*()> Target, const FString& Rule, TFunction<FVector2D(const FGeometry&)> Fraction = nullptr)
+	{
+		FGothamScript* Self = &Script;
+		TSharedRef<FVector2D> At = MakeShared<FVector2D>(FVector2D::ZeroVector);
+		// Slate treats the first click on an inactive window differently, so clicks need the game to be the active
+		// application: leave the machine alone while this test runs.
+		Script.WaitUntil([]() { return FSlateApplication::Get().IsActive(); }, 3.f, TEXT("the game window is the active application (precondition; leave the PC idle)"));
+		Script.Do([Self, Target = MoveTemp(Target), Fraction = MoveTemp(Fraction), At, Rule]()
+			{
+				const UWidget* Widget = Target();
+				const bool bClickable = Widget && Widget->GetCachedWidget().IsValid();
+				if (bClickable)
+				{
+					const FGeometry& Geometry = Widget->GetCachedGeometry();
+					*At = Geometry.GetAbsolutePosition() + Geometry.GetAbsoluteSize() * (Fraction ? Fraction(Geometry) : FVector2D(0.5, 0.5));
+					MouseEvent(*At, false, false);
+				}
+				Self->Check(bClickable, Rule);
+			})
+			.WaitFrames(1)
+			.Do([At]() { MouseEvent(*At, true, false); })
+			.WaitFrames(1)
+			.Do([At]() { MouseEvent(*At, false, true); });
 	}
 
 	/** The prompt with this keyboard key inside Screen (including nested widgets such as the tab list). */
@@ -100,13 +145,149 @@ namespace GothamMenuInputTestPrivate
 		}
 		return Label ? Label->GetColorAndOpacity().GetSpecifiedColor() : FLinearColor::Transparent;
 	}
+
+	/** True if the user's keyboard focus is Screen's widget or inside it. */
+	bool HasFocusWithin(const UUserWidget* Screen)
+	{
+		const TSharedPtr<SWidget> ScreenSlate = Screen ? Screen->GetCachedWidget() : nullptr;
+		for (TSharedPtr<SWidget> Widget = FSlateApplication::Get().GetUserFocusedWidget(0); Widget.IsValid() && ScreenSlate.IsValid(); Widget = Widget->GetParentWidget())
+		{
+			if (Widget == ScreenSlate)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * A condition that holds once Get's widget has kept the same on-screen position and size for two frames in a row:
+	 * layout changes (UI scale), animated scrolling and sliding highlights take a few frames to settle, and a click
+	 * aimed before that misses.
+	 */
+	TFunction<bool()> Stable(TFunction<const UWidget*()> Get)
+	{
+		TSharedRef<FVector4> Last = MakeShared<FVector4>(-1.0, -1.0, -1.0, -1.0);
+		TSharedRef<int32> SameFrames = MakeShared<int32>(0);
+		return [Get = MoveTemp(Get), Last, SameFrames]()
+		{
+			const UWidget* Widget = Get();
+			if (!Widget || !Widget->GetCachedWidget().IsValid())
+			{
+				return false;
+			}
+			const FGeometry& Geometry = Widget->GetCachedGeometry();
+			const FVector4 Now(Geometry.GetAbsolutePosition().X, Geometry.GetAbsolutePosition().Y, Geometry.GetAbsoluteSize().X, Geometry.GetAbsoluteSize().Y);
+			if (Now.Equals(*Last, 0.01) && Now.Z > 0.0)
+			{
+				++*SameFrames;
+			}
+			else
+			{
+				*SameFrames = 0;
+				*Last = Now;
+			}
+			return *SameFrames >= 2;
+		};
+	}
+
+	void ReleaseKey(const FKey& Key)
+	{
+		FSlateApplication& App = FSlateApplication::Get();
+		App.ProcessKeyUpEvent(FKeyEvent(Key, App.GetModifierKeys(), 0, false, 0, 0));
+	}
+
+	FName SelectedTab(const UObject* Screen)
+	{
+		for (TObjectIterator<UGothamTabList> It; It; ++It)
+		{
+			if (!It->HasAnyFlags(RF_ClassDefaultObject) && Screen && It->IsIn(Screen))
+			{
+				return It->GetSelectedTabId();
+			}
+		}
+		return NAME_None;
+	}
+
+	template<typename T>
+	T* FindIn(const UObject* Screen)
+	{
+		for (TObjectIterator<T> It; It; ++It)
+		{
+			if (!It->HasAnyFlags(RF_ClassDefaultObject) && Screen && It->IsIn(Screen))
+			{
+				return *It;
+			}
+		}
+		return nullptr;
+	}
+	const UGothamClueTileView* FindTileView(const UObject* Screen) { return FindIn<UGothamClueTileView>(Screen); }
+	const UGadgetWheel* FindWheel(const UObject* Screen) { return FindIn<UGadgetWheel>(Screen); }
+
+	UGothamViewModelSubsystem* ViewModelsOf(const TWeakObjectPtr<AGothamPlayerController>& PC)
+	{
+		const ULocalPlayer* LocalPlayer = PC.IsValid() ? PC->GetLocalPlayer() : nullptr;
+		return LocalPlayer ? LocalPlayer->GetSubsystem<UGothamViewModelSubsystem>() : nullptr;
+	}
+
+	UEnhancedInputUserSettings* UserSettingsOf(const TWeakObjectPtr<AGothamPlayerController>& PC)
+	{
+		const ULocalPlayer* LocalPlayer = PC.IsValid() ? PC->GetLocalPlayer() : nullptr;
+		const auto* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+		return Input ? Input->GetUserSettings() : nullptr;
+	}
+
+	void MapKeyboardSlot(UEnhancedInputUserSettings* UserSettings, FName Action, const FKey& Key)
+	{
+		FMapPlayerKeyArgs Args;
+		Args.MappingName = Action;
+		Args.Slot = EPlayerMappableKeySlot::First;
+		Args.NewKey = Key;
+		FGameplayTagContainer Failure;
+		UserSettings->MapPlayerKey(Args, Failure);
+	}
+
+	/** Rebinds Action's keyboard slot in memory (never saved), remembering the key it had in Undo. */
+	void Rebind(const TWeakObjectPtr<AGothamPlayerController>& PC, FName Action, const FKey& Key, TArray<TPair<FName, FKey>>& Undo)
+	{
+		UEnhancedInputUserSettings* UserSettings = UserSettingsOf(PC);
+		const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings ? UserSettings->GetActiveKeyProfile() : nullptr;
+		const FKeyMappingRow* Row = Profile ? Profile->FindKeyMappingRow(Action) : nullptr;
+		if (!Row)
+		{
+			return;
+		}
+		for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+		{
+			if (Mapping.GetSlot() == EPlayerMappableKeySlot::First)
+			{
+				Undo.Add({ Action, Mapping.GetCurrentKey() });
+			}
+		}
+		MapKeyboardSlot(UserSettings, Action, Key);
+		UserSettings->ApplySettings();
+	}
+
+	/** Puts back exactly the keys Rebind replaced, so the player's own rebinds are untouched. */
+	void RestoreBindings(const TWeakObjectPtr<AGothamPlayerController>& PC, TArray<TPair<FName, FKey>>& Undo)
+	{
+		if (UEnhancedInputUserSettings* UserSettings = UserSettingsOf(PC))
+		{
+			for (const TPair<FName, FKey>& Entry : Undo)
+			{
+				MapKeyboardSlot(UserSettings, Entry.Key, Entry.Value);
+			}
+			UserSettings->ApplySettings();
+		}
+		Undo.Reset();
+	}
 }
 
 void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 {
-	if (const TSharedPtr<FGothamScript> Script = Build(Controller, [](bool bPassed, const FString& Rule)
+	if (const TSharedPtr<FGothamScript> Script = Build(Controller, [](EGothamCheck Result, const FString& Rule)
 	{
-		UE_LOG(LogGothamMenuTest, Display, TEXT("%s: %s"), bPassed ? TEXT("PASS") : TEXT("FAIL"), *Rule);
+		UE_LOG(LogGothamMenuTest, Display, TEXT("%s: %s"), FGothamScript::ResultLabel(Result), *Rule);
 	}))
 	{
 		Script->Quit();
@@ -132,91 +313,186 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	TSharedPtr<int32> ScaleBefore = MakeShared<int32>(0);
 	TSharedPtr<FLinearColor> LabelBefore = MakeShared<FLinearColor>(FLinearColor::Transparent);
 	auto Settings = [WeakPC]() { const UGothamSettingsSubsystem* S = UGothamSettingsSubsystem::Get(WeakPC.Get()); return S ? S->GetViewModel() : nullptr; };
+	TSharedPtr<TArray<TPair<FName, FKey>>> Undo = MakeShared<TArray<TPair<FName, FKey>>>();
+	auto Scale = [Settings]() { return Settings() ? Settings()->GetCurrent().UIScaleIndex : -1; };
+	auto Push = [WeakUI](TSoftClassPtr<UCommonActivatableWidget> UGothamUISettings::* Class)
+	{
+		return [WeakUI, Class]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EGothamUILayer::Menu, (GetMutableDefault<UGothamUISettings>()->*Class).LoadSynchronous()); } };
+	};
+	// A screen is ready for input once it is active, no layer is mid-transition (Common UI blocks input meanwhile),
+	// and focus has landed inside it.
+	auto Settled = [WeakUI](auto* Screen) { return Screen && WeakUI.IsValid() && !WeakUI->IsTransitioning() && HasFocusWithin(Screen); };
+	auto Closed = [WeakUI](auto* Screen) { return !Screen && WeakUI.IsValid() && !WeakUI->IsTransitioning(); };
+	constexpr float Open = 3.f;
+	constexpr float Quick = 1.5f;
 
 	// 1. The case file's own key (J) closes it.
-	Script->At(1.0f).Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->ToggleClueLog(); } });
-	Script->At(2.5f).Do([Self]() { Self->Check(ActiveScreen<UClueLogScreen>() != nullptr, TEXT("J opens the case file (precondition)")); SendKey(EKeys::J); });
-	Script->At(3.2f).Do([Self]() { Self->Check(ActiveScreen<UClueLogScreen>() == nullptr, TEXT("J again closes the case file")); });
+	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->ToggleClueLog(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UClueLogScreen>()); }, Open, TEXT("J opens the case file (precondition)"))
+		.Do([]() { SendKey(EKeys::J); })
+		.WaitUntil([Closed]() { return Closed(ActiveScreen<UClueLogScreen>()); }, Quick, TEXT("J again closes the case file"));
 
 	// 2. The pause key on the gamepad (Start) closes pause.
-	Script->At(3.5f).Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->TogglePauseMenu(); } });
-	Script->At(5.0f).Do([Self]() { Self->Check(ActiveScreen<UPauseMenuScreen>() != nullptr, TEXT("pause opens (precondition)")); SendKey(EKeys::Gamepad_Special_Right); });
-	Script->At(5.7f).Do([Self]() { Self->Check(ActiveScreen<UPauseMenuScreen>() == nullptr, TEXT("Start closes pause")); });
+	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->TogglePauseMenu(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("pause opens (precondition)"))
+		.Do([]() { SendKey(EKeys::Gamepad_Special_Right); })
+		.WaitUntil([Closed]() { return Closed(ActiveScreen<UPauseMenuScreen>()); }, Quick, TEXT("Start closes pause"));
 
-	// 3. Settings: each prompt does what its key does.
-	Script->At(6.0f).Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass.LoadSynchronous()); } });
-	// Keys straight to the focused row first: separates "the key never reaches the row" from "the click fails".
-	Script->At(6.9f).Do([Self, Settings, ScaleBefore]() { *ScaleBefore = Settings() ? Settings()->GetCurrent().UIScaleIndex : -1; SendKey(EKeys::Right); });
-	Script->At(7.1f).Do([Self, Settings, ScaleBefore]()
-	{
-		Self->Check(Settings() && Settings()->GetCurrent().UIScaleIndex != *ScaleBefore, TEXT("Right on a focused option row steps it"));
-		*ScaleBefore = Settings() ? Settings()->GetCurrent().UIScaleIndex : -1;
-		SendKey(EKeys::Enter);
-	});
-	Script->At(7.3f).Do([Self, Settings, ScaleBefore]()
-	{
-		Self->Check(Settings() && Settings()->GetCurrent().UIScaleIndex != *ScaleBefore, TEXT("Enter on a focused option row steps it"));
-		if (Settings()) { Settings()->Revert(); }
-	});
-	// The selector's left half steps back. The selector (260 wide, inset 14) sits at the row's right edge; click a
-	// quarter of the way into it.
-	Script->At(7.35f).Do([Self, Settings, ScaleBefore]()
-	{
-		*ScaleBefore = Settings() ? Settings()->GetCurrent().UIScaleIndex : -1;
-		UGothamOptionRow* Row = FindRow(ActiveScreen<USettingsScreen>(), EGothamSetting::UIScale);
-		const FGeometry Geometry = Row ? Row->GetCachedGeometry() : FGeometry();
-		const float SelectorLeft = Geometry.GetLocalSize().X - 14.f - 260.f;
-		const float LeftQuarter = Geometry.GetLocalSize().X > 0.f ? (SelectorLeft + 260.f * 0.25f) / Geometry.GetLocalSize().X : 0.5f;
-		Self->Check(Click(Row, FVector2D(LeftQuarter, 0.5)), TEXT("the UI scale row is clickable"));
-	});
-	Script->At(7.45f).Do([Self, Settings, ScaleBefore]()
-	{
-		Self->Check(Settings() && Settings()->GetCurrent().UIScaleIndex == *ScaleBefore - 1, TEXT("clicking the left half of a selector steps it back"));
-		if (Settings()) { Settings()->Revert(); }
-	});
-	Script->At(7.5f).Do([Self, Settings, ScaleBefore]()
-	{
-		const USettingsScreen* Screen = ActiveScreen<USettingsScreen>();
-		Self->Check(Screen != nullptr, TEXT("settings open (precondition)"));
-		*ScaleBefore = Settings() ? Settings()->GetCurrent().UIScaleIndex : -1;
-		const TSharedPtr<SWidget> Focused = FSlateApplication::Get().GetUserFocusedWidget(0);
-		const UObject* FocusedObject = Focused.IsValid() && Focused->GetType() == TEXT("SObjectWidget") ? StaticCastSharedPtr<SObjectWidget>(Focused)->GetWidgetObject() : nullptr;
-		UE_LOG(LogGothamMenuTest, Display, TEXT("focus before clicking [Enter]: %s"), FocusedObject ? *FocusedObject->GetName() : TEXT("not a user widget"));
-		Self->Check(Click(FindHint(Screen, EKeys::Enter)), TEXT("the [Enter] prompt is clickable"));
-	});
-	Script->At(8.0f).Do([Self, Settings, ScaleBefore]()
-	{
-		USettingsViewModel* VM = Settings();
-		Self->Check(VM && VM->GetCurrent().UIScaleIndex != *ScaleBefore, TEXT("clicking [Enter] Change steps the focused option (UI scale)"));
-		if (VM) { VM->Revert(); }
-		Self->Check(Click(FindHint(ActiveScreen<USettingsScreen>(), EKeys::E)), TEXT("the [E] tab prompt is clickable"));
-	});
-	Script->At(8.6f).Do([Self, Settings, LabelBefore]()
-	{
-		FName Tab;
-		for (TObjectIterator<UGothamTabList> It; It; ++It)
+	// 3. Settings: keys on a focused row, then each prompt does what its key does.
+	Script->Do(Push(&UGothamUISettings::SettingsScreenClass))
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<USettingsScreen>()); }, Open, TEXT("settings open (precondition)"))
+		// Keys straight to the focused row first: separates "the key never reaches the row" from "the click fails".
+		.Do([Scale, ScaleBefore]() { *ScaleBefore = Scale(); SendKey(EKeys::Right); })
+		.WaitUntil([Scale, ScaleBefore]() { return Scale() != *ScaleBefore; }, Quick, TEXT("Right on a focused option row steps it"))
+		.Do([Scale, ScaleBefore]() { *ScaleBefore = Scale(); SendKey(EKeys::Enter); })
+		.WaitUntil([Scale, ScaleBefore]() { return Scale() != *ScaleBefore; }, Quick, TEXT("Enter on a focused option row steps it"))
+		// The selector's left half steps back. The selector (260 wide, inset 14) sits at the row's right edge; click a
+		// quarter of the way into it.
+		// Changing the UI scale re-lays out everything; clicks wait for the new geometry.
+		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
+		.WaitUntil(Stable([]() { return FindRow(ActiveScreen<USettingsScreen>(), EGothamSetting::UIScale); }), Quick, TEXT("the UI scale row settles (precondition)"))
+		.Do([Scale, ScaleBefore]() { *ScaleBefore = Scale(); });
+	AddClick(*Script, []() { return FindRow(ActiveScreen<USettingsScreen>(), EGothamSetting::UIScale); }, TEXT("the UI scale row is clickable"),
+		[](const FGeometry& Geometry)
 		{
-			if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsIn(ActiveScreen<USettingsScreen>())) { Tab = It->GetSelectedTabId(); }
-		}
-		Self->Check(Tab == TEXT("Accessibility"), TEXT("clicking [E] switches to the next tab"));
+			const float Width = Geometry.GetLocalSize().X;
+			const float SelectorLeft = Width - 14.f - 260.f;
+			return FVector2D(Width > 0.f ? (SelectorLeft + 260.f * 0.25f) / Width : 0.5f, 0.5);
+		});
+	Script->WaitUntil([Scale, ScaleBefore]() { return Scale() == *ScaleBefore - 1; }, Quick, TEXT("clicking the left half of a selector steps it back"))
+		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
+		.WaitUntil(Stable([]() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Enter); }), Quick, TEXT("the [Enter] prompt settles (precondition)"))
+		.Do([Scale, ScaleBefore]() { *ScaleBefore = Scale(); });
+	AddClick(*Script, []() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Enter); }, TEXT("the [Enter] prompt is clickable"));
+	Script->WaitUntil([Scale, ScaleBefore]() { return Scale() != *ScaleBefore; }, Quick, TEXT("clicking [Enter] Change steps the focused option (UI scale)"))
+		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
+		.WaitUntil(Stable([]() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::E); }), Quick, TEXT("the [E] prompt settles (precondition)"));
+	AddClick(*Script, []() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::E); }, TEXT("the [E] tab prompt is clickable"));
+	Script->WaitUntil([WeakUI]() { return WeakUI.IsValid() && !WeakUI->IsTransitioning() && SelectedTab(ActiveScreen<USettingsScreen>()) == TEXT("Accessibility"); },
+			Quick, TEXT("clicking [E] switches to the next tab"))
+		// Live restyle: every widget subscribes to settings changes through FGothamSettingsListener. Turning high contrast
+		// on must recolour an open screen's prompts right away (a missed subscription would leave them).
+		.Do([Settings, LabelBefore]()
+		{
+			*LabelBefore = PromptLabelColor(ActiveScreen<USettingsScreen>());
+			if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::HighContrast, +1); }
+		})
+		.WaitUntil([LabelBefore]() { const FLinearColor Now = PromptLabelColor(ActiveScreen<USettingsScreen>()); return LabelBefore->A > 0.f && !Now.Equals(*LabelBefore, 0.01f); },
+			Quick, TEXT("turning high contrast on restyles an open screen live"))
+		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } });
 
-		// Live restyle: every widget subscribes to settings changes through FGothamSettingsListener. Turning high
-		// contrast on must recolour an open screen's prompts right away (a missed subscription would leave them).
-		*LabelBefore = PromptLabelColor(ActiveScreen<USettingsScreen>());
-		if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::HighContrast, +1); }
-	});
-	Script->At(8.9f).Do([Self, Settings, LabelBefore]()
-	{
-		const FLinearColor After = PromptLabelColor(ActiveScreen<USettingsScreen>());
-		Self->Check(LabelBefore->A > 0.f && !After.Equals(*LabelBefore, 0.01f), TEXT("turning high contrast on restyles an open screen live"));
-		if (USettingsViewModel* VM = Settings()) { VM->Revert(); }
-		Self->Check(Click(FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape)), TEXT("the [Esc] prompt is clickable"));
-	});
-	Script->At(9.6f).Do([Self]() { Self->Check(ActiveScreen<USettingsScreen>() == nullptr, TEXT("clicking [Esc] Back closes settings")); });
+	// Review finding 1: opening Key bindings must keep unapplied settings.
+	Script->Do([Settings]() { if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::SubtitleSize, +1); } })
+		.Do(Push(&UGothamUISettings::ControlsScreenClass))
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UControlsScreen>()); }, Open, TEXT("key bindings open over settings (precondition)"))
+		.Do([Self, Settings]() { Self->CheckKnownBug(Settings() && Settings()->GetIsDirty(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); })
+		.Do([]() { if (UControlsScreen* Controls = ActiveScreen<UControlsScreen>()) { Controls->DeactivateWidget(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<USettingsScreen>()); }, Open, TEXT("back on settings (precondition)"))
+		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
+		.WaitUntil(Stable([]() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape); }), Quick, TEXT("the [Esc] prompt settles (precondition)"));
+	AddClick(*Script, []() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape); }, TEXT("the [Esc] prompt is clickable"));
+	Script->WaitUntil([Closed]() { return Closed(ActiveScreen<USettingsScreen>()); }, Quick, TEXT("clicking [Esc] Back closes settings"));
 
-	Script->At(10.1f).Do([Self]()
+	// Review findings 2 and 7: screens opened from pause keep the game paused, and the case file's key opens the case
+	// file over pause instead of closing pause.
+	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->TogglePauseMenu(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("pause opens again (precondition)"))
+		.Do(Push(&UGothamUISettings::SettingsScreenClass))
+		.WaitUntil([Closed, WeakUI]() { return ActiveScreen<USettingsScreen>() && WeakUI.IsValid() && !WeakUI->IsTransitioning(); }, Open, TEXT("settings open over pause (precondition)"))
+		// Seen on some runs: focus lands on the game viewport, so a gamepad has nothing to move. The pause screen
+		// deactivating underneath (finding 2) is the likely cause.
+		.Do([Self]() { Self->CheckKnownBug(HasFocusWithin(ActiveScreen<USettingsScreen>()), TEXT("settings opened from pause receive focus (review 2)"), /*bIntermittent*/ true); })
+		.Do([Self, WeakPC]() { Self->CheckKnownBug(WeakPC.IsValid() && UGameplayStatics::IsGamePaused(WeakPC.Get()), TEXT("the game stays paused under settings opened from pause (review 2)")); })
+		.Do([]() { if (USettingsScreen* Screen = ActiveScreen<USettingsScreen>()) { Screen->DeactivateWidget(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("back on pause (precondition)"))
+		.Do([]() { SendKey(EKeys::J); })
+		.WaitUntil([WeakUI]() { return WeakUI.IsValid() && !WeakUI->IsTransitioning(); }, Quick, TEXT("the case file key is handled (precondition)"))
+		.Do([Self]() { Self->CheckKnownBug(ActiveScreen<UClueLogScreen>() != nullptr, TEXT("the case file key opens the case file over pause (review 7)")); })
+		// One screen per settled frame: a closed screen leaves the stack only after its transition.
+		.WaitUntil([WeakUI]()
+		{
+			if (!WeakUI.IsValid() || WeakUI->IsTransitioning())
+			{
+				return false;
+			}
+			return !WeakUI->PopTopScreen();
+		}, Open, TEXT("menus close (cleanup)"));
+
+	// Review finding 9: the case file follows a changed list of the same length.
+	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->ToggleClueLog(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UClueLogScreen>()); }, Open, TEXT("the case file opens again (precondition)"))
+		.Do([Self, WeakPC]()
+		{
+			UClueListViewModel* Clues = ViewModelsOf(WeakPC) ? ViewModelsOf(WeakPC)->GetClues() : nullptr;
+			if (!Clues || Clues->GetEntries().Num() < 2)
+			{
+				Self->Check(false, TEXT("the level has at least two clues (precondition)"));
+				return;
+			}
+			TArray<TObjectPtr<UClueEntryViewModel>> Reversed = Clues->GetEntries();
+			Algo::Reverse(Reversed);
+			Clues->SetEntries(Reversed);
+			const UGothamClueTileView* Tiles = FindTileView(ActiveScreen<UClueLogScreen>());
+			Self->CheckKnownBug(Tiles && Tiles->GetItemAt(0) == Reversed[0], TEXT("the case file shows a reordered clue list (review 9)"));
+			Algo::Reverse(Reversed);
+			Clues->SetEntries(Reversed);
+		})
+		.Do([]() { if (UClueLogScreen* Screen = ActiveScreen<UClueLogScreen>()) { Screen->DeactivateWidget(); } })
+		.WaitUntil([Closed]() { return Closed(ActiveScreen<UClueLogScreen>()); }, Quick, TEXT("the case file closes (cleanup)"));
+
+	// Review finding 8: every HUD view model can be resolved by class (for designer bindings).
+	Script->Do([Self, WeakPC]()
 	{
-		UE_LOG(LogGothamMenuTest, Display, TEXT("Menu input test: %d passed, %d failed"), Self->GetPassed(), Self->GetFailed());
+		const UGothamViewModelSubsystem* ViewModels = ViewModelsOf(WeakPC);
+		Self->CheckKnownBug(ViewModels && ViewModels->FindViewModel(USubtitleViewModel::StaticClass()) != nullptr, TEXT("the resolver finds the subtitles view model (review 8)"));
+	});
+
+	// Review findings 3, 4, 6 and 10: the gadget wheel and gadget keys follow rebinding, the wheel's slow motion survives
+	// a hit-stop, and the wheel follows reduced motion live. Rebinds are in memory only (never saved) and undone.
+	Script->Do([WeakPC, WeakUI, Undo]()
+		{
+			Rebind(WeakPC, TEXT("GadgetWheel"), EKeys::Z, *Undo);
+			Rebind(WeakPC, TEXT("Gadget1"), EKeys::X, *Undo);
+			if (WeakUI.IsValid()) { WeakUI->NotifyBindingsChanged(); }
+		})
+		.Do([Self, WeakPC]()
+		{
+			const UGothamViewModelSubsystem* ViewModels = ViewModelsOf(WeakPC);
+			const UGadgetSlotViewModel* First = ViewModels ? ViewModels->GetGadgetBar()->GetSlot(0) : nullptr;
+			Self->CheckKnownBug(First && First->GetHotkey().ToString() == UGothamInputGlyph::GetKeyLabel(EKeys::X).ToString(), TEXT("the HUD's gadget key hint follows rebinding (review 4)"));
+		})
+		.Do([WeakPC, WeakUI]()
+		{
+			GothamFeel::HitStop(WeakPC.Get(), GothamFeel::HitStopSeconds);
+			if (WeakUI.IsValid()) { WeakUI->OpenGadgetWheel(); }
+		})
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UGadgetWheelScreen>()); }, Open, TEXT("the gadget wheel opens (precondition)"))
+		.Wait(GothamFeel::HitStopSeconds * 3.f)
+		.Do([Self, WeakPC, Settings]()
+		{
+			Self->CheckKnownBug(WeakPC.IsValid() && UGameplayStatics::GetGlobalTimeDilation(WeakPC.Get()) < 0.5f, TEXT("the wheel's slow motion survives a hit-stop (review 6)"));
+			if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::ReducedMotion, +1); }
+		})
+		.Do([Self, Settings]()
+		{
+			const UGadgetWheel* Wheel = FindWheel(ActiveScreen<UGadgetWheelScreen>());
+			Self->CheckKnownBug(Wheel && Wheel->bReduceMotion, TEXT("the open wheel follows reduced motion live (review 10)"));
+			if (Settings()) { Settings()->Revert(); }
+			ReleaseKey(EKeys::Z);
+		})
+		.Wait(0.5f)
+		.Do([Self]() { Self->CheckKnownBug(ActiveScreen<UGadgetWheelScreen>() == nullptr, TEXT("releasing the rebound wheel key closes the wheel (review 3)")); })
+		.Do([WeakPC, WeakUI, Undo]()
+		{
+			if (UGadgetWheelScreen* Wheel = ActiveScreen<UGadgetWheelScreen>()) { Wheel->DeactivateWidget(); }
+			RestoreBindings(WeakPC, *Undo);
+			if (WeakUI.IsValid()) { WeakUI->NotifyBindingsChanged(); }
+		})
+		.WaitUntil([Closed]() { return Closed(ActiveScreen<UGadgetWheelScreen>()); }, Quick, TEXT("the wheel closes (cleanup)"));
+
+	Script->Do([Self]()
+	{
+		UE_LOG(LogGothamMenuTest, Display, TEXT("Menu input test: %d passed, %d failed, %d known bugs"), Self->GetPassed(), Self->GetFailed(), Self->GetKnownBugs());
 	});
 	return Script;
 }

@@ -12,6 +12,8 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+DEFINE_LOG_CATEGORY_STATIC(LogGothamFunctional, Log, All);
+
 namespace GothamFunctionalTests
 {
 	constexpr EAutomationTestFlags Flags = EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter;
@@ -67,10 +69,14 @@ namespace GothamFunctionalTests
 					return false;
 				}
 				FAutomationTestBase* T = Test;
-				Script = Build(PC, [T](bool bPassed, const FString& Rule)
+				Script = Build(PC, [T](EGothamCheck Result, const FString& Rule)
 				{
-					if (bPassed) { T->AddInfo(FString::Printf(TEXT("PASS: %s"), *Rule)); }
-					else { T->AddError(FString::Printf(TEXT("FAIL: %s"), *Rule)); }
+					// A known bug is recorded, not failed; a known bug that now passes fails, so it gets promoted.
+					const FString Line = FString::Printf(TEXT("%s: %s"), FGothamScript::ResultLabel(Result), *Rule);
+					// Also in the log: if the game hangs, the report is never written, but the log shows how far it got.
+					UE_LOG(LogGothamFunctional, Display, TEXT("%s"), *Line);
+					if (Result == EGothamCheck::Passed || Result == EGothamCheck::KnownBug) { T->AddInfo(Line); }
+					else { T->AddError(Line); }
 				});
 				if (!Script)
 				{
@@ -84,7 +90,7 @@ namespace GothamFunctionalTests
 			{
 				return false;
 			}
-			if (Script->GetPassed() + Script->GetFailed() == 0)
+			if (Script->GetPassed() + Script->GetFailed() + Script->GetKnownBugs() == 0)
 			{
 				Test->AddError(TEXT("the script finished without checking anything"));
 			}
