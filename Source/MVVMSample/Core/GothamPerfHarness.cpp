@@ -267,7 +267,12 @@ void FGothamPerfHarness::Start(AGothamPlayerController* Controller, const FStrin
 				It->SetScrollOffset(62.f + 60.f * FMath::Sin(Seconds * 2.f));
 			}
 		},
-		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } } });
+		[WeakUI, WeakVMs]()
+		{
+			if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); }
+			// Later scenarios (and the HUD's objective) must see the level's real clues again, not 505.
+			if (WeakVMs.IsValid()) { WeakVMs->RemoveDebugClues(); }
+		} });
 
 	// 6. Settings screen open (rows, scroll box, buttons).
 	Run->Scenarios.Add({ TEXT("settings"),

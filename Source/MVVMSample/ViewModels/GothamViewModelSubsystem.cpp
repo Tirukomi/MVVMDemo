@@ -197,6 +197,7 @@ void UGothamViewModelSubsystem::RebuildClues()
 		}
 		Entries.Add(Entry);
 	}
+	DebugClueCount = 0;
 	Clues->SetEntries(MoveTemp(Entries));
 	RefreshObjectives();
 }
@@ -235,7 +236,8 @@ void UGothamViewModelSubsystem::ShowSubtitle(const FText& Speaker, const FText& 
 
 void UGothamViewModelSubsystem::RefreshObjectives()
 {
-	Objectives->SetProgress(Clues->GetDiscoveredCount(), Clues->GetTotalCount());
+	// Debug clues are never discovered, so only the total needs correcting.
+	Objectives->SetProgress(Clues->GetDiscoveredCount(), FMath::Max(0, Clues->GetTotalCount() - DebugClueCount));
 }
 
 void UGothamViewModelSubsystem::AddDebugClues(int32 Count)
@@ -249,6 +251,20 @@ void UGothamViewModelSubsystem::AddDebugClues(int32 Count)
 			NSLOCTEXT("Gotham.Clues", "DebugBody", "Generated to stress the virtualised list."), TSoftObjectPtr<UTexture2D>());
 		Entries.Add(Entry);
 	}
+	DebugClueCount += Count;
+	Clues->SetEntries(MoveTemp(Entries));
+	RefreshObjectives();
+}
+
+void UGothamViewModelSubsystem::RemoveDebugClues()
+{
+	if (DebugClueCount <= 0)
+	{
+		return;
+	}
+	TArray<TObjectPtr<UClueEntryViewModel>> Entries = Clues->GetEntries();
+	Entries.SetNum(FMath::Max(0, Entries.Num() - DebugClueCount));
+	DebugClueCount = 0;
 	Clues->SetEntries(MoveTemp(Entries));
 	RefreshObjectives();
 }

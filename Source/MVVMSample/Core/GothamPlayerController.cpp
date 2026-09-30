@@ -29,6 +29,8 @@
 #include "Gameplay/DetectiveComponent.h"
 #include "Gameplay/ThreatSubsystem.h"
 #include "UI/ClueEntryWidget.h"
+#include "ViewModels/ClueViewModels.h"
+#include "ViewModels/ObjectivesViewModel.h"
 #include "UI/Screens/PauseMenuScreen.h"
 #include "UnrealClient.h"
 #include "UI/Layout/GothamUISubsystem.h"
@@ -705,10 +707,17 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	// Later than the actions above so shaders (compiled on first run) and transitions have settled.
 	float ShotDelay = 4.f;
 	FParse::Value(Cmd, TEXT("GothamShotDelay="), ShotDelay);
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([ShotName, StressCount](float)
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([ShotName, StressCount, WeakThis](float)
 	{
 		if (StressCount > 0)
 		{
+			// The objective tracks the level's real clues only; the fake ones exist just to stress the list.
+			const ULocalPlayer* LocalPlayer = WeakThis.IsValid() ? WeakThis->GetLocalPlayer() : nullptr;
+			if (const UGothamViewModelSubsystem* ViewModels = LocalPlayer ? LocalPlayer->GetSubsystem<UGothamViewModelSubsystem>() : nullptr)
+			{
+				UE_LOG(LogGothamHud, Log, TEXT("Objective: %d / %d (clue list holds %d entries)"),
+					ViewModels->GetObjectives()->GetFoundCount(), ViewModels->GetObjectives()->GetTotalCount(), ViewModels->GetClues()->GetTotalCount());
+			}
 			// Proof of virtualisation: rows alive should stay near the viewport size, not the item count.
 			int32 Rows = 0;
 			for (TObjectIterator<UClueEntryWidget> It; It; ++It)

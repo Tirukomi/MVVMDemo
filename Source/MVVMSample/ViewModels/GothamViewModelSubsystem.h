@@ -49,8 +49,11 @@ public:
 	USubtitleViewModel* GetSubtitles() const { return Subtitles; }
 	UThreatViewModel* GetThreats() const { return Threats; }
 
-	/** Dev aid: appends fake undiscovered clues to exercise the virtualised clue log. */
+	/** Dev aid: appends fake undiscovered clues to exercise the virtualised clue log. They never count toward the
+	 *  objective (it tracks the level's real clues). */
 	void AddDebugClues(int32 Count);
+	/** Dev aid: removes every clue added by AddDebugClues. */
+	void RemoveDebugClues();
 
 	/** Used by the view-model resolver to hand a view model to a widget by class. */
 	UObject* FindViewModel(const UClass* ViewModelClass) const;
@@ -81,6 +84,9 @@ private:
 	TObjectPtr<UThreatViewModel> Threats;
 
 	TWeakObjectPtr<UGothamThreatSubsystem> BoundThreats;
+
+	/** Fake clues appended after the real ones (dev aids only). */
+	int32 DebugClueCount = 0;
 	FDelegateHandle ThreatsHandle;
 
 	UPROPERTY(Transient)
