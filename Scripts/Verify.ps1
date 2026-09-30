@@ -1,7 +1,7 @@
 # The refactoring gate (Docs/RefactoringPlan.md). Runs every check, prints one PASS / FAIL line per check, writes a
 # report to Saved/Verify/<timestamp>.md and exits non-zero if anything failed. Close the editor first.
 #
-#   .\Scripts\Verify.ps1                         # the full gate, about 25 minutes
+#   .\Scripts\Verify.ps1                         # the full gate, about 30 minutes
 #   .\Scripts\Verify.ps1 -Quick                  # incremental build, no perf runs (about 13 minutes)
 #   .\Scripts\Verify.ps1 -Only G2,G3             # a subset
 #   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD  # perf noise check: this build against itself must pass
@@ -16,7 +16,7 @@ param(
     # G5 compares against this commit (normally the last merged pass), built in a worktree under Saved/PerfRef.
     [string]$PerfRef = "master",
     # Alternating reference / current perf runs (ABBA order, so drift during the gate cancels out).
-    [int]$PerfRounds = 3,
+    [int]$PerfRounds = 5,
     # A scenario fails when the median, over rounds, of (current UI cost - reference UI cost) exceeds this.
     [double]$PerfToleranceMs = 0.05,
     # Passed to the current build only as -GothamPerfInject=<scenario>:<ms>, to prove G5 catches a known cost.

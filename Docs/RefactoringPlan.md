@@ -30,7 +30,7 @@ Pass 0 builds this as a single script, `Scripts/Verify.ps1`, which prints one PA
 | G2 | `python Scripts/run_tests.py`, all green | logic regressions |
 | G3 | `-GothamMenuInputTest`, all PASS | focus, hit-testing, prompt clicks, toggle keys |
 | G4 | Screenshot regression: recapture the set and diff against `Docs/img` in 8x8 blocks (so animated scanlines and rain average out). Deterministic images (no recorded noise) are held to 0.1%; animated ones get 3x their recorded noise (`Scripts/ScreenNoise.json`, from two captures of the same code) plus 0.5 points. Review any image over that | layout, colour and localization regressions, and stale baselines |
-| G5 | Perf harness at 1080p: every scenario's game-thread cost within 0.05 ms of the pass-0 baseline (median of two runs) | accidental per-frame work |
+| G5 | Perf harness at 1080p, side by side with a reference build (default `master`, built in `Saved/PerfRef`): five ABBA rounds, and every scenario's UI cost within 0.05 ms of the reference on the median | accidental per-frame work |
 | G6 | Logs of every run in the gate: no `Ensure condition failed`, no project (`LogGotham*`) errors or warnings, and no content-integrity warnings (materials, skeletal meshes, missing usage flags, failed package loads) | tick, focus and lifetime mistakes; content that silently renders wrong (a material without its skeletal-mesh flag showed the engine default on the thugs for all of V5) |
 
 A pass that fails any check does not merge. Fix it on the branch, or drop the branch.
@@ -44,7 +44,11 @@ A pass that fails any check does not merge. Fix it on the branch, or drop the br
 2. **`Scripts/DiffScreens.ps1`:** compares two image folders with `System.Drawing`. It reports the share of pixels
    that changed beyond a small colour distance, and writes a diff image for any over the threshold. Pillow isn't
    installed, and this needs no downloads.
-3. **Baselines:** the current `Docs/img` set and two perf runs (`Saved/Perf/Baseline_*`).
+3. **Baselines:** the current `Docs/img` set. Perf has no stored baseline: G5 measures the reference build in the same
+   session, because recorded numbers drifted by more than the tolerance within a day. `-PerfRef HEAD` (a build against
+   itself must pass) and `-PerfInject <scenario>:<ms>` (a known cost must fail) check the check.
+   Measured on 2026-09-30: against itself the worst median was +0.038 ms, and single rounds swung by up to 0.18 ms
+   (the median discards them). An injected 0.1 ms on `gadget-wheel` read as +0.081 ms, and only that row failed.
 4. **Characterization tests** for what later passes rewrite:
    - every setting survives `SaveToConfig` then `LoadFromConfig`, and a fixture string in today's exact config
      format still loads (P4 must keep it)
@@ -133,7 +137,7 @@ This is the biggest logic pass, so it's split into three merges. Each one is gat
 1. Add `FGothamScript` (steps `Wait`, `Do`, `Expect`, `Sample`, `Screenshot`, `Quit`), with a unit test of step
    timing using a fake clock.
 2. Port the menu input test first (it has the most asserts). G3 must still show every PASS line, word for word.
-3. Port the perf harness scenarios. The report format stays identical so baselines remain comparable (G5).
+3. Port the perf harness scenarios. The report format stays identical, so G5 can still read both builds.
 4. Port the screenshot flags one by one. Command-line flags keep their names and meaning; only the sequencing
    underneath changes.
 5. Delete the old tickers and run structs.
