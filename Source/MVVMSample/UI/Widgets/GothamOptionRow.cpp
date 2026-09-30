@@ -6,13 +6,10 @@
 #include "Accessibility/GothamSettingsListener.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
-#include "Components/HorizontalBox.h"
-#include "Components/HorizontalBoxSlot.h"
-#include "Components/Overlay.h"
-#include "Components/OverlaySlot.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "UI/GothamWidgetTick.h"
+#include "UI/Style/GothamLayout.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamSelectorDecor.h"
 #include "UI/Widgets/GothamText.h"
@@ -49,29 +46,21 @@ bool UGothamOptionRow::Initialize()
 		LabelText = WidgetTree->ConstructWidget<UGothamText>();
 		LabelText->SetFont(GothamStyle::Font(EGothamTextStyle::BodyStrong));
 		LabelText->SetAutoWrapText(true);
-		UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(LabelText);
-		LabelSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-		LabelSlot->SetVerticalAlignment(VAlign_Center);
-		LabelSlot->SetPadding(FMargin(0.f, 0.f, 16.f, 0.f));
+		GothamLayout::Add(Row, LabelText).Fill().VCenter().Pad(0.f, 0.f, 16.f, 0.f);
 
 		USizeBox* SelectorBox = WidgetTree->ConstructWidget<USizeBox>();
 		SelectorBox->SetWidthOverride(SelectorWidth);
-		Row->AddChildToHorizontalBox(SelectorBox)->SetVerticalAlignment(VAlign_Center);
+		GothamLayout::Add(Row, SelectorBox).VCenter();
 
 		UOverlay* Selector = WidgetTree->ConstructWidget<UOverlay>();
 		SelectorBox->SetContent(Selector);
 		Decor = WidgetTree->ConstructWidget<UGothamSelectorDecor>();
-		UOverlaySlot* DecorSlot = Selector->AddChildToOverlay(Decor);
-		DecorSlot->SetHorizontalAlignment(HAlign_Fill);
-		DecorSlot->SetVerticalAlignment(VAlign_Fill);
+		GothamLayout::Add(Selector, Decor).FillBoth();
 
 		ValueText = WidgetTree->ConstructWidget<UGothamText>();
 		ValueText->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
 		ValueText->SetJustification(ETextJustify::Center);
-		UOverlaySlot* ValueSlot = Selector->AddChildToOverlay(ValueText);
-		ValueSlot->SetHorizontalAlignment(HAlign_Center);
-		ValueSlot->SetVerticalAlignment(VAlign_Center);
-		ValueSlot->SetPadding(FMargin(24.f, 2.f, 24.f, 8.f));
+		GothamLayout::Add(Selector, ValueText).Center().Pad(24.f, 2.f, 24.f, 8.f);
 	}
 	return Super::Initialize();
 }
