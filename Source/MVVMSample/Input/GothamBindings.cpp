@@ -2,28 +2,24 @@
 
 #include "Input/GothamBindings.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Bindings"
+#include "Input/GothamActionTable.h"
 
 namespace GothamBindings
 {
 	const TArray<FGothamBindingDef>& GetDefinitions()
 	{
-		static const TArray<FGothamBindingDef> Defs = {
-			{ TEXT("MoveForward"), LOCTEXT("MoveForward", "Move forward"), false },
-			{ TEXT("MoveBack"), LOCTEXT("MoveBack", "Move back"), false },
-			{ TEXT("MoveLeft"), LOCTEXT("MoveLeft", "Move left"), false },
-			{ TEXT("MoveRight"), LOCTEXT("MoveRight", "Move right"), false },
-			{ TEXT("Attack"), LOCTEXT("Attack", "Attack"), true },
-			{ TEXT("Counter"), LOCTEXT("Counter", "Counter"), true },
-			{ TEXT("Gadget1"), LOCTEXT("Gadget1", "Gadget 1"), true },
-			{ TEXT("Gadget2"), LOCTEXT("Gadget2", "Gadget 2"), true },
-			{ TEXT("Gadget3"), LOCTEXT("Gadget3", "Gadget 3"), true },
-			{ TEXT("GadgetWheel"), LOCTEXT("GadgetWheel", "Gadget wheel"), true },
-			{ TEXT("Detective"), LOCTEXT("Detective", "Detective mode"), true },
-			{ TEXT("Scan"), LOCTEXT("Scan", "Scan clue"), true },
-			{ TEXT("ClueLog"), LOCTEXT("ClueLog", "Case file"), true },
-			{ TEXT("Pause"), LOCTEXT("Pause", "Pause"), true },
-		};
+		static const TArray<FGothamBindingDef> Defs = []
+		{
+			TArray<FGothamBindingDef> Out;
+			for (const FGothamActionDef& Action : GothamActions::GetTable())
+			{
+				if (Action.bRebindable)
+				{
+					Out.Add({ Action.Name, Action.DisplayName, Action.HasGamepadSlot() });
+				}
+			}
+			return Out;
+		}();
 		return Defs;
 	}
 
@@ -70,4 +66,3 @@ namespace GothamBindings
 	}
 }
 
-#undef LOCTEXT_NAMESPACE
