@@ -30,7 +30,8 @@ protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
-	virtual void NativeOnDeactivated() override;
+	virtual void NativeOnClosed() override;
+	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 	virtual FReply NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual void OnPaletteChanged() override;
 

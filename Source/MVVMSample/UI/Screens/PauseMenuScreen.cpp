@@ -124,10 +124,11 @@ void UPauseMenuScreen::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UPauseMenuScreen::NativeOnDeactivated()
+void UPauseMenuScreen::NativeOnClosed()
 {
+	// Only when pause itself closes: settings and the case file open on top of it and keep the game paused.
 	UGameplayStatics::SetGamePaused(this, false);
-	Super::NativeOnDeactivated();
+	Super::NativeOnClosed();
 }
 
 void UPauseMenuScreen::RefreshStatus()

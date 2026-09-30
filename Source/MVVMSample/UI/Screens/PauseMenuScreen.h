@@ -29,7 +29,7 @@ protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual void NativeOnActivated() override;
-	virtual void NativeOnDeactivated() override;
+	virtual void NativeOnClosed() override;
 	virtual void OnPaletteChanged() override;
 
 private:

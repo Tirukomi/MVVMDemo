@@ -37,6 +37,12 @@ protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual void NativeOnActivated() override;
+	virtual void NativeOnDeactivated() override final;
+
+	/** Another screen was pushed on top; this one comes back when that closes. */
+	virtual void NativeOnCovered() {}
+	/** This screen is leaving for good (back, close, or popped). What should happen once per visit goes here. */
+	virtual void NativeOnClosed() {}
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
@@ -45,6 +51,9 @@ protected:
 
 	/** Screens that must be answered (e.g. confirmations that block) can turn back off. */
 	bool bCanDismissWithBack = true;
+
+	/** Whether other screens' keys (the case file's) open those screens on top of this one. Off for modals. */
+	bool bOpensScreensByKey = true;
 
 	/**
 	 * The gameplay action that opens this screen (e.g. "ClueLog"). Pressing any key bound to it closes the screen

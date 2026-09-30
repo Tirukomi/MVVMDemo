@@ -17,6 +17,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Input/CommonUIInputTypes.h"
 #include "UI/GothamWidgetTick.h"
+#include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Style/GothamMotion.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamHintButton.h"
@@ -59,10 +60,37 @@ void UGothamScreen::NativeDestruct()
 void UGothamScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
+	// Common UI's router focuses the desired target through the local player's pending Slate operations, which only
+	// apply when the viewport next handles input. When a screen opens over another one the HUD is briefly the leaf and
+	// focus sits on the game viewport, so the player's first press would go to the game. Focus directly instead.
+	if (const UWidget* Target = GetDesiredFocusTarget())
+	{
+		const TSharedPtr<SWidget> TargetSlate = Target->GetCachedWidget();
+		const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+		if (TargetSlate.IsValid() && LocalPlayer)
+		{
+			FSlateApplication::Get().SetUserFocus(LocalPlayer->GetControllerId(), TargetSlate, EFocusCause::SetDirectly);
+		}
+	}
 	if (SlideTarget)
 	{
 		GothamMotion::SlideIn(SlideTarget, SlideFrom);
 	}
+}
+
+void UGothamScreen::NativeOnDeactivated()
+{
+	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+	const UGothamUISubsystem* UI = LocalPlayer ? LocalPlayer->GetSubsystem<UGothamUISubsystem>() : nullptr;
+	if (UI && UI->IsCovered(this))
+	{
+		NativeOnCovered();
+	}
+	else
+	{
+		NativeOnClosed();
+	}
+	Super::NativeOnDeactivated();
 }
 
 UWidget* UGothamScreen::NativeGetDesiredFocusTarget() const
@@ -78,6 +106,15 @@ FReply UGothamScreen::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEve
 	{
 		DeactivateWidget();
 		return FReply::Handled();
+	}
+	// Another screen's key opens that screen on top (gameplay input is off in menus, so the key arrives here).
+	if (bOpensScreensByKey && !InKeyEvent.IsRepeat() && ToggleActionName != TEXT("ClueLog") && IsKeyBoundToAction(Key, TEXT("ClueLog")))
+	{
+		if (UGothamUISubsystem* UI = GetOwningLocalPlayer() ? GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>() : nullptr)
+		{
+			UI->ToggleClueLog();
+			return FReply::Handled();
+		}
 	}
 	if (bCanDismissWithBack && (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right))
 	{

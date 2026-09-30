@@ -48,12 +48,21 @@ public:
 	/** Dev aid for profiling: hides or shows the entire UI layer. */
 	void SetLayoutVisible(bool bVisible);
 
-	/** Opens the case file, or closes the topmost menu if one is already up. */
+	/**
+	 * The case file's key: closes the case file if it is the top menu, otherwise opens it on top of whatever menu is
+	 * open (an open gadget wheel gives way first). A key only ever closes its own screen.
+	 */
 	void ToggleClueLog();
 
 	/** Opens the hold-to-use gadget wheel unless it (or a menu) is already up. */
 	void OpenGadgetWheel();
 	EGothamInputContext GetInputContext() const { return Tracker.GetInputContext(); }
+
+	/**
+	 * True if Screen is in a layer stack with another screen pushed above it. Common UI deactivates a screen both when
+	 * it is covered and when it is closed; this tells the two apart (a covered screen comes back).
+	 */
+	bool IsCovered(const UCommonActivatableWidget* Screen) const;
 
 	/** True while any layer is animating between screens (Common UI blocks input to the layer meanwhile). */
 	bool IsTransitioning() const { return TransitioningLayers != 0; }

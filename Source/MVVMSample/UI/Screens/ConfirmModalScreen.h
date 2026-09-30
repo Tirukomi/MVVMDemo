@@ -26,7 +26,7 @@ public:
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
-	virtual void NativeOnDeactivated() override;
+	virtual void NativeOnClosed() override;
 	virtual void OnPaletteChanged() override;
 
 private:

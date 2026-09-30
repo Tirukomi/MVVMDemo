@@ -61,6 +61,24 @@ bool UGothamUISubsystem::PopTopScreen()
 	return false;
 }
 
+bool UGothamUISubsystem::IsCovered(const UCommonActivatableWidget* Screen) const
+{
+	for (int32 i = 0; Layout && Screen && i < static_cast<int32>(EGothamUILayer::Count); ++i)
+	{
+		if (const UCommonActivatableWidgetContainerBase* Stack = Layout->GetLayer(static_cast<EGothamUILayer>(i)))
+		{
+			// A push adds the new screen to the list before the one below is deactivated.
+			const TArray<UCommonActivatableWidget*>& List = Stack->GetWidgetList();
+			const int32 Index = List.Find(const_cast<UCommonActivatableWidget*>(Screen));
+			if (Index != INDEX_NONE)
+			{
+				return Index < List.Num() - 1;
+			}
+		}
+	}
+	return false;
+}
+
 void UGothamUISubsystem::TogglePauseMenu()
 {
 	if (!PopTopScreen())
@@ -79,10 +97,22 @@ void UGothamUISubsystem::SetLayoutVisible(bool bVisible)
 
 void UGothamUISubsystem::ToggleClueLog()
 {
-	if (!PopTopScreen())
+	if (!Layout)
 	{
-		PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ClueLogClass.LoadSynchronous());
+		return;
 	}
+	const TSubclassOf<UCommonActivatableWidget> ClueLogClass = GetDefault<UGothamUISettings>()->ClueLogClass.LoadSynchronous();
+	if (UCommonActivatableWidget* Wheel = Tracker.IsLayerOccupied(EGothamUILayer::GameMenu) ? Layout->GetLayer(EGothamUILayer::GameMenu)->GetActiveWidget() : nullptr)
+	{
+		Wheel->DeactivateWidget();
+	}
+	UCommonActivatableWidget* Top = Layout->GetLayer(EGothamUILayer::Menu)->GetActiveWidget();
+	if (Top && ClueLogClass && Top->IsA(ClueLogClass))
+	{
+		Top->DeactivateWidget();
+		return;
+	}
+	PushScreen(EGothamUILayer::Menu, ClueLogClass);
 }
 
 void UGothamUISubsystem::OpenGadgetWheel()

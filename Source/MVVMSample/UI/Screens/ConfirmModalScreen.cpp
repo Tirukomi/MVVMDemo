@@ -22,6 +22,8 @@
 
 TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 {
+	// A confirmation must be answered first: no other screen opens underneath it.
+	bOpensScreensByKey = false;
 	if (!WidgetTree->RootWidget)
 	{
 		UOverlay* Root = WidgetTree->ConstructWidget<UOverlay>();
@@ -119,7 +121,7 @@ void UConfirmModalScreen::Finish(bool bConfirmed)
 	DeactivateWidget();
 }
 
-void UConfirmModalScreen::NativeOnDeactivated()
+void UConfirmModalScreen::NativeOnClosed()
 {
 	// Back / Esc counts as "No" so callers always get exactly one answer.
 	if (!bAnswered)
@@ -127,7 +129,7 @@ void UConfirmModalScreen::NativeOnDeactivated()
 		bAnswered = true;
 		Callback.ExecuteIfBound(false);
 	}
-	Super::NativeOnDeactivated();
+	Super::NativeOnClosed();
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -162,14 +162,28 @@ void USettingsScreen::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void USettingsScreen::NativeOnDeactivated()
+UWidget* USettingsScreen::NativeGetDesiredFocusTarget() const
+{
+	// The screen is reused and keeps its tab, so focus must land on the page that is showing: a row on a hidden page
+	// cannot take focus, and focus would stay on the game viewport.
+	const int32 Index = Switcher ? Switcher->GetActiveWidgetIndex() : 0;
+	if (Pages.IsValidIndex(Index) && !Pages[Index]->GetItems().IsEmpty())
+	{
+		const TArray<TObjectPtr<UWidget>>& Items = Pages[Index]->GetItems();
+		return Items.Contains(DefaultFocus) ? DefaultFocus.Get() : Items[0].Get();
+	}
+	return Super::NativeGetDesiredFocusTarget();
+}
+
+void USettingsScreen::NativeOnClosed()
 {
 	// Leaving with unapplied changes discards them, so a previewed language or scale never sticks by accident.
+	// Only when leaving: Key bindings opens on top of this screen and must not throw the changes away.
 	if (ViewModel)
 	{
 		ViewModel->Revert();
 	}
-	Super::NativeOnDeactivated();
+	Super::NativeOnClosed();
 }
 
 FReply USettingsScreen::NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
