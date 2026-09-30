@@ -30,7 +30,7 @@ Pass 0 builds this as a single script, `Scripts/Verify.ps1`, which prints one PA
 | G2 | `python Scripts/run_tests.py`, all green | logic regressions |
 | G3 | `-GothamMenuInputTest`, all PASS | focus, hit-testing, prompt clicks, toggle keys |
 | G4 | Screenshot regression: recapture the set and diff against `Docs/img` in 8x8 blocks (so animated scanlines and rain average out). Deterministic images (no recorded noise) are held to 0.1%; animated ones get 3x their recorded noise (`Scripts/ScreenNoise.json`, from two captures of the same code) plus 0.5 points. Review any image over that | layout, colour and localization regressions, and stale baselines |
-| G5 | Perf harness at 1080p, side by side with a reference build (default `master`, built in `Saved/PerfRef`): five ABBA rounds, and every scenario's UI cost within 0.05 ms of the reference on the median | accidental per-frame work |
+| G5 | Perf harness at 1080p, side by side with a reference build (default `master`). Both sides are built and run from sibling worktrees (`Saved/PerfRef`, and `Saved/PerfCur` = HEAD plus this checkout's `Source` and `Config`), because running from this checkout biased the current side by about +0.05 ms: five ABBA rounds, and every scenario's UI cost within 0.05 ms of the reference on the median | accidental per-frame work |
 | G6 | Logs of every run in the gate: no `Ensure condition failed`, no project (`LogGotham*`) errors or warnings, and no content-integrity warnings (materials, skeletal meshes, missing usage flags, failed package loads) | tick, focus and lifetime mistakes; content that silently renders wrong (a material without its skeletal-mesh flag showed the engine default on the thugs for all of V5) |
 
 A pass that fails any check does not merge. Fix it on the branch, or drop the branch.
@@ -49,6 +49,7 @@ A pass that fails any check does not merge. Fix it on the branch, or drop the br
    itself must pass) and `-PerfInject <scenario>:<ms>` (a known cost must fail) check the check.
    Measured on 2026-09-30: against itself the worst median was +0.038 ms, and single rounds swung by up to 0.18 ms
    (the median discards them). An injected 0.1 ms on `gadget-wheel` read as +0.081 ms, and only that row failed.
+   With both sides in worktrees, the same check gave medians from -0.035 to -0.002 ms.
 4. **Characterization tests** for what later passes rewrite:
    - every setting survives `SaveToConfig` then `LoadFromConfig`, and a fixture string in today's exact config
      format still loads (P4 must keep it)
