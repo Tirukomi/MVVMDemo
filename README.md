@@ -90,7 +90,7 @@ These make the game reproduce a state, screenshot itself and stay out of the way
 uses them to regenerate every image above.
 
 `-GothamMenuInputTest` (drives the menus through Slate input and logs PASS / FAIL), `-GothamCombatDemo`, `-GothamNoThugs`, `-GothamOpenPause`, `-GothamOpenQuit`, `-GothamOpenWheel`, `-GothamDetective`, `-GothamClueLog[=N]`, `-GothamOpenSettings`,
-`-GothamSettingsTab=<Display|Accessibility|Controls|Language>`, `-GothamSettingsItem=<n>`, `-GothamOpenControls`, `-GothamRebindDemo`, `-GothamCycleLanguage`, `-GothamShotDelay=<s>`,
+`-GothamSettingsTab=<Display|Accessibility|Controls|Language>`, `-GothamSettingsItem=<n>`, `-GothamNoHoverFocus`, `-GothamOpenControls`, `-GothamRebindDemo`, `-GothamCycleLanguage`, `-GothamShotDelay=<s>`,
 `-GothamLanguage=<culture>`, `-GothamColorMode=0..3`, `-GothamUIScale=0..4`, `-GothamHighContrast`,
 `-GothamReducedMotion`, `-GothamPerf=<label>` (see [Performance](Docs/Performance.md)).
 

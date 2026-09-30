@@ -56,4 +56,18 @@ namespace GothamUI
 			Slate->SetCanTick(false);
 		}
 	}
+
+	/**
+	 * Whether hovering a menu item moves focus to it (the normal behaviour). Screenshot runs pass
+	 * -GothamNoHoverFocus: the window opens wherever the real cursor rests, and focus must not follow it there.
+	 */
+	inline bool HoverMovesFocus()
+	{
+#if !UE_BUILD_SHIPPING
+		static const bool bNoHoverFocus = FParse::Param(FCommandLine::Get(), TEXT("GothamNoHoverFocus"));
+		return !bNoHoverFocus;
+#else
+		return true;
+#endif
+	}
 }
