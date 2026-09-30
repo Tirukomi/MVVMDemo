@@ -51,14 +51,19 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 		Label->SetTextTransformPolicy(ETextTransformPolicy::ToUpper);
 		Label->SetText(LOCTEXT("Mode", "DETECTIVE MODE"));
 		ModeLabel = Label;
-		Strip->AddChildToHorizontalBox(Label)->SetPadding(FMargin(0.f, 0.f, 24.f, 0.f));
+		UHorizontalBoxSlot* ModeSlot = Strip->AddChildToHorizontalBox(Label);
+		ModeSlot->SetPadding(FMargin(0.f, 0.f, 24.f, 0.f));
+		ModeSlot->SetVerticalAlignment(VAlign_Center);
 
 		UGothamInputGlyph* ScanGlyph = WidgetTree->ConstructWidget<UGothamInputGlyph>();
 		ScanGlyph->SetAction(TEXT("Scan"));
 		Strip->AddChildToHorizontalBox(ScanGlyph)->SetVerticalAlignment(VAlign_Center);
 
 		ScanLabel = WidgetTree->ConstructWidget<UTextBlock>();
-		Strip->AddChildToHorizontalBox(ScanLabel)->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
+		// Centred on the key glyph: the default Fill alignment would pin the text to the top of the row.
+		UHorizontalBoxSlot* ScanSlot = Strip->AddChildToHorizontalBox(ScanLabel);
+		ScanSlot->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
+		ScanSlot->SetVerticalAlignment(VAlign_Center);
 	}
 	return Super::RebuildWidget();
 }

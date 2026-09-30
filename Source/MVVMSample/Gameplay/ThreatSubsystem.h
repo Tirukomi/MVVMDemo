@@ -46,8 +46,8 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
+	/** The base class already ticks conditionally (and never for the class default object): tick only with thugs. */
 	virtual bool IsTickable() const override { return !Thugs.IsEmpty(); }
-	virtual ETickableTickType GetTickableTickType() const override { return ETickableTickType::Conditional; }
 
 protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
