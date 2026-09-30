@@ -221,6 +221,49 @@ bool FGothamInputBindingsTest::RunTest(const FString& Parameters)
 		});
 		TestTrue(FString::Printf(TEXT("%s defaults to %s"), *Pair.Key.ToString(), *Pair.Value.ToString()), bFound);
 	}
+
+	// Every mapping, grouped by action: value type, then each key in mapping order ("~" = Y negated), with its
+	// mappable name and display name. The key order inside an action decides its rebind slots.
+	TMap<FString, FString> Actual;
+	for (const FEnhancedActionKeyMapping& Mapping : Context->GetMappings())
+	{
+		FString& Line = Actual.FindOrAdd(GetNameSafe(Mapping.Action));
+		if (Line.IsEmpty())
+		{
+			Line = FString::Printf(TEXT("%d:"), static_cast<int32>(Mapping.Action->ValueType));
+		}
+		Line += FString::Printf(TEXT(" %s%s"), *Mapping.Key.ToString(), Mapping.Modifiers.IsEmpty() ? TEXT("") : TEXT("~"));
+		if (Mapping.IsPlayerMappable())
+		{
+			Line += FString::Printf(TEXT("[%s|%s]"), *Mapping.GetMappingName().ToString(), *Mapping.GetDisplayName().ToString());
+		}
+	}
+	const TMap<FString, FString> Expected = {
+		{ TEXT("IA_Attack"), TEXT("0: LeftMouseButton[Attack|Attack] Gamepad_FaceButton_Bottom[Attack|Attack] F3[Attack|Attack]") },
+		{ TEXT("IA_ClueLog"), TEXT("0: J[ClueLog|Case file] Gamepad_Special_Left[ClueLog|Case file]") },
+		{ TEXT("IA_Counter"), TEXT("0: RightMouseButton[Counter|Counter] Gamepad_RightShoulder[Counter|Counter]") },
+		{ TEXT("IA_DebugDamage"), TEXT("0: F1") },
+		{ TEXT("IA_DebugHeal"), TEXT("0: F2") },
+		{ TEXT("IA_Detective"), TEXT("0: V[Detective|Detective mode] Gamepad_DPad_Up[Detective|Detective mode]") },
+		{ TEXT("IA_Gadget1"), TEXT("0: One[Gadget1|Gadget 1] Gamepad_FaceButton_Left[Gadget1|Gadget 1]") },
+		{ TEXT("IA_Gadget2"), TEXT("0: Two[Gadget2|Gadget 2] Gamepad_FaceButton_Top[Gadget2|Gadget 2]") },
+		{ TEXT("IA_Gadget3"), TEXT("0: Three[Gadget3|Gadget 3] Gamepad_FaceButton_Right[Gadget3|Gadget 3]") },
+		{ TEXT("IA_GadgetWheel"), TEXT("0: Q[GadgetWheel|Gadget wheel] Gamepad_LeftShoulder[GadgetWheel|Gadget wheel]") },
+		{ TEXT("IA_Look"), TEXT("2: Mouse2D~ Gamepad_Right2D~") },
+		{ TEXT("IA_Move"), TEXT("2: Gamepad_Left2D") },
+		{ TEXT("IA_MoveBack"), TEXT("0: S[MoveBack|Move back]") },
+		{ TEXT("IA_MoveForward"), TEXT("0: W[MoveForward|Move forward]") },
+		{ TEXT("IA_MoveLeft"), TEXT("0: A[MoveLeft|Move left]") },
+		{ TEXT("IA_MoveRight"), TEXT("0: D[MoveRight|Move right]") },
+		{ TEXT("IA_Pause"), TEXT("0: Escape[Pause|Pause] Gamepad_Special_Right[Pause|Pause]") },
+		{ TEXT("IA_Scan"), TEXT("0: E[Scan|Scan clue] Gamepad_DPad_Right[Scan|Scan clue]") },
+	};
+	TestEqual("same set of actions", Actual.Num(), Expected.Num());
+	for (const TPair<FString, FString>& Pair : Expected)
+	{
+		const FString* Found = Actual.Find(Pair.Key);
+		TestEqual(FString::Printf(TEXT("%s mappings"), *Pair.Key), Found ? *Found : FString(TEXT("(missing)")), Pair.Value);
+	}
 	PC->MarkAsGarbage();
 	return true;
 }
