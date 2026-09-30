@@ -28,23 +28,7 @@ namespace GothamMarkers
 
 void SClueMarkerLayer::Construct(const FArguments& InArgs)
 {
-	SetCanTick(false);
-	SetVisibility(EVisibility::HitTestInvisible);
-}
-
-void SClueMarkerLayer::SetActive(bool bInActive)
-{
-	if (bInActive && !Timer.IsValid())
-	{
-		Timer = RegisterActiveTimer(0.f, FWidgetActiveTimerDelegate::CreateSP(this, &SClueMarkerLayer::Refresh));
-	}
-	else if (!bInActive && Timer.IsValid())
-	{
-		UnRegisterActiveTimer(Timer.ToSharedRef());
-		Timer.Reset();
-		Markers.Reset();
-		Invalidate(EInvalidateWidgetReason::Paint);
-	}
+	ConstructOverlay();
 }
 
 void SClueMarkerLayer::SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted)
@@ -56,20 +40,10 @@ void SClueMarkerLayer::SetColors(const FLinearColor& InUnknown, const FLinearCol
 	Invalidate(EInvalidateWidgetReason::Paint);
 }
 
-EActiveTimerReturnType SClueMarkerLayer::Refresh(double, float)
-{
-	Markers.Reset();
-	if (Provider)
-	{
-		Provider(Markers);
-	}
-	Invalidate(EInvalidateWidgetReason::Paint);
-	return EActiveTimerReturnType::Continue;
-}
-
 int32 SClueMarkerLayer::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
 	FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {
+	const TArray<FGothamClueMarker>& Markers = GetItems();
 	if (Markers.IsEmpty())
 	{
 		return LayerId;

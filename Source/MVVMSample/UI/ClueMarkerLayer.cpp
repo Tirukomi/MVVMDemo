@@ -2,7 +2,6 @@
 
 #include "UI/ClueMarkerLayer.h"
 
-#include "Blueprint/WidgetLayoutLibrary.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/Slate/SClueMarkerLayer.h"
@@ -12,25 +11,16 @@
 
 #define LOCTEXT_NAMESPACE "Gotham.ClueMarkers"
 
-TSharedRef<SWidget> UClueMarkerLayer::RebuildWidget()
+TSharedRef<SGothamWorldOverlayBase> UClueMarkerLayer::MakeOverlay()
 {
-	SlateLayer = SNew(SClueMarkerLayer);
-	const TWeakObjectPtr<UClueMarkerLayer> Weak(this);
-	SlateLayer->SetProvider([Weak](TArray<FGothamClueMarker>& Out)
-	{
-		if (const UClueMarkerLayer* Self = Weak.Get())
-		{
-			Self->BuildMarkers(Out);
-		}
-	});
-	SlateLayer->SetActive(Detective && Detective->GetIsVisible());
-	return SlateLayer.ToSharedRef();
+	TSharedRef<SClueMarkerLayer> Layer = SNew(SClueMarkerLayer);
+	Layer->SetProvider(MakeProvider(&UClueMarkerLayer::BuildMarkers));
+	return Layer;
 }
 
-void UClueMarkerLayer::ReleaseSlateResources(bool bReleaseChildren)
+bool UClueMarkerLayer::ShouldBeActive() const
 {
-	Super::ReleaseSlateResources(bReleaseChildren);
-	SlateLayer.Reset();
+	return Detective && Detective->GetIsVisible();
 }
 
 void UClueMarkerLayer::SetViewModels(UClueListViewModel* InClues, UDetectiveViewModel* InDetective)
@@ -40,26 +30,20 @@ void UClueMarkerLayer::SetViewModels(UClueListViewModel* InClues, UDetectiveView
 	Detective = InDetective;
 	GothamMVVM::Bind(Detective, this, &UClueMarkerLayer::OnDetectiveChanged,
 		{ UDetectiveViewModel::FFieldNotificationClassDescriptor::bIsVisible });
-	if (SlateLayer.IsValid())
-	{
-		SlateLayer->SetActive(Detective && Detective->GetIsVisible());
-	}
+	UpdateActive();
 }
 
 void UClueMarkerLayer::SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted)
 {
-	if (SlateLayer.IsValid())
+	if (SClueMarkerLayer* Layer = GetOverlay<SClueMarkerLayer>())
 	{
-		SlateLayer->SetColors(InUnknown, InKnown, InAnalysing, InMuted);
+		Layer->SetColors(InUnknown, InKnown, InAnalysing, InMuted);
 	}
 }
 
 void UClueMarkerLayer::OnDetectiveChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId)
 {
-	if (SlateLayer.IsValid())
-	{
-		SlateLayer->SetActive(Detective && Detective->GetIsVisible());
-	}
+	UpdateActive();
 }
 
 void UClueMarkerLayer::BuildMarkers(TArray<FGothamClueMarker>& Out) const
@@ -84,8 +68,7 @@ void UClueMarkerLayer::BuildMarkers(TArray<FGothamClueMarker>& Out) const
 			continue;
 		}
 		FVector2D Screen;
-		// Viewport-relative and DPI-adjusted: the same space as the full-screen HUD canvas this layer fills.
-		if (!UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PC, World, Screen, true))
+		if (!ProjectToLayer(World, Screen))
 		{
 			continue;
 		}

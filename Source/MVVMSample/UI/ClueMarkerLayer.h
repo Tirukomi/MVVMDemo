@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/Widget.h"
+#include "UI/GothamWorldOverlayLayer.h"
 #include "ClueMarkerLayer.generated.h"
 
-class SClueMarkerLayer;
 class UClueListViewModel;
 class UDetectiveViewModel;
 
@@ -16,7 +15,7 @@ class UDetectiveViewModel;
  * visible; everything else about the markers (what to show, how far, which is being analysed) comes from view models.
  */
 UCLASS()
-class MVVMSAMPLE_API UClueMarkerLayer : public UWidget
+class MVVMSAMPLE_API UClueMarkerLayer : public UGothamWorldOverlayLayer
 {
 	GENERATED_BODY()
 
@@ -28,10 +27,9 @@ public:
 	void SetViewModels(UClueListViewModel* InClues, UDetectiveViewModel* InDetective);
 	void SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted);
 
-	virtual void ReleaseSlateResources(bool bReleaseChildren) override;
-
 protected:
-	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual TSharedRef<SGothamWorldOverlayBase> MakeOverlay() override;
+	virtual bool ShouldBeActive() const override;
 
 private:
 	void OnDetectiveChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
@@ -42,6 +40,4 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UDetectiveViewModel> Detective;
-
-	TSharedPtr<SClueMarkerLayer> SlateLayer;
 };

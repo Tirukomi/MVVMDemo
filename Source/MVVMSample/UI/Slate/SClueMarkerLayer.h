@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Widgets/SLeafWidget.h"
+#include "UI/Slate/SGothamWorldOverlay.h"
 
 /** One world-anchored clue marker, already projected into the layer's local space. */
 struct FGothamClueMarker
@@ -30,33 +30,22 @@ namespace GothamMarkers
 
 /**
  * Draws every clue marker in one paint pass: corner brackets, a label and distance, and an analysis arc on the clue being
- * analysed. While active it refreshes markers through a provider on an active timer (positions change with the camera);
- * when inactive it unregisters the timer and paints nothing, so it costs nothing outside Detective Mode.
+ * analysed. A world overlay: active (refreshing every frame) only while Detective Mode is visible.
  */
-class MVVMSAMPLE_API SClueMarkerLayer : public SLeafWidget
+class MVVMSAMPLE_API SClueMarkerLayer : public SGothamWorldOverlay<FGothamClueMarker>
 {
 public:
-	using FProvider = TFunction<void(TArray<FGothamClueMarker>& OutMarkers)>;
-
 	SLATE_BEGIN_ARGS(SClueMarkerLayer) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
 
-	void SetProvider(FProvider InProvider) { Provider = MoveTemp(InProvider); }
-	void SetActive(bool bInActive);
 	void SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted);
 
 	virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
 		FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;
-	virtual FVector2D ComputeDesiredSize(float) const override { return FVector2D::ZeroVector; }
 
 private:
-	EActiveTimerReturnType Refresh(double InCurrentTime, float InDeltaTime);
-
-	FProvider Provider;
-	TArray<FGothamClueMarker> Markers;
-	TSharedPtr<FActiveTimerHandle> Timer;
 	FLinearColor UnknownColor = FLinearColor(1.f, 0.55f, 0.1f);
 	FLinearColor KnownColor = FLinearColor(0.35f, 0.7f, 0.9f);
 	FLinearColor AnalysingColor = FLinearColor(0.96f, 0.68f, 0.22f);
