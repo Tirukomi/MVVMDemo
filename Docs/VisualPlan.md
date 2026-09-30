@@ -249,7 +249,7 @@ This is the biggest visual change for the least work.
   every new element. The new tokens also need high-contrast variants.
 
 **V5 as built:**
-- **Thugs** (`AGothamThug`): four training dummies (the mannequin in dark metal) spawned by `AGothamGameMode` around the
+- **Thugs** (`AGothamThug`): four training dummies (the mannequin in its own textured materials, apart from the hero's dark suit) spawned by `AGothamGameMode` around the
   start. Each spot has fallbacks, and a trace skips any that landed on a prop. They turn to face the player and are
   drawn as hostiles in Detective Mode (custom-depth stencil 3). There's no AI controller.
 - **Attack logic** (pure, tested): `FGothamThugBrain` runs Idle -> Warning (1.1 s counter window) -> Strike -> Recover,

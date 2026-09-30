@@ -13,7 +13,6 @@
 #include "Gameplay/GothamFeel.h"
 #include "Gameplay/HealthComponent.h"
 #include "Gameplay/ThreatSubsystem.h"
-#include "Materials/MaterialInterface.h"
 #include "UObject/ConstructorHelpers.h"
 
 namespace
@@ -51,14 +50,9 @@ AGothamThug::AGothamThug()
 void AGothamThug::BeginPlay()
 {
 	Super::BeginPlay();
-	// Dark metal rather than the hero's suit, so the silhouettes read apart. Soft path, as for the hero.
-	if (UMaterialInterface* Look = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(TEXT("/Game/Materials/Environment/M_DarkMetal.M_DarkMetal"))).LoadSynchronous())
-	{
-		for (int32 i = 0; i < GetMesh()->GetNumMaterials(); ++i)
-		{
-			GetMesh()->SetMaterial(i, Look);
-		}
-	}
+	// No material override: thugs keep the mannequin's own textured materials (MI_Manny_01/02_New), which read
+	// clearly apart from the hero's dark suit. A generated material here would need the skeletal-mesh usage flag,
+	// or the engine silently substitutes its default material.
 	if (UGothamThreatSubsystem* Threats = GetWorld()->GetSubsystem<UGothamThreatSubsystem>())
 	{
 		Threats->Register(this);
