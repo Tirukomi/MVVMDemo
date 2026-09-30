@@ -3,11 +3,12 @@
 #
 #   .\Scripts\Verify.ps1                         # the full gate, about 22 minutes (about 7 when G5 skips)
 #   .\Scripts\Verify.ps1 -Quick                  # incremental build, no perf runs (about 6 minutes)
-#   .\Scripts\Verify.ps1 -Only G2,G3             # a subset
+#   .\Scripts\Verify.ps1 -Only G2,G4             # a subset
 #   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD -ForcePerf  # perf noise check: this build against itself must pass
 #   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD -PerfInject gadget-wheel:0.1   # sensitivity: must fail on gadget-wheel
 #
-# G1 build (clean rebuild, zero project warnings)   G2 automation tests       G3 menu input test (Slate input)
+# G1 build (clean rebuild, zero project warnings)   G2 automation tests (editor pass + game pass, which includes the
+#                                                   menu input rules that were G3)
 # G4 screenshots vs Docs/img (DiffScreens.ps1)      G5 perf vs a reference build, measured side by side
 # G6 no ensures / project errors in logs
 param(
@@ -125,16 +126,6 @@ if (Should-Run "G2") {
     $out = & python (Join-Path $root "Scripts\run_tests.py") 2>&1
     $summary = ($out | Select-String -Pattern '\d+ passed, \d+ failed' | Select-Object -Last 1).Line
     Record "G2" ($LASTEXITCODE -eq 0 -and $summary) ("tests: {0}" -f $summary) (($out | Select-String "FAILED") -join "`n")
-}
-
-# G3: menu input rules through Slate's input path.
-if (Should-Run "G3") {
-    Run-Game "-GothamMenuInputTest" 90 | Out-Null
-    $gameLog = Join-Path $root "Saved\Logs\MVVMSample.log"
-    $line = (Select-String -Path $gameLog -Pattern "Menu input test: (\d+) passed, (\d+) failed" | Select-Object -Last 1)
-    $fails = Select-String -Path $gameLog -Pattern "LogGothamMenuTest: Display: FAIL" | ForEach-Object { $_.Line }
-    $ok = $line -and ([int]$line.Matches[0].Groups[2].Value -eq 0)
-    Record "G3" $ok ($(if ($line) { $line.Matches[0].Value } else { "no result line (test did not finish)" })) ($fails -join "`n")
 }
 
 # G4: screenshots against the committed set.

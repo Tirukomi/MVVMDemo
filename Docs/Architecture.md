@@ -119,7 +119,10 @@ side). Clues are `UClueDataAsset`s placed as `AClueActor`s; custom depth + stenc
 
 Automation specs live in `Source/MVVMSample/Tests`. They cover view-model behaviour, component logic (via `Advance()`
 so unregistered components can be driven), input/palette/settings rules and rebinding. Run them with
-`Scripts/run_tests.py` (exit code reflects failures). Visual verification uses the dev flags documented in the README.
+`Scripts/run_tests.py` (exit code reflects failures). It runs two passes: the editor pass (headless) and a game pass
+for `Gotham.Functional.*`, latent tests that need the running game, such as the menu input rules (focus,
+hit-testing, prompt clicks, toggle keys) driven through Slate's own input path. Visual verification uses the dev
+flags documented in the README.
 
 Everything that drives the running game on its own is a script for one runner, `FGothamScript`
 (`Core/GothamScript.h`): the dev flags (`Core/GothamDevAids.cpp`, compiled out of Shipping), the perf harness and the

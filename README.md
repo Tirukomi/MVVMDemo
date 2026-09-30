@@ -68,7 +68,7 @@ for pause).
 ## Tests
 
 ```bash
-python Scripts/run_tests.py          # headless; exit code reflects failures; report in Saved/AutomationReports
+python Scripts/run_tests.py          # editor pass (headless) + game pass (Gotham.Functional, small window); exit code reflects failures
 ```
 
 Before merging a refactor, run the whole gate (build, tests, menu input test, screenshot diff, perf versus baseline,
