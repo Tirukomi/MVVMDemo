@@ -29,8 +29,25 @@ struct FGothamBindingChange
 	FKey NewKey;
 };
 
+/** Which naming a gamepad's buttons use on screen. */
+enum class EGothamGamepadStyle : uint8
+{
+	Xbox,         // A B X Y, LB RB LT RT, View / Menu
+	PlayStation,  // Cross Circle Square Triangle, L1 R1 L2 R2, Create / Options
+	Nintendo,     // B A Y X by position, L R ZL ZR, - / +
+};
+
 namespace GothamBindings
 {
+	/** The style for a gamepad name as Common Input reports it ("PS5", "DualSense", "Switch" ...); Xbox otherwise. */
+	MVVMSAMPLE_API EGothamGamepadStyle GamepadStyleFromName(FName GamepadName);
+
+	/**
+	 * A key's short on-screen name ("Esc", "LB", "D-pad Up"), localizable, in the given gamepad's naming. Keys without
+	 * a short name use the engine's display name.
+	 */
+	MVVMSAMPLE_API FText GetKeyLabel(const FKey& Key, EGothamGamepadStyle Style = EGothamGamepadStyle::Xbox);
+
 	inline constexpr int32 KeyboardSlot = 0;
 	inline constexpr int32 GamepadSlot = 1;
 

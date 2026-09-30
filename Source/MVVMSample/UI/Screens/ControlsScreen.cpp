@@ -278,7 +278,7 @@ void UControlsScreen::RefreshLabels()
 		}
 		const bool bThis = bCapturing && Entry.Name == CaptureName && Entry.Slot == CaptureSlot;
 		const FKey Key = ViewModel->GetKey(Entry.Name, Entry.Slot);
-		Entry.Button->SetLabel(bThis ? LOCTEXT("Capturing", "...") : (Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key) : LOCTEXT("Unbound", "Unbound")));
+		Entry.Button->SetLabel(bThis ? LOCTEXT("Capturing", "...") : (Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key, GetOwningLocalPlayer()) : LOCTEXT("Unbound", "Unbound")));
 	}
 }
 

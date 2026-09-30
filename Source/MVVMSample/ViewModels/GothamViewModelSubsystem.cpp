@@ -6,6 +6,9 @@
 #include "Core/GothamCharacter.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
+#include "EnhancedInputSubsystems.h"
+#include "Input/GothamBindings.h"
+#include "UserSettings/EnhancedInputUserSettings.h"
 #include "Gameplay/ClueDataAsset.h"
 #include "Gameplay/ComboComponent.h"
 #include "Gameplay/DetectiveComponent.h"
@@ -65,7 +68,8 @@ void UGothamViewModelSubsystem::Deinitialize()
 UObject* UGothamViewModelSubsystem::FindViewModel(const UClass* ViewModelClass) const
 {
 	for (UObject* Candidate : { static_cast<UObject*>(Vitals), static_cast<UObject*>(GadgetBar), static_cast<UObject*>(Combo),
-		static_cast<UObject*>(Detective), static_cast<UObject*>(Objectives), static_cast<UObject*>(Clues), static_cast<UObject*>(Threats) })
+		static_cast<UObject*>(Detective), static_cast<UObject*>(Objectives), static_cast<UObject*>(Clues), static_cast<UObject*>(Subtitles),
+		static_cast<UObject*>(Threats) })
 	{
 		if (Candidate && Candidate->GetClass()->IsChildOf(ViewModelClass))
 		{
@@ -106,6 +110,37 @@ void UGothamViewModelSubsystem::Unbind()
 	BoundThreats.Reset();
 	BoundCombo.Reset();
 	BoundDetective.Reset();
+	if (UEnhancedInputUserSettings* InputSettings = BoundInputSettings.Get())
+	{
+		InputSettings->OnSettingsChanged.RemoveDynamic(this, &UGothamViewModelSubsystem::HandleInputSettingsChanged);
+	}
+	BoundInputSettings.Reset();
+}
+
+void UGothamViewModelSubsystem::HandleInputSettingsChanged(UEnhancedInputUserSettings* InputSettings)
+{
+	RefreshGadgetHotkeys();
+}
+
+void UGothamViewModelSubsystem::RefreshGadgetHotkeys()
+{
+	const UEnhancedInputUserSettings* InputSettings = BoundInputSettings.Get();
+	const UEnhancedPlayerMappableKeyProfile* Profile = InputSettings ? InputSettings->GetActiveKeyProfile() : nullptr;
+	for (int32 i = 0; i < GadgetBar->GetSlots().Num(); ++i)
+	{
+		FKey Key;
+		if (const FKeyMappingRow* Row = Profile ? Profile->FindKeyMappingRow(*FString::Printf(TEXT("Gadget%d"), i + 1)) : nullptr)
+		{
+			for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+			{
+				if (Mapping.GetSlot() == EPlayerMappableKeySlot::First)
+				{
+					Key = Mapping.GetCurrentKey();
+				}
+			}
+		}
+		GadgetBar->GetSlot(i)->SetHotkey(Key.IsValid() ? GothamBindings::GetKeyLabel(Key) : FText::AsNumber(i + 1));
+	}
 }
 
 void UGothamViewModelSubsystem::BindToCharacter(AGothamCharacter* Character)
@@ -136,6 +171,16 @@ void UGothamViewModelSubsystem::BindToCharacter(AGothamCharacter* Character)
 	{
 		GadgetBar->GetSlot(i)->SetDefinition(Defs[i].DisplayName, FText::AsNumber(i + 1), Defs[i].Tint, Defs[i].IconIndex);
 	}
+	// Key hints follow the player's bindings, and change when they are rebound.
+	if (const auto* Input = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr)
+	{
+		if (UEnhancedInputUserSettings* InputSettings = Input->GetUserSettings())
+		{
+			InputSettings->OnSettingsChanged.AddUniqueDynamic(this, &UGothamViewModelSubsystem::HandleInputSettingsChanged);
+			BoundInputSettings = InputSettings;
+		}
+	}
+	RefreshGadgetHotkeys();
 
 	// Hostiles live in the world, not on the character: the threat subsystem publishes one snapshot list per frame.
 	if (UGothamThreatSubsystem* ThreatSub = Character->GetWorld()->GetSubsystem<UGothamThreatSubsystem>())

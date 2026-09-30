@@ -82,6 +82,6 @@ void UThreatIndicatorLayer::BuildIndicators(TArray<FGothamThreatIndicator>& Out)
 	{
 		// Follows rebinding and device switches: the prompt always names the key that counters right now.
 		const FKey Key = UGothamInputGlyph::FindKeyForAction(PC, TEXT("Counter"));
-		Layer->SetKeyLabel(Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key) : FText::GetEmpty());
+		Layer->SetKeyLabel(Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key, PC->GetLocalPlayer()) : FText::GetEmpty());
 	}
 }

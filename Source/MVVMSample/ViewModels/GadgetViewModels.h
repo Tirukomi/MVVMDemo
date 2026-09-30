@@ -14,6 +14,8 @@ class MVVMSAMPLE_API UGadgetSlotViewModel : public UMVVMViewModelBase
 
 public:
 	void SetDefinition(const FText& InName, const FText& InHotkey, const FLinearColor& InTint, int32 InIconIndex = 0);
+	/** The key hint, which follows rebinding. */
+	void SetHotkey(const FText& InHotkey);
 
 	/** Remaining and total seconds; derives percent and ready state. */
 	void SetCooldown(float InRemaining, float InTotal);

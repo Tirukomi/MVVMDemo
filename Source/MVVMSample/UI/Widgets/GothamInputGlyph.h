@@ -10,6 +10,7 @@
 #include "GothamInputGlyph.generated.h"
 
 class APlayerController;
+class ULocalPlayer;
 class UInputAction;
 class UTextBlock;
 enum class ECommonInputType : uint8;
@@ -31,7 +32,8 @@ public:
 	void SetFixedKeys(FKey InKeyboardMouseKey, FKey InGamepadKey);
 
 	/** Short label for a key, e.g. "Esc", "A". Static so tests can cover the mapping. */
-	static FText GetKeyLabel(const FKey& Key);
+	/** The key's short name in the naming of the gamepad Player is using (Xbox if unknown). See GothamBindings::GetKeyLabel. */
+	static FText GetKeyLabel(const FKey& Key, const ULocalPlayer* Player = nullptr);
 
 	/** The key currently bound to a gameplay action for the device the player is using (invalid if none yet). */
 	static FKey FindKeyForAction(const APlayerController* Player, FName InActionName);

@@ -2,6 +2,11 @@
 
 #include "ViewModels/GadgetViewModels.h"
 
+void UGadgetSlotViewModel::SetHotkey(const FText& InHotkey)
+{
+	UE_MVVM_SET_PROPERTY_VALUE(Hotkey, InHotkey);
+}
+
 void UGadgetSlotViewModel::SetDefinition(const FText& InName, const FText& InHotkey, const FLinearColor& InTint, int32 InIconIndex)
 {
 	UE_MVVM_SET_PROPERTY_VALUE(IconIndex, InIconIndex);

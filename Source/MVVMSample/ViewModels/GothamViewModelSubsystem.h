@@ -9,6 +9,7 @@
 #include "GothamViewModelSubsystem.generated.h"
 
 class AGothamCharacter;
+class UEnhancedInputUserSettings;
 class UComboComponent;
 class UClueListViewModel;
 class UComboViewModel;
@@ -70,6 +71,12 @@ private:
 	void RebuildClues();
 	void HandleSettings(const FGothamSettingsData& Data);
 	void ShowSubtitle(const FText& Speaker, const FText& Line, float Seconds);
+	/** Gadget key hints from the player's current bindings (rebinding included). */
+	void RefreshGadgetHotkeys();
+	UFUNCTION()
+	void HandleInputSettingsChanged(UEnhancedInputUserSettings* InputSettings);
+
+	TWeakObjectPtr<UEnhancedInputUserSettings> BoundInputSettings;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UPlayerVitalsViewModel> Vitals;

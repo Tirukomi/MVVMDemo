@@ -15,6 +15,7 @@
 #include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Widgets/GothamText.h"
 #include "Engine/LocalPlayer.h"
+#include "Input/GothamBindings.h"
 #include "EnhancedInputSubsystems.h"
 
 TSharedRef<SWidget> UGothamInputGlyph::RebuildWidget()
@@ -84,34 +85,10 @@ void UGothamInputGlyph::SetFixedKeys(FKey InKeyboardMouseKey, FKey InGamepadKey)
 	Refresh();
 }
 
-FText UGothamInputGlyph::GetKeyLabel(const FKey& Key)
+FText UGothamInputGlyph::GetKeyLabel(const FKey& Key, const ULocalPlayer* Player)
 {
-	static const TMap<FName, const TCHAR*> ShortNames = {
-		{ EKeys::Gamepad_FaceButton_Bottom.GetFName(), TEXT("A") },
-		{ EKeys::Gamepad_FaceButton_Right.GetFName(), TEXT("B") },
-		{ EKeys::Gamepad_FaceButton_Left.GetFName(), TEXT("X") },
-		{ EKeys::Gamepad_FaceButton_Top.GetFName(), TEXT("Y") },
-		{ EKeys::Gamepad_Special_Right.GetFName(), TEXT("Menu") },
-		{ EKeys::Gamepad_RightTrigger.GetFName(), TEXT("RT") },
-		{ EKeys::Gamepad_LeftTrigger.GetFName(), TEXT("LT") },
-		{ EKeys::Gamepad_RightShoulder.GetFName(), TEXT("RB") },
-		{ EKeys::Gamepad_LeftShoulder.GetFName(), TEXT("LB") },
-		{ EKeys::Gamepad_DPad_Up.GetFName(), TEXT("D-pad Up") },
-		{ EKeys::Gamepad_DPad_Down.GetFName(), TEXT("D-pad Down") },
-		{ EKeys::Gamepad_DPad_Left.GetFName(), TEXT("D-pad Left") },
-		{ EKeys::Gamepad_DPad_Right.GetFName(), TEXT("D-pad Right") },
-		{ EKeys::Gamepad_Special_Left.GetFName(), TEXT("View") },
-		{ EKeys::Escape.GetFName(), TEXT("Esc") },
-		{ EKeys::Enter.GetFName(), TEXT("Enter") },
-		{ EKeys::LeftMouseButton.GetFName(), TEXT("LMB") },
-		{ EKeys::RightMouseButton.GetFName(), TEXT("RMB") },
-		{ EKeys::MiddleMouseButton.GetFName(), TEXT("MMB") },
-	};
-	if (const TCHAR* const* Short = ShortNames.Find(Key.GetFName()))
-	{
-		return FText::FromString(*Short);
-	}
-	return Key.GetDisplayName();
+	const UCommonInputSubsystem* Input = Player ? UCommonInputSubsystem::Get(Player) : nullptr;
+	return GothamBindings::GetKeyLabel(Key, Input ? GothamBindings::GamepadStyleFromName(Input->GetCurrentGamepadName()) : EGothamGamepadStyle::Xbox);
 }
 
 FKey UGothamInputGlyph::FindKeyForAction(const APlayerController* Player, FName InActionName)
@@ -145,7 +122,7 @@ void UGothamInputGlyph::Refresh()
 	UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer());
 	const bool bGamepad = Input && Input->GetCurrentInputType() == ECommonInputType::Gamepad;
 	const FKey Key = ActionName.IsNone() ? (bGamepad ? FixedGamepad : FixedKeyboardMouse) : FindKeyForAction(GetOwningPlayer(), ActionName);
-	Text->SetText(Key.IsValid() ? GetKeyLabel(Key) : FText::GetEmpty());
+	Text->SetText(Key.IsValid() ? GetKeyLabel(Key, GetOwningLocalPlayer()) : FText::GetEmpty());
 	// Palette tokens, so the key caps follow high contrast like everything else.
 	const FLinearColor Ink = GothamStyle::Token(this, EGothamColorToken::TextPrimary);
 	Text->SetColorAndOpacity(Ink);

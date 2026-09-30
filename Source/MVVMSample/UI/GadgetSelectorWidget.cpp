@@ -144,7 +144,7 @@ void UGadgetSelectorWidget::RebuildEntries()
 	using FSlotVM = UGadgetSlotViewModel::FFieldNotificationClassDescriptor;
 	for (UGadgetSlotViewModel* SlotVM : ViewModel->GetSlots())
 	{
-		GothamMVVM::Bind(SlotVM, this, &UGadgetSelectorWidget::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady, FSlotVM::DisplayName });
+		GothamMVVM::Bind(SlotVM, this, &UGadgetSelectorWidget::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady, FSlotVM::DisplayName, FSlotVM::Hotkey });
 
 		// Small entry: key above the icon.
 		UVerticalBox* Entry = WidgetTree->ConstructWidget<UVerticalBox>();
