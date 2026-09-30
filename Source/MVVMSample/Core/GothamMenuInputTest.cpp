@@ -21,7 +21,8 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogGothamMenuTest, Log, All);
 
-namespace
+// Named (not anonymous) namespace: unity builds merge this file with others, e.g. the perf harness's own FRun.
+namespace GothamMenuInputTestPrivate
 {
 	template<typename T>
 	T* ActiveScreen()
@@ -74,7 +75,7 @@ namespace
 		return nullptr;
 	}
 
-	struct FRun : TSharedFromThis<FRun>
+	struct FMenuTestRun : TSharedFromThis<FMenuTestRun>
 	{
 		struct FStep { float At; TFunction<void()> Do; };
 		TArray<FStep> Steps;
@@ -104,6 +105,7 @@ namespace
 
 void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 {
+	using namespace GothamMenuInputTestPrivate;
 	ULocalPlayer* LocalPlayer = Controller ? Controller->GetLocalPlayer() : nullptr;
 	UGothamUISubsystem* UI = LocalPlayer ? LocalPlayer->GetSubsystem<UGothamUISubsystem>() : nullptr;
 	if (!UI)
@@ -112,9 +114,9 @@ void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 	}
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
 	const TWeakObjectPtr<AGothamPlayerController> WeakPC(Controller);
-	TSharedRef<FRun> Run = MakeShared<FRun>();
+	TSharedRef<FMenuTestRun> Run = MakeShared<FMenuTestRun>();
 	// Steps use a raw pointer: the ticker below owns the run, and steps capturing the shared ref would form a cycle.
-	FRun* Self = &Run.Get();
+	FMenuTestRun* Self = &Run.Get();
 	TSharedPtr<int32> ScaleBefore = MakeShared<int32>(0);
 	auto Settings = [WeakPC]() { const UGothamSettingsSubsystem* S = UGothamSettingsSubsystem::Get(WeakPC.Get()); return S ? S->GetViewModel() : nullptr; };
 
