@@ -673,7 +673,7 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	if (bRebindDemo)
 	{
 		// Rebinds Scan (keyboard slot) from E to R through Enhanced Input user settings, then opens the controls
-		// screen so the result is visible. Exercises the same MapPlayerKey path the screen uses.
+		// screen so the result is visible. Exercises the same MapPlayerKey and save path the screen uses.
 		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, WeakUI](float)
 		{
 			if (!WeakThis.IsValid() || !WeakUI.IsValid())
@@ -690,6 +690,8 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 				FGameplayTagContainer Failure;
 				UserSettings->MapPlayerKey(Args, Failure);
 				UserSettings->ApplySettings();
+				// Saved like a rebind made on the Controls screen, so a restart shows whether it loads back.
+				UserSettings->SaveSettings();
 				UE_LOG(LogGothamHud, Log, TEXT("Rebind demo: Scan -> R (failure tags: %d)"), Failure.Num());
 			}
 			WeakUI->NotifyBindingsChanged();
