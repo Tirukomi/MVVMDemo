@@ -50,6 +50,11 @@ A pass that fails any check does not merge. Fix it on the branch, or drop the br
    Measured on 2026-09-30: against itself the worst median was +0.038 ms, and single rounds swung by up to 0.18 ms
    (the median discards them). An injected 0.1 ms on `gadget-wheel` read as +0.081 ms, and only that row failed.
    With both sides in worktrees, the same check gave medians from -0.035 to -0.002 ms.
+   **Gate time.** G5 is skipped when nothing under `Source`, `Config` or `Content` differs from the reference
+   (`-ForcePerf` overrides), the worktrees' warm-up is a launch that quits once loaded, and G4 captures the static
+   menu shots three at a time (live-world shots stay one at a time: in parallel the HUD's damage flash landed on a
+   different frame). 5 s perf samples were tried and dropped: the injected 0.1 ms read as only +0.054 ms. A full gate
+   is about 22 minutes, down from 27; without runtime changes about 7.
 4. **Characterization tests** for what later passes rewrite:
    - every setting survives `SaveToConfig` then `LoadFromConfig`, and a fixture string in today's exact config
      format still loads (P4 must keep it)

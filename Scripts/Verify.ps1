@@ -1,8 +1,8 @@
 # The refactoring gate (Docs/RefactoringPlan.md). Runs every check, prints one PASS / FAIL line per check, writes a
 # report to Saved/Verify/<timestamp>.md and exits non-zero if anything failed. Close the editor first.
 #
-#   .\Scripts\Verify.ps1                         # the full gate, about 30 minutes
-#   .\Scripts\Verify.ps1 -Quick                  # incremental build, no perf runs (about 13 minutes)
+#   .\Scripts\Verify.ps1                         # the full gate, about 22 minutes (about 7 when G5 skips)
+#   .\Scripts\Verify.ps1 -Quick                  # incremental build, no perf runs (about 6 minutes)
 #   .\Scripts\Verify.ps1 -Only G2,G3             # a subset
 #   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD -ForcePerf  # perf noise check: this build against itself must pass
 #   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD -PerfInject gadget-wheel:0.1   # sensitivity: must fail on gadget-wheel
@@ -21,8 +21,8 @@ param(
     [double]$PerfToleranceMs = 0.05,
     # Passed to the current build only as -GothamPerfInject=<scenario>:<ms>, to prove G5 catches a known cost.
     [string]$PerfInject = "",
-    # Sampled seconds per perf scenario (the harness's own default is 8). Five measured as precise: see RefactoringPlan.md.
-    [int]$PerfSampleSeconds = 5,
+    # Sampled seconds per perf scenario. 5 was tried and measured noisier (an injected 0.1 ms read as +0.054), so 8.
+    [int]$PerfSampleSeconds = 8,
     # Measure perf even when nothing under Source, Config or Content differs from the reference.
     [switch]$ForcePerf
 )

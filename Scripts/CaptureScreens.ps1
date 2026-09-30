@@ -34,13 +34,19 @@ $shots = @(
     @{ name = "ultrawide";        flags = "-GothamDetective";                              shot = "gotham_detective"; res = "2560 1080" }
 )
 
-# Up to $Parallel captures run at once; each writes its own file name (-GothamShotName), so they never collide.
+# Menu screens pause the world, so they are static: up to $Parallel of them run at once, each writing its own file
+# (-GothamShotName). Shots of the live world are timing-sensitive (damage flash, combo decay, detective pulses) and
+# games slow each other down, so those run one at a time, after the menus.
+$solo = @("hud", "combat", "combat-access", "hud-wheel", "detective", "detective-reveal", "detective-analyse", "colour-blind", "ultrawide")
 $shotDir = Join-Path $root "Saved\Screenshots\WindowsEditor"
 Remove-Item (Join-Path $root "Saved\Screenshots") -Recurse -Force -ErrorAction SilentlyContinue
-$queue = [System.Collections.Queue]::new(@($shots | Where-Object { -not $Only -or $_.name -eq $Only }))
+$selected = @($shots | Where-Object { -not $Only -or $_.name -eq $Only })
+$queue = [System.Collections.Queue]::new(@($selected | Where-Object { $solo -notcontains $_.name }) + @($selected | Where-Object { $solo -contains $_.name }))
 $running = @()
 while ($queue.Count -gt 0 -or $running.Count -gt 0) {
     while ($queue.Count -gt 0 -and $running.Count -lt [math]::Max(1, $Parallel)) {
+        $isSolo = $solo -contains $queue.Peek().name
+        if (($isSolo -and $running.Count -gt 0) -or ($running | Where-Object { $solo -contains $_.Shot.name })) { break }
         $s = $queue.Dequeue()
         $w, $h = $s.res -split " "
         $file = "cap_$($s.name)"
