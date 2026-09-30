@@ -1,10 +1,11 @@
 # Captures the documentation screenshots into Docs/img using the game's own dev flags (no OS-level input or
 # screen grabs, so it never touches other windows). Close the editor first. ~30 s per image.
-param([string]$Only = "")
+# -OutDir writes somewhere else (Scripts/Verify.ps1 captures into Saved/Verify/Screens and diffs against Docs/img).
+param([string]$Only = "", [string]$OutDir = "")
 
 $root = Split-Path -Parent $PSScriptRoot
 $engine = "D:\UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe"
-$out = Join-Path $root "Docs\img"
+$out = if ($OutDir) { $OutDir } else { Join-Path $root "Docs\img" }
 New-Item -ItemType Directory -Force $out | Out-Null
 
 $shots = @(
@@ -35,10 +36,13 @@ foreach ($s in $shots) {
     Remove-Item (Join-Path $root "Saved\Screenshots") -Recurse -Force -ErrorAction SilentlyContinue
     $arguments = "`"$root\MVVMSample.uproject`" /Game/Maps/L_Arena -game -windowed -ResX=$w -ResY=$h -nosplash -unattended $($s.flags) -GothamShotDelay=8"
     $p = Start-Process $engine -ArgumentList $arguments -PassThru
-    Start-Sleep -Seconds 30
+    # Stop as soon as the screenshot is on disk (and fully written) rather than always waiting the worst case.
+    $src = Join-Path $root "Saved\Screenshots\WindowsEditor\$($s.shot).png"
+    $deadline = (Get-Date).AddSeconds(45)
+    while ((Get-Date) -lt $deadline -and -not (Test-Path $src)) { Start-Sleep -Milliseconds 500 }
+    Start-Sleep -Seconds 1
     if (-not $p.HasExited) { $p.Kill() }
     Start-Sleep -Seconds 2
-    $src = Join-Path $root "Saved\Screenshots\WindowsEditor\$($s.shot).png"
     if (Test-Path $src) { Copy-Item $src (Join-Path $out "$($s.name).png") -Force; Write-Host "captured $($s.name)" }
     else { Write-Host "MISSING $($s.name)" }
 }

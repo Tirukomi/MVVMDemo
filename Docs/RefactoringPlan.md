@@ -29,9 +29,9 @@ Pass 0 builds this as a single script, `Scripts/Verify.ps1`, which prints one PA
 | G1 | Full clean rebuild (`Rebuild.bat`), zero warnings in project code | unity-build clashes, shadowing; the two bugs adaptive non-unity builds hid |
 | G2 | `python Scripts/run_tests.py`, all green | logic regressions |
 | G3 | `-GothamMenuInputTest`, all PASS | focus, hit-testing, prompt clicks, toggle keys |
-| G4 | Screenshot regression: recapture the set and diff against `Docs/img` (tolerance for rain and animation noise); review any image over the threshold | layout, colour and localization regressions |
+| G4 | Screenshot regression: recapture the set and diff against `Docs/img` in 8x8 blocks (so animated scanlines and rain average out). Deterministic images (no recorded noise) are held to 0.1%; animated ones get 3x their recorded noise (`Scripts/ScreenNoise.json`, from two captures of the same code) plus 0.5 points. Review any image over that | layout, colour and localization regressions, and stale baselines |
 | G5 | Perf harness at 1080p: every scenario's game-thread cost within 0.05 ms of the pass-0 baseline (median of two runs) | accidental per-frame work |
-| G6 | Logs of all G3 to G5 runs: no `Ensure condition failed`, no `Error:` from project categories | tick, focus and lifetime mistakes |
+| G6 | Logs of every run in the gate: no `Ensure condition failed`, no project (`LogGotham*`) errors or warnings, and no content-integrity warnings (materials, skeletal meshes, missing usage flags, failed package loads) | tick, focus and lifetime mistakes; content that silently renders wrong (a material without its skeletal-mesh flag showed the engine default on the thugs for all of V5) |
 
 A pass that fails any check does not merge. Fix it on the branch, or drop the branch.
 

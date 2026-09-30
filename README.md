@@ -35,7 +35,7 @@ More: [pause](Docs/img/pause.png), [quit confirmation](Docs/img/pause-quit.png),
 | **Accessibility** | Colour-blind presets, high contrast, reduced motion, hold/toggle wheel, subtitles, gamepad-navigable menus, no colour-only information |
 | **Localization** | English, German, Japanese and a pseudo-locale via UE's gather/compile pipeline, live switching. [ADR 0006](Docs/ADR/0006-localization-pipeline.md) |
 | **Performance and memory** | Measured harness, budgets, before/after numbers. [Docs/Performance.md](Docs/Performance.md) |
-| **Engineering standards** | 41 automation tests, ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
+| **Engineering standards** | 45 automation tests, ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
 
 Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). Refactoring ideas: [Docs/RefactoringProposal.md](Docs/RefactoringProposal.md), plan: [Docs/RefactoringPlan.md](Docs/RefactoringPlan.md). Plan and per-milestone notes:
 [Docs/ProjectPlan.md](Docs/ProjectPlan.md).
@@ -71,7 +71,14 @@ for pause).
 python Scripts/run_tests.py          # headless; exit code reflects failures; report in Saved/AutomationReports
 ```
 
-41 automation tests cover view models, component logic, wheel hit-testing, layer/input-context rules, settings
+Before merging a refactor, run the whole gate (build, tests, menu input test, screenshot diff, perf versus baseline,
+log scan). See [Docs/RefactoringPlan.md](Docs/RefactoringPlan.md):
+
+```bash
+powershell -ExecutionPolicy Bypass -File Scripts/Verify.ps1
+```
+
+45 automation tests cover view models, component logic, wheel hit-testing, layer/input-context rules, settings
 persistence and grouping, palette legibility, rebinding conflicts, subtitles, HUD motion and ghost timing, Detective
 pulse and analysis timing, the menu highlight's slide, and the combat rules (thug attack cycle, attack director,
 edge-arrow math, combo milestones, camera trauma). Visual behaviour is verified with dev flags and

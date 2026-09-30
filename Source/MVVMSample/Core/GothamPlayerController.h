@@ -31,6 +31,9 @@ protected:
 	virtual void AcknowledgePossession(APawn* P) override;
 
 private:
+	/** Characterization tests build the input assets without a live player (Tests/CharacterizationTests.cpp). */
+	friend struct FGothamInputTestAccess;
+
 	void BuildInputAssets();
 	void RegisterRebindableContext();
 	void BindViewModelsToPawn();
