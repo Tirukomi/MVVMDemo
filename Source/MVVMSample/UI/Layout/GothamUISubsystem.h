@@ -55,6 +55,9 @@ public:
 	void OpenGadgetWheel();
 	EGothamInputContext GetInputContext() const { return Tracker.GetInputContext(); }
 
+	/** True while any layer is animating between screens (Common UI blocks input to the layer meanwhile). */
+	bool IsTransitioning() const { return TransitioningLayers != 0; }
+
 	FOnGothamInputContextChanged OnInputContextChanged;
 
 	/** Fired after the player rebinds controls, so glyphs and hints re-read their keys. */
@@ -68,4 +71,6 @@ private:
 	TObjectPtr<UGothamPrimaryLayout> Layout;
 
 	FGothamUIModeTracker Tracker;
+	/** One bit per EGothamUILayer that is mid-transition. */
+	uint32 TransitioningLayers = 0;
 };

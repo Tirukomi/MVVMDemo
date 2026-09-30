@@ -30,6 +30,10 @@ void UGothamUISubsystem::EnsureLayout(APlayerController* Owner)
 		const EGothamUILayer LayerId = static_cast<EGothamUILayer>(i);
 		Layout->GetLayer(LayerId)->OnDisplayedWidgetChanged().AddWeakLambda(this,
 			[this, LayerId](UCommonActivatableWidget*) { HandleLayerChanged(LayerId); });
+		Layout->GetLayer(LayerId)->OnTransitioningChanged.AddWeakLambda(this, [this, i](UCommonActivatableWidgetContainerBase*, bool bTransitioning)
+		{
+			TransitioningLayers = bTransitioning ? (TransitioningLayers | (1u << i)) : (TransitioningLayers & ~(1u << i));
+		});
 	}
 }
 
