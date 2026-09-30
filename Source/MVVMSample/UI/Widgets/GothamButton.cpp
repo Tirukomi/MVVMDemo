@@ -2,7 +2,6 @@
 
 #include "UI/Widgets/GothamButton.h"
 
-#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/TextBlock.h"
 #include "Styling/SlateBrush.h"

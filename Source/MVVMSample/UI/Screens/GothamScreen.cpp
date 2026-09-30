@@ -3,7 +3,6 @@
 #include "UI/Screens/GothamScreen.h"
 
 #include "Accessibility/GothamSettingsListener.h"
-#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Containers/Ticker.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/BackgroundBlur.h"

@@ -4,7 +4,6 @@
 #include "UI/Style/GothamStyle.h"
 
 #include "Accessibility/GothamSettingsListener.h"
-#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/HorizontalBox.h"

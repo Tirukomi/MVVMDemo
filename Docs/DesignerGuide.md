@@ -50,8 +50,9 @@ Never hard-code a colour that means something. Ask the palette for a token (`Goo
    a `FieldNotify` text property) and its position in `FGothamSettingsData::GetOptionPosition` (the selector pips).
 3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it. Subscribe the row to the
    new field in `UGothamOptionRow::Setup`.
-4. Read it wherever it matters through `UGothamSettingsSubsystem::Get(this)` or, for widgets, derive from
-   `UGothamSettingsAwareWidget` and override `OnSettingsApplied`.
+4. Read it wherever it matters through `UGothamSettingsSubsystem::Get(this)`. To react to changes, derive a
+   widget from `UGothamSettingsAwareWidget` and override `OnSettingsApplied`, or, in any other class, keep an
+   `FGothamSettingsListener` member and `Bind` it (it unsubscribes itself).
 5. Add a case to `Tests/SettingsTests.cpp`.
 
 ## Add a rebindable action

@@ -2,7 +2,6 @@
 
 #include "UI/Widgets/GothamHintButton.h"
 
-#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
