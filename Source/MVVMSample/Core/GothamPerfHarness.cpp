@@ -5,7 +5,7 @@
 #if !UE_BUILD_SHIPPING
 
 #include "Blueprint/UserWidget.h"
-#include "Containers/Ticker.h"
+#include "Core/GothamScript.h"
 #include "Core/GothamCharacter.h"
 #include "Core/GothamPlayerController.h"
 #include "Engine/Engine.h"
@@ -70,11 +70,9 @@ namespace
 		TArray<FResult> Results;
 
 		int32 Index = -1;
-		float Elapsed = 0.f;
 		TArray<float> FrameMs;
 		double GameMsSum = 0.0;
 		int32 GameSamples = 0;
-		FTSTicker::FDelegateHandle Handle;
 		double StartMB = 0.0;
 		/** -GothamPerfInject=<scenario>:<ms>: busy-waits that long on the game thread every frame of one scenario, so
 		 *  the gate can prove it catches a real regression of a known size. */
@@ -106,16 +104,26 @@ namespace
 				GEngine->Exec(nullptr, TEXT("Slate.EnableGlobalInvalidation 1"));
 			}
 			StartMB = UsedMB();
+			// Each scenario: set up, run warm-up + sample seconds (sampling after the warm-up), finish. The script
+			// holds this run; the run never holds the script, so there is no cycle.
 			const TSharedRef<FRun> Self = AsShared();
-			Handle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Self](float Dt) { return Self->Tick(Dt); }), 0.f);
+			TSharedRef<FGothamScript> Script = MakeShared<FGothamScript>();
+			for (int32 i = 0; i < Scenarios.Num(); ++i)
+			{
+				Script->Do([Self, i]() { Self->StartScenario(i); })
+					.Sample(WarmupSeconds + SampleSeconds(), [Self](float Elapsed, float DeltaTime) { Self->SampleFrame(Elapsed, DeltaTime); })
+					.Do([Self]() { Self->FinishScenario(); });
+			}
+			Script->Do([Self]() { Self->WriteReport(); }).Quit();
+			Script->Start();
 		}
 
-		void StartScenario()
+		void StartScenario(int32 InIndex)
 		{
+			Index = InIndex;
 			FrameMs.Reset();
 			GameMsSum = 0.0;
 			GameSamples = 0;
-			Elapsed = 0.f;
 			if (Scenarios.IsValidIndex(Index) && Scenarios[Index].Setup)
 			{
 				Scenarios[Index].Setup();
@@ -150,20 +158,12 @@ namespace
 			}
 		}
 
-		bool Tick(float DeltaTime)
+		void SampleFrame(float Elapsed, float DeltaTime)
 		{
-			if (!Controller.IsValid())
+			if (!Controller.IsValid() || !Scenarios.IsValidIndex(Index))
 			{
-				return false;
+				return;
 			}
-			if (Index < 0)
-			{
-				Index = 0;
-				StartScenario();
-				return true;
-			}
-
-			Elapsed += DeltaTime;
 			if (Scenarios[Index].PerFrame)
 			{
 				Scenarios[Index].PerFrame(Elapsed);
@@ -179,18 +179,6 @@ namespace
 				GameMsSum += FPlatformTime::ToMilliseconds(GGameThreadTime);
 				++GameSamples;
 			}
-			if (Elapsed >= WarmupSeconds + SampleSeconds())
-			{
-				FinishScenario();
-				if (++Index >= Scenarios.Num())
-				{
-					WriteReport();
-					FPlatformMisc::RequestExit(false);
-					return false;
-				}
-				StartScenario();
-			}
-			return true;
 		}
 
 		void WriteReport()
