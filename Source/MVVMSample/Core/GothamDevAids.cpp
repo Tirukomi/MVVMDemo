@@ -5,10 +5,10 @@
 #if !UE_BUILD_SHIPPING
 
 #include "Accessibility/GothamSettingsSubsystem.h"
-#include "Containers/Ticker.h"
 #include "Core/GothamCharacter.h"
 #include "Core/GothamMenuInputTest.h"
 #include "Core/GothamPerfHarness.h"
+#include "Core/GothamScript.h"
 #include "Core/GothamPlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "EngineUtils.h"
@@ -102,11 +102,32 @@ namespace GothamDevAidsPrivate
 		return WeakPC.IsValid() ? Cast<AGothamCharacter>(WeakPC->GetPawn()) : nullptr;
 	}
 
-	/** Core tickers, not world timers: the world is paused or slowed while some of these screens are open. */
-	void After(float Seconds, TFunction<void()> Action)
+	/**
+	 * The dev aids' actions, each at a time from start-up. Run turns them into one script (real time, so paused and
+	 * slowed screens do not stop it); actions due at the same time run in the order they were added.
+	 */
+	struct FTimeline
 	{
-		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Action = MoveTemp(Action)](float) { Action(); return false; }), Seconds);
-	}
+		struct FEntry { float At; FGothamScript::FAction Action; };
+		TArray<FEntry> Entries;
+
+		void After(float Seconds, FGothamScript::FAction Action) { Entries.Add({ Seconds, MoveTemp(Action) }); }
+
+		void Run()
+		{
+			if (Entries.IsEmpty())
+			{
+				return;
+			}
+			Entries.StableSort([](const FEntry& A, const FEntry& B) { return A.At < B.At; });
+			TSharedRef<FGothamScript> Script = MakeShared<FGothamScript>();
+			for (FEntry& Entry : Entries)
+			{
+				Script->At(Entry.At).Do(MoveTemp(Entry.Action));
+			}
+			Script->Start();
+		}
+	};
 
 	/** Screenshot runs must be deterministic: the first mouse delta after window capture would otherwise swing the camera. */
 	void IgnoreLookForShots(AGothamPlayerController* Controller)
@@ -121,14 +142,14 @@ namespace GothamDevAidsPrivate
 	}
 
 	/** -GothamQuitAfterLoad, -GothamMenuInputTest, -GothamPerf: runs that take over and quit on their own. */
-	bool RunSelfContained(AGothamPlayerController* Controller)
+	bool RunSelfContained(AGothamPlayerController* Controller, FTimeline& Timeline)
 	{
 		const TCHAR* Cmd = FCommandLine::Get();
 		// Quits as soon as the level and HUD are up: a cheap first launch that gets a freshly built project's one-off
 		// start-up work out of the way (the perf gate's warm-up).
 		if (FParse::Param(Cmd, TEXT("GothamQuitAfterLoad")))
 		{
-			After(1.f, [] { FPlatformMisc::RequestExit(false); });
+			Timeline.After(1.f, [] { FPlatformMisc::RequestExit(false); });
 			return true;
 		}
 		// Drives the menus through Slate input and logs PASS / FAIL per rule, then quits.
@@ -157,7 +178,7 @@ namespace GothamDevAidsPrivate
 	}
 
 	/** -GothamOpenPause / -Quit / -Wheel / -Settings / -Controls. */
-	void OpenScreens(const FFlags& F, UGothamUISubsystem* UI)
+	void OpenScreens(const FFlags& F, UGothamUISubsystem* UI, FTimeline& Timeline)
 	{
 		if (F.bPause)
 		{
@@ -166,7 +187,7 @@ namespace GothamDevAidsPrivate
 		if (F.bQuit)
 		{
 			// After the pause menu's intro, the way a player would reach it.
-			After(1.f, []
+			Timeline.After(1.f, []
 			{
 				for (TObjectIterator<UPauseMenuScreen> It; It; ++It)
 				{
@@ -192,9 +213,9 @@ namespace GothamDevAidsPrivate
 	}
 
 	/** One second in: the wheel hover and combo, the detective stand-off and scan, the case file (with fake clues). */
-	void StageScene(const FFlags& F, const FWeakPC& WeakPC, const TWeakObjectPtr<UGothamUISubsystem>& WeakUI)
+	void StageScene(const FFlags& F, const FWeakPC& WeakPC, const TWeakObjectPtr<UGothamUISubsystem>& WeakUI, FTimeline& Timeline)
 	{
-		After(1.f, [F, WeakPC, WeakUI]
+		Timeline.After(1.f, [F, WeakPC, WeakUI]
 		{
 			AGothamCharacter* Hero = HeroOf(WeakPC);
 			if (!Hero)
@@ -244,7 +265,7 @@ namespace GothamDevAidsPrivate
 	}
 
 	/** -GothamDetectiveReveal / -GothamDetectiveAnalyse: open the mode (and start analysing) so the shot lands mid-effect. */
-	void DetectiveMidEffect(const FFlags& F, const FWeakPC& WeakPC)
+	void DetectiveMidEffect(const FFlags& F, const FWeakPC& WeakPC, FTimeline& Timeline)
 	{
 		if (!F.bDetective || !(F.bReveal || F.bAnalyse))
 		{
@@ -253,7 +274,7 @@ namespace GothamDevAidsPrivate
 		const float Delay = ShotDelay();
 		// Reveal: open 0.8 s before the shot (the opening pulse is ~half way). Analyse: open earlier, start analysing
 		// 0.55 s before the shot (about half of the 1.1 s analysis).
-		After(F.bReveal ? Delay - 0.8f : Delay - 2.f, [WeakPC]
+		Timeline.After(F.bReveal ? Delay - 0.8f : Delay - 2.f, [WeakPC]
 		{
 			if (AGothamCharacter* Hero = HeroOf(WeakPC))
 			{
@@ -262,7 +283,7 @@ namespace GothamDevAidsPrivate
 		});
 		if (F.bAnalyse)
 		{
-			After(Delay - 0.55f, [WeakPC]
+			Timeline.After(Delay - 0.55f, [WeakPC]
 			{
 				if (AGothamCharacter* Hero = HeroOf(WeakPC))
 				{
@@ -273,13 +294,13 @@ namespace GothamDevAidsPrivate
 	}
 
 	/** -GothamHudDemo: a representative combat moment, a recent hit, a live combo and a gadget recharging. */
-	void HudDemo(const FFlags& F, const FWeakPC& WeakPC)
+	void HudDemo(const FFlags& F, const FWeakPC& WeakPC, FTimeline& Timeline)
 	{
 		if (!F.bHudDemo)
 		{
 			return;
 		}
-		After(5.f, [WeakPC]
+		Timeline.After(5.f, [WeakPC]
 		{
 			if (AGothamCharacter* Hero = HeroOf(WeakPC))
 			{
@@ -287,7 +308,7 @@ namespace GothamDevAidsPrivate
 				Hero->UseGadget(1);
 			}
 		});
-		After(7.85f, [WeakPC]
+		Timeline.After(7.85f, [WeakPC]
 		{
 			if (AGothamCharacter* Hero = HeroOf(WeakPC))
 			{
@@ -304,14 +325,14 @@ namespace GothamDevAidsPrivate
 	 * -GothamCombatDemo: forced telegraphs timed so the screenshot lands mid-warning, one thug in view (counter prompt)
 	 * and the one most behind the camera (a red edge arrow). The combo crosses 10 just before, so the callout shows too.
 	 */
-	void CombatDemo(const FFlags& F, const FWeakPC& WeakPC)
+	void CombatDemo(const FFlags& F, const FWeakPC& WeakPC, FTimeline& Timeline)
 	{
 		if (!F.bCombatDemo)
 		{
 			return;
 		}
 		const float Delay = ShotDelay();
-		After(Delay - 0.45f, [WeakPC]
+		Timeline.After(Delay - 0.45f, [WeakPC]
 		{
 			UWorld* World = WeakPC.IsValid() ? WeakPC->GetWorld() : nullptr;
 			if (UGothamThreatSubsystem* Threats = World ? World->GetSubsystem<UGothamThreatSubsystem>() : nullptr)
@@ -320,7 +341,7 @@ namespace GothamDevAidsPrivate
 				Threats->ForceWarningBehind();
 			}
 		});
-		After(Delay - 0.6f, [WeakPC]
+		Timeline.After(Delay - 0.6f, [WeakPC]
 		{
 			if (AGothamCharacter* Hero = HeroOf(WeakPC))
 			{
@@ -336,13 +357,13 @@ namespace GothamDevAidsPrivate
 	 * -GothamRebindDemo: rebinds Scan (keyboard slot) from E to R through Enhanced Input user settings, then opens the
 	 * controls screen so the result is visible. Exercises the same MapPlayerKey and save path the screen uses.
 	 */
-	void RebindDemo(const FFlags& F, const FWeakPC& WeakPC, const TWeakObjectPtr<UGothamUISubsystem>& WeakUI)
+	void RebindDemo(const FFlags& F, const FWeakPC& WeakPC, const TWeakObjectPtr<UGothamUISubsystem>& WeakUI, FTimeline& Timeline)
 	{
 		if (!F.bRebindDemo)
 		{
 			return;
 		}
-		After(1.5f, [WeakPC, WeakUI]
+		Timeline.After(1.5f, [WeakPC, WeakUI]
 		{
 			if (!WeakPC.IsValid() || !WeakUI.IsValid())
 			{
@@ -368,13 +389,13 @@ namespace GothamDevAidsPrivate
 	}
 
 	/** -GothamCycleLanguage: proves live language switching (with -GothamOpenSettings the screen is already open). */
-	void CycleLanguage(const FFlags& F, const FWeakPC& WeakPC)
+	void CycleLanguage(const FFlags& F, const FWeakPC& WeakPC, FTimeline& Timeline)
 	{
 		if (!F.bCycleLanguage)
 		{
 			return;
 		}
-		After(2.f, [WeakPC]
+		Timeline.After(2.f, [WeakPC]
 		{
 			if (UGothamSettingsSubsystem* Settings = WeakPC.IsValid() ? UGothamSettingsSubsystem::Get(WeakPC.Get()) : nullptr)
 			{
@@ -384,11 +405,11 @@ namespace GothamDevAidsPrivate
 	}
 
 	/** The screenshot, later than every action above so shaders (compiled on first run) and transitions have settled. */
-	void ScheduleScreenshot(const FFlags& F, const FWeakPC& WeakPC)
+	void ScheduleScreenshot(const FFlags& F, const FWeakPC& WeakPC, FTimeline& Timeline)
 	{
 		const FString ShotName = F.ShotName();
 		const int32 StressCount = F.StressCount;
-		After(ShotDelay(), [ShotName, StressCount, WeakPC]
+		Timeline.After(ShotDelay(), [ShotName, StressCount, WeakPC]
 		{
 			if (StressCount > 0)
 			{
@@ -422,8 +443,10 @@ namespace GothamDevAids
 			return;
 		}
 		IgnoreLookForShots(Controller);
-		if (RunSelfContained(Controller))
+		FTimeline Timeline;
+		if (RunSelfContained(Controller, Timeline))
 		{
+			Timeline.Run();
 			return;
 		}
 		const FFlags F;
@@ -432,18 +455,19 @@ namespace GothamDevAids
 			return;
 		}
 		DisableAttackDirector(Controller);
-		OpenScreens(F, UI);
+		OpenScreens(F, UI, Timeline);
 
-		// The order matters where delays coincide: tickers due in the same frame run in the order they were added.
+		// The order matters where times coincide: actions due in the same frame run in the order they were added.
 		const FWeakPC WeakPC(Controller);
 		const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
-		StageScene(F, WeakPC, WeakUI);
-		DetectiveMidEffect(F, WeakPC);
-		HudDemo(F, WeakPC);
-		CombatDemo(F, WeakPC);
-		RebindDemo(F, WeakPC, WeakUI);
-		CycleLanguage(F, WeakPC);
-		ScheduleScreenshot(F, WeakPC);
+		StageScene(F, WeakPC, WeakUI, Timeline);
+		DetectiveMidEffect(F, WeakPC, Timeline);
+		HudDemo(F, WeakPC, Timeline);
+		CombatDemo(F, WeakPC, Timeline);
+		RebindDemo(F, WeakPC, WeakUI, Timeline);
+		CycleLanguage(F, WeakPC, Timeline);
+		ScheduleScreenshot(F, WeakPC, Timeline);
+		Timeline.Run();
 	}
 }
 
