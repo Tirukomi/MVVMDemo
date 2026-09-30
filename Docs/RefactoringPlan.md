@@ -176,6 +176,10 @@ This is the biggest logic pass, so it's split into three merges. Each one is gat
 - **UMG assets for static screens (item 9, long-term).** An ADR update first. Then one screen at a time behind its
   existing C++ base class, starting with the simplest (pause).
 
+**P10 status (2026-09-30):** option rows are Common UI buttons (with a new menu rule for the selector's clicked
+half); `GothamLayout` exists and is used in the option row; ADR 0002 has the amendment for UMG static screens.
+Converting the pause menu itself needs its `WBP_` authored in the editor, so it waits for that.
+
 ## Timeline
 
 | Pass | Size | Depends on |
