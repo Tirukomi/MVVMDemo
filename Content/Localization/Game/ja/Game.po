@@ -1,0 +1,974 @@
+﻿# Game Japanese translation.
+# Fill out your copyright notice in the Description page of Project Settings.
+# 
+msgid ""
+msgstr ""
+"Project-Id-Version: Game\n"
+"POT-Creation-Date: 2026-09-30 21:51\n"
+"PO-Revision-Date: 2026-09-30 21:51\n"
+"Language-Team: \n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. Key:	ScanHold
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
+msgctxt "Gotham.Settings,ScanHold"
+msgid "Hold"
+msgstr "長押し"
+
+#. Key:	ScanTap
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
+msgctxt "Gotham.Settings,ScanTap"
+msgid "Tap"
+msgstr "タップ"
+
+#. Key:	SubtitleSizeLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(103)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(103)
+msgctxt "Gotham.Settings,SubtitleSizeLabel"
+msgid "Subtitle size"
+msgstr "字幕サイズ"
+
+#. Key:	SubtitleSizeDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(104)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(104)
+msgctxt "Gotham.Settings,SubtitleSizeDesc"
+msgid "Text size for subtitles and speaker names."
+msgstr "字幕と話者名の文字サイズ。"
+
+#. Key:	SizeSmall
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(112)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(112)
+msgctxt "Gotham.Settings,SizeSmall"
+msgid "Small"
+msgstr "小"
+
+#. Key:	SizeLarge
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(113)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(113)
+msgctxt "Gotham.Settings,SizeLarge"
+msgid "Large"
+msgstr "大"
+
+#. Key:	SizeMedium
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(114)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(114)
+msgctxt "Gotham.Settings,SizeMedium"
+msgid "Medium"
+msgstr "中"
+
+#. Key:	SubtitleBackgroundLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(118)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(118)
+msgctxt "Gotham.Settings,SubtitleBackgroundLabel"
+msgid "Subtitle background"
+msgstr "字幕の背景"
+
+#. Key:	SubtitleBackgroundDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(119)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(119)
+msgctxt "Gotham.Settings,SubtitleBackgroundDesc"
+msgid "Draws a solid panel behind subtitles so they read over any scene."
+msgstr "字幕の背後に不透明なパネルを表示し、どの場面でも読みやすくします。"
+
+#. Key:	Off
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(12)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(12)
+msgctxt "Gotham.Settings,Off"
+msgid "Off"
+msgstr "オフ"
+
+#. Key:	On
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(12)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(12)
+msgctxt "Gotham.Settings,On"
+msgid "On"
+msgstr "オン"
+
+#. Key:	LanguageLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(40)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(40)
+msgctxt "Gotham.Settings,LanguageLabel"
+msgid "Language"
+msgstr "言語"
+
+#. Key:	LanguageDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(41)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(41)
+msgctxt "Gotham.Settings,LanguageDesc"
+msgid "Language for all menus, the HUD and subtitles. Changes preview immediately."
+msgstr "メニュー、HUD、字幕の言語。変更はすぐにプレビューされます。"
+
+#. Key:	ColorVisionLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(52)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(52)
+msgctxt "Gotham.Settings,ColorVisionLabel"
+msgid "Colour vision"
+msgstr "色覚"
+
+#. Key:	ColorVisionDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(53)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(53)
+msgctxt "Gotham.Settings,ColorVisionDesc"
+msgid "Swaps the clue, danger and highlight colours for palettes that stay distinct with protanopia, deuteranopia or tritanopia."
+msgstr "手がかり・危険・強調の色を、1型・2型・3型色覚でも見分けやすい配色に切り替えます。"
+
+#. Key:	Protanopia
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(61)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(61)
+msgctxt "Gotham.Settings,Protanopia"
+msgid "Protanopia"
+msgstr "赤色覚異常(P型)"
+
+#. Key:	Deuteranopia
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(62)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(62)
+msgctxt "Gotham.Settings,Deuteranopia"
+msgid "Deuteranopia"
+msgstr "緑色覚異常(D型)"
+
+#. Key:	Tritanopia
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(63)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(63)
+msgctxt "Gotham.Settings,Tritanopia"
+msgid "Tritanopia"
+msgstr "青色覚異常(T型)"
+
+#. Key:	ColorDefault
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(64)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(64)
+msgctxt "Gotham.Settings,ColorDefault"
+msgid "Standard"
+msgstr "標準"
+
+#. Key:	UIScaleLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(68)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(68)
+msgctxt "Gotham.Settings,UIScaleLabel"
+msgid "UI scale"
+msgstr "UIスケール"
+
+#. Key:	UIScaleDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(69)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(69)
+msgctxt "Gotham.Settings,UIScaleDesc"
+msgid "Scales every menu and HUD element. Layouts reflow, so nothing is cut off at larger sizes."
+msgstr "すべてのメニューとHUDの大きさを変更します。レイアウトが再配置されるため、大きくしても切れません。"
+
+#. Key:	PercentFmt
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(73)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(73)
+msgctxt "Gotham.Settings,PercentFmt"
+msgid "{0}%"
+msgstr "{0}%"
+
+#. Key:	HighContrastLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(75)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(75)
+msgctxt "Gotham.Settings,HighContrastLabel"
+msgid "High contrast"
+msgstr "ハイコントラスト"
+
+#. Key:	HighContrastDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(76)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(76)
+msgctxt "Gotham.Settings,HighContrastDesc"
+msgid "Solid panels and brighter text and edges, for readability over busy scenes."
+msgstr "不透明なパネルと明るい文字・縁取りで、背景が複雑でも読みやすくします。"
+
+#. Key:	ReducedMotionLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(82)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(82)
+msgctxt "Gotham.Settings,ReducedMotionLabel"
+msgid "Reduced motion"
+msgstr "モーション軽減"
+
+#. Key:	ReducedMotionDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(83)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(83)
+msgctxt "Gotham.Settings,ReducedMotionDesc"
+msgid "Turns off pops, slides, pulses, screen transitions and rain streaks. Colour cues stay on."
+msgstr "ポップ、スライド、パルス、画面遷移、雨の筋をオフにします。色による合図は残ります。"
+
+#. Key:	WheelModeLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(89)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(89)
+msgctxt "Gotham.Settings,WheelModeLabel"
+msgid "Gadget wheel"
+msgstr "ガジェットホイール"
+
+#. Key:	WheelModeDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(90)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(90)
+msgctxt "Gotham.Settings,WheelModeDesc"
+msgid "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close."
+msgstr "長押し：ボタンを押している間ガジェットホイールを表示します。切り替え：一度押すと開き、もう一度押すと閉じます。"
+
+#. Key:	WheelHold
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
+msgctxt "Gotham.Settings,WheelHold"
+msgid "Hold"
+msgstr "長押し"
+
+#. Key:	WheelToggle
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
+msgctxt "Gotham.Settings,WheelToggle"
+msgid "Toggle"
+msgstr "切り替え"
+
+#. Key:	ScanModeLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(96)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(96)
+msgctxt "Gotham.Settings,ScanModeLabel"
+msgid "Clue analysis"
+msgstr "手がかり分析"
+
+#. Key:	ScanModeDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(97)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(97)
+msgctxt "Gotham.Settings,ScanModeDesc"
+msgid "Hold: keep the button held to analyse a clue. Tap: a single press analyses it."
+msgstr "長押し：ボタンを押し続けて手がかりを分析します。タップ：一度押すだけで分析します。"
+
+#. Key:	Ledger.Title
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(13)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(13)
+msgctxt "Gotham.ClueTable,Ledger.Title"
+msgid "Torn ledger page"
+msgstr "破れた台帳のページ"
+
+#. Key:	Ledger.Body
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(14)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(14)
+msgctxt "Gotham.ClueTable,Ledger.Body"
+msgid "A page torn from a shipping ledger. Three crates never reached the docks."
+msgstr "船荷台帳から破り取られたページ。3つの木箱は埠頭に届かなかった。"
+
+#. Key:	Footprint.Title
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(16)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(16)
+msgctxt "Gotham.ClueTable,Footprint.Title"
+msgid "Muddy footprint"
+msgstr "泥だらけの足跡"
+
+#. Key:	Footprint.Body
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(17)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(17)
+msgctxt "Gotham.ClueTable,Footprint.Body"
+msgid "A size 12 boot print, heading away from the warehouse."
+msgstr "倉庫から離れていく、サイズ12のブーツの足跡。"
+
+#. Key:	Casing.Title
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(19)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(19)
+msgctxt "Gotham.ClueTable,Casing.Title"
+msgid "Spent shell casing"
+msgstr "使用済みの薬莢"
+
+#. Key:	Casing.Body
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(20)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(20)
+msgctxt "Gotham.ClueTable,Casing.Body"
+msgid "9mm, fired recently. The rounding on the rim points to a custom load."
+msgstr "9mm、最近発射されたもの。縁の丸みから、特注の装填だと分かる。"
+
+#. Key:	Keycard.Title
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(22)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(22)
+msgctxt "Gotham.ClueTable,Keycard.Title"
+msgid "Dropped keycard"
+msgstr "落とされたキーカード"
+
+#. Key:	Keycard.Body
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(23)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(23)
+msgctxt "Gotham.ClueTable,Keycard.Body"
+msgid "Maintenance access. Someone went back for it and did not find it."
+msgstr "整備用アクセス権。誰かが取りに戻ったが、見つけられなかった。"
+
+#. Key:	Note.Title
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(25)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(25)
+msgctxt "Gotham.ClueTable,Note.Title"
+msgid "Crumpled note"
+msgstr "くしゃくしゃのメモ"
+
+#. Key:	Note.Body
+#. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(26)
+#: Source/MVVMSample/Gameplay/ClueStrings.cpp(26)
+msgctxt "Gotham.ClueTable,Note.Body"
+msgid "Half a phone number and the word 'midnight' underlined twice."
+msgstr "電話番号の半分と、二重に下線が引かれた「真夜中」の文字。"
+
+#. Key:	WingBlade
+#. SourceLocation:	Source/MVVMSample/Gameplay/GadgetComponent.cpp(22)
+#: Source/MVVMSample/Gameplay/GadgetComponent.cpp(22)
+msgctxt "Gotham.Gadgets,WingBlade"
+msgid "Wing-Blade"
+msgstr "ウイングブレード"
+
+#. Key:	Grapnel
+#. SourceLocation:	Source/MVVMSample/Gameplay/GadgetComponent.cpp(23)
+#: Source/MVVMSample/Gameplay/GadgetComponent.cpp(23)
+msgctxt "Gotham.Gadgets,Grapnel"
+msgid "Grapnel"
+msgstr "グラップル"
+
+#. Key:	Smoke
+#. SourceLocation:	Source/MVVMSample/Gameplay/GadgetComponent.cpp(24)
+#: Source/MVVMSample/Gameplay/GadgetComponent.cpp(24)
+msgctxt "Gotham.Gadgets,Smoke"
+msgid "Smoke Pellet"
+msgstr "煙幕弾"
+
+#. Key:	MoveForward
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(15)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(15)
+msgctxt "Gotham.Bindings,MoveForward"
+msgid "Move forward"
+msgstr "前進"
+
+#. Key:	MoveBack
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(16)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(16)
+msgctxt "Gotham.Bindings,MoveBack"
+msgid "Move back"
+msgstr "後退"
+
+#. Key:	MoveLeft
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(17)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(17)
+msgctxt "Gotham.Bindings,MoveLeft"
+msgid "Move left"
+msgstr "左へ移動"
+
+#. Key:	MoveRight
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(18)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(18)
+msgctxt "Gotham.Bindings,MoveRight"
+msgid "Move right"
+msgstr "右へ移動"
+
+#. Key:	Attack
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(19)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(19)
+msgctxt "Gotham.Bindings,Attack"
+msgid "Attack"
+msgstr "攻撃"
+
+#. Key:	Counter
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(20)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(20)
+msgctxt "Gotham.Bindings,Counter"
+msgid "Counter"
+msgstr "カウンター"
+
+#. Key:	Gadget1
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(21)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(21)
+msgctxt "Gotham.Bindings,Gadget1"
+msgid "Gadget 1"
+msgstr "ガジェット 1"
+
+#. Key:	Gadget2
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(22)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(22)
+msgctxt "Gotham.Bindings,Gadget2"
+msgid "Gadget 2"
+msgstr "ガジェット 2"
+
+#. Key:	Gadget3
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(23)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(23)
+msgctxt "Gotham.Bindings,Gadget3"
+msgid "Gadget 3"
+msgstr "ガジェット 3"
+
+#. Key:	GadgetWheel
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(24)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(24)
+msgctxt "Gotham.Bindings,GadgetWheel"
+msgid "Gadget wheel"
+msgstr "ガジェットホイール"
+
+#. Key:	Detective
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(25)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(25)
+msgctxt "Gotham.Bindings,Detective"
+msgid "Detective mode"
+msgstr "探偵モード"
+
+#. Key:	Scan
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(26)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(26)
+msgctxt "Gotham.Bindings,Scan"
+msgid "Scan clue"
+msgstr "手がかりをスキャン"
+
+#. Key:	ClueLog
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(27)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(27)
+msgctxt "Gotham.Bindings,ClueLog"
+msgid "Case file"
+msgstr "事件ファイル"
+
+#. Key:	Pause
+#. SourceLocation:	Source/MVVMSample/Input/GothamActionTable.cpp(28)
+#: Source/MVVMSample/Input/GothamActionTable.cpp(28)
+msgctxt "Gotham.Bindings,Pause"
+msgid "Pause"
+msgstr "ポーズ"
+
+#. Key:	CaseNumberFmt
+#. SourceLocation:	Source/MVVMSample/UI/ClueEntryWidget.cpp(28)
+#: Source/MVVMSample/UI/ClueEntryWidget.cpp(28)
+msgctxt "Gotham.ClueLog,CaseNumberFmt"
+msgid "No. {0}"
+msgstr "No. {0}"
+
+#. Key:	Analysing
+#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(83)
+#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(83)
+msgctxt "Gotham.ClueMarkers,Analysing"
+msgid "Analysing"
+msgstr "分析中"
+
+#. Key:	Unknown
+#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(84)
+#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(84)
+msgctxt "Gotham.ClueMarkers,Unknown"
+msgid "Unknown evidence"
+msgstr "不明な証拠"
+
+#. Key:	DistanceFmt
+#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(86)
+#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(86)
+msgctxt "Gotham.ClueMarkers,DistanceFmt"
+msgid "{0} m"
+msgstr "{0} m"
+
+#. Key:	Hits
+#. SourceLocation:	Source/MVVMSample/UI/ComboWidget.cpp(41)
+#: Source/MVVMSample/UI/ComboWidget.cpp(41)
+msgctxt "Gotham.Combo,Hits"
+msgid "Hits"
+msgstr "ヒット"
+
+#. Key:	HoldToAnalyse
+#. SourceLocation:	Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
+#: Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
+msgctxt "Gotham.DetectiveOverlay,HoldToAnalyse"
+msgid "Hold to analyse"
+msgstr "長押しで分析"
+
+#. Key:	Scan
+#. SourceLocation:	Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
+#: Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
+msgctxt "Gotham.DetectiveOverlay,Scan"
+msgid "Scan"
+msgstr "スキャン"
+
+#. Key:	Mode
+#. SourceLocation:	Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(54)
+#: Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(54)
+msgctxt "Gotham.DetectiveOverlay,Mode"
+msgid "DETECTIVE MODE"
+msgstr "探偵モード"
+
+#. Key:	Recharging
+#. SourceLocation:	Source/MVVMSample/UI/GadgetSelectorWidget.cpp(105)
+#: Source/MVVMSample/UI/GadgetSelectorWidget.cpp(105)
+msgctxt "Gotham.GadgetSelector,Recharging"
+msgid "{0}s"
+msgstr "{0}秒"
+
+#. Key:	Ready
+#. SourceLocation:	Source/MVVMSample/UI/GadgetSelectorWidget.cpp(191)
+#: Source/MVVMSample/UI/GadgetSelectorWidget.cpp(191)
+msgctxt "Gotham.GadgetSelector,Ready"
+msgid "Ready"
+msgstr "準備完了"
+
+#. Key:	Low
+#. SourceLocation:	Source/MVVMSample/UI/HealthBarWidget.cpp(85)
+#: Source/MVVMSample/UI/HealthBarWidget.cpp(85)
+msgctxt "Gotham.HealthBar,Low"
+msgid "Low"
+msgstr "低下"
+
+#. Key:	HealthFmt
+#. SourceLocation:	Source/MVVMSample/UI/HealthBarWidget.cpp(89)
+#: Source/MVVMSample/UI/HealthBarWidget.cpp(89)
+msgctxt "Gotham.HealthBar,HealthFmt"
+msgid "{0} / {1}"
+msgstr "{0} / {1}"
+
+#. Key:	Objective
+#. SourceLocation:	Source/MVVMSample/UI/ObjectiveTrackerWidget.cpp(41)
+#: Source/MVVMSample/UI/ObjectiveTrackerWidget.cpp(41)
+msgctxt "Gotham.Objectives,Objective"
+msgid "Objective"
+msgstr "目標"
+
+#. Key:	SummaryFmt
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(141)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(141)
+msgctxt "Gotham.ClueLog,SummaryFmt"
+msgid "{0} of {1} clues discovered"
+msgstr "{1}件中{0}件の手がかりを発見"
+
+#. Key:	Analysed
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
+msgctxt "Gotham.ClueLog,Analysed"
+msgid "Analysed"
+msgstr "分析済み"
+
+#. Key:	Unknown
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(197)
+msgctxt "Gotham.ClueLog,Unknown"
+msgid "Not yet found"
+msgstr "未発見"
+
+#. Key:	Section
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
+msgctxt "Gotham.ClueLog,Section"
+msgid "Investigation"
+msgstr "捜査"
+
+#. Key:	Title
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
+msgctxt "Gotham.ClueLog,Title"
+msgid "Case file"
+msgstr "事件ファイル"
+
+#. Key:	Back
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
+msgctxt "Gotham.ClueLog,Back"
+msgid "Close"
+msgstr "閉じる"
+
+#. Key:	Select
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
+msgctxt "Gotham.ClueLog,Select"
+msgid "Browse"
+msgstr "閲覧"
+
+#. Key:	Caution
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(56)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(56)
+msgctxt "Gotham.ConfirmModal,Caution"
+msgid "Caution"
+msgstr "注意"
+
+#. Key:	Yes
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(72)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(72)
+msgctxt "Gotham.ConfirmModal,Yes"
+msgid "Yes"
+msgstr "はい"
+
+#. Key:	No
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(77)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(77)
+msgctxt "Gotham.ConfirmModal,No"
+msgid "No"
+msgstr "いいえ"
+
+#. Key:	ResetAll
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(106)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(106)
+msgctxt "Gotham.ControlsScreen,ResetAll"
+msgid "Reset to defaults"
+msgstr "初期設定に戻す"
+
+#. Key:	Back
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(110)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(110)
+msgctxt "Gotham.ControlsScreen,Back"
+msgid "Back"
+msgstr "戻る"
+
+#. Key:	BackHint
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
+msgctxt "Gotham.ControlsScreen,BackHint"
+msgid "Back"
+msgstr "戻る"
+
+#. Key:	Rebind
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
+msgctxt "Gotham.ControlsScreen,Rebind"
+msgid "Rebind"
+msgstr "再割り当て"
+
+#. Key:	WasReset
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(206)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(206)
+msgctxt "Gotham.ControlsScreen,WasReset"
+msgid "Controls reset to defaults."
+msgstr "操作設定を初期値に戻しました。"
+
+#. Key:	PressPad
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(220)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(220)
+msgctxt "Gotham.ControlsScreen,PressPad"
+msgid "Press a gamepad button. Choose B to cancel."
+msgstr "ゲームパッドのボタンを押してください。Bでキャンセル。"
+
+#. Key:	PressKey
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(221)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(221)
+msgctxt "Gotham.ControlsScreen,PressKey"
+msgid "Press a key or mouse button. Choose Esc to cancel."
+msgstr "キーまたはマウスボタンを押してください。Escでキャンセル。"
+
+#. Key:	Capturing
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
+msgctxt "Gotham.ControlsScreen,Capturing"
+msgid "..."
+msgstr "..."
+
+#. Key:	Unbound
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
+msgctxt "Gotham.ControlsScreen,Unbound"
+msgid "Unbound"
+msgstr "未割り当て"
+
+#. Key:	Section
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
+msgctxt "Gotham.ControlsScreen,Section"
+msgid "Options"
+msgstr "オプション"
+
+#. Key:	Title
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
+msgctxt "Gotham.ControlsScreen,Title"
+msgid "Controls"
+msgstr "操作"
+
+#. Key:	KeyboardColumn
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(53)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(53)
+msgctxt "Gotham.ControlsScreen,KeyboardColumn"
+msgid "Keyboard / Mouse"
+msgstr "キーボード / マウス"
+
+#. Key:	GamepadColumn
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(54)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(54)
+msgctxt "Gotham.ControlsScreen,GamepadColumn"
+msgid "Gamepad"
+msgstr "ゲームパッド"
+
+#. Key:	EvidenceFmt
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(140)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(140)
+msgctxt "Gotham.PauseMenu,EvidenceFmt"
+msgid "{0} / {1}"
+msgstr "{0} / {1}"
+
+#. Key:	QuitBody
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
+msgctxt "Gotham.PauseMenu,QuitBody"
+msgid "Unsaved progress will be lost."
+msgstr "保存されていない進行状況は失われます。"
+
+#. Key:	QuitTitle
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(171)
+msgctxt "Gotham.PauseMenu,QuitTitle"
+msgid "Quit game?"
+msgstr "ゲームを終了しますか？"
+
+#. Key:	Section
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
+msgctxt "Gotham.PauseMenu,Section"
+msgid "Blackwater Ops"
+msgstr "Blackwater Ops"
+
+#. Key:	Title
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
+msgctxt "Gotham.PauseMenu,Title"
+msgid "Paused"
+msgstr "ポーズ中"
+
+#. Key:	Resume
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(48)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(48)
+msgctxt "Gotham.PauseMenu,Resume"
+msgid "Resume"
+msgstr "再開"
+
+#. Key:	CaseFile
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(49)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(49)
+msgctxt "Gotham.PauseMenu,CaseFile"
+msgid "Case file"
+msgstr "事件ファイル"
+
+#. Key:	Settings
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(50)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(50)
+msgctxt "Gotham.PauseMenu,Settings"
+msgid "Settings"
+msgstr "設定"
+
+#. Key:	Quit
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(51)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(51)
+msgctxt "Gotham.PauseMenu,Quit"
+msgid "Quit"
+msgstr "終了"
+
+#. Key:	ObjectiveLabel
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(72)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(72)
+msgctxt "Gotham.PauseMenu,ObjectiveLabel"
+msgid "Objective"
+msgstr "目標"
+
+#. Key:	EvidenceLabel
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(76)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(76)
+msgctxt "Gotham.PauseMenu,EvidenceLabel"
+msgid "Evidence"
+msgstr "証拠"
+
+#. Key:	Back
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
+msgctxt "Gotham.PauseMenu,Back"
+msgid "Resume"
+msgstr "再開"
+
+#. Key:	Select
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
+msgctxt "Gotham.PauseMenu,Select"
+msgid "Select"
+msgstr "選択"
+
+#. Key:	Apply
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(114)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(114)
+msgctxt "Gotham.SettingsScreen,Apply"
+msgid "Apply"
+msgstr "適用"
+
+#. Key:	Revert
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(115)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(115)
+msgctxt "Gotham.SettingsScreen,Revert"
+msgid "Revert"
+msgstr "元に戻す"
+
+#. Key:	Defaults
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(116)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(116)
+msgctxt "Gotham.SettingsScreen,Defaults"
+msgid "Defaults"
+msgstr "初期値"
+
+#. Key:	Back
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(117)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(117)
+msgctxt "Gotham.SettingsScreen,Back"
+msgid "Back"
+msgstr "戻る"
+
+#. Key:	BackHint
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
+msgctxt "Gotham.SettingsScreen,BackHint"
+msgid "Back (discards unapplied changes)"
+msgstr "戻る（未適用の変更は破棄されます）"
+
+#. Key:	Select
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
+msgctxt "Gotham.SettingsScreen,Select"
+msgid "Change"
+msgstr "変更"
+
+#. Key:	KeyBindingsDesc
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(217)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(217)
+msgctxt "Gotham.SettingsScreen,KeyBindingsDesc"
+msgid "Change the key or button for every action, separately for keyboard and mouse and for gamepad."
+msgstr "すべての操作のキーやボタンを、キーボード・マウスとゲームパッドで個別に変更できます。"
+
+#. Key:	Unapplied
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(246)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(246)
+msgctxt "Gotham.SettingsScreen,Unapplied"
+msgid "Unapplied changes. Choose Apply to keep them."
+msgstr "未適用の変更があります。保持するには「適用」を選んでください。"
+
+#. Key:	Section
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
+msgctxt "Gotham.SettingsScreen,Section"
+msgid "Options"
+msgstr "オプション"
+
+#. Key:	Title
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
+msgctxt "Gotham.SettingsScreen,Title"
+msgid "Settings"
+msgstr "設定"
+
+#. Key:	KeyBindings
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(69)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(69)
+msgctxt "Gotham.SettingsScreen,KeyBindings"
+msgid "Key bindings"
+msgstr "キー割り当て"
+
+#. Key:	Unknown
+#. SourceLocation:	Source/MVVMSample/ViewModels/ClueViewModels.cpp(27)
+#: Source/MVVMSample/ViewModels/ClueViewModels.cpp(27)
+msgctxt "Gotham.Clues,Unknown"
+msgid "???"
+msgstr "???"
+
+#. Key:	UnknownBody
+#. SourceLocation:	Source/MVVMSample/ViewModels/ClueViewModels.cpp(28)
+#: Source/MVVMSample/ViewModels/ClueViewModels.cpp(28)
+msgctxt "Gotham.Clues,UnknownBody"
+msgid "Not yet investigated."
+msgstr "未調査です。"
+
+#. Key:	MilestoneFmt
+#. SourceLocation:	Source/MVVMSample/ViewModels/ComboViewModel.cpp(13)
+#: Source/MVVMSample/ViewModels/ComboViewModel.cpp(13)
+msgctxt "Gotham.Combo,MilestoneFmt"
+msgid "{0}-hit combo"
+msgstr "{0}ヒットコンボ"
+
+#. Key:	MultiplierFmt
+#. SourceLocation:	Source/MVVMSample/ViewModels/ComboViewModel.cpp(22)
+#: Source/MVVMSample/ViewModels/ComboViewModel.cpp(22)
+msgctxt "Gotham.Combo,MultiplierFmt"
+msgid "x{0}"
+msgstr "x{0}"
+
+#. Key:	BadPad
+#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(29)
+#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(29)
+msgctxt "Gotham.Controls,BadPad"
+msgid "That button cannot be used here. Choose a gamepad button."
+msgstr "このボタンはここでは使用できません。ゲームパッドのボタンを選んでください。"
+
+#. Key:	BadKey
+#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(30)
+#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(30)
+msgctxt "Gotham.Controls,BadKey"
+msgid "That key cannot be used here. Choose another key or mouse button."
+msgstr "このキーはここでは使用できません。別のキーまたはマウスボタンを選んでください。"
+
+#. Key:	Swapped
+#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(41)
+#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(41)
+msgctxt "Gotham.Controls,Swapped"
+msgid "That key was already in use; the two actions swapped keys."
+msgstr "そのキーはすでに使用されていたため、2つの操作のキーを入れ替えました。"
+
+#. Key:	Detective
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(210)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(210)
+msgctxt "Gotham.Subtitles,Detective"
+msgid "Detective"
+msgstr "探偵"
+
+#. Key:	ClueFound
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(211)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(211)
+msgctxt "Gotham.Subtitles,ClueFound"
+msgid "{0}. {1}"
+msgstr "{0}。{1}"
+
+#. Key:	DebugTitle
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(254)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(254)
+msgctxt "Gotham.Clues,DebugTitle"
+msgid "Debug clue {0}"
+msgstr "デバッグ手がかり {0}"
+
+#. Key:	DebugBody
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
+#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
+msgctxt "Gotham.Clues,DebugBody"
+msgid "Generated to stress the virtualised list."
+msgstr "仮想化リストの負荷テスト用に生成されました。"
+
+#. Key:	Complete
+#. SourceLocation:	Source/MVVMSample/ViewModels/ObjectivesViewModel.cpp(13)
+#: Source/MVVMSample/ViewModels/ObjectivesViewModel.cpp(13)
+msgctxt "Gotham.Objectives,Complete"
+msgid "Case solved"
+msgstr "事件解決"
+
+#. Key:	Find
+#. SourceLocation:	Source/MVVMSample/ViewModels/ObjectivesViewModel.cpp(13)
+#: Source/MVVMSample/ViewModels/ObjectivesViewModel.cpp(13)
+msgctxt "Gotham.Objectives,Find"
+msgid "Find the clues"
+msgstr "手がかりを探せ"
+
+#. Key:	ProgressFmt
+#. SourceLocation:	Source/MVVMSample/ViewModels/ObjectivesViewModel.cpp(19)
+#: Source/MVVMSample/ViewModels/ObjectivesViewModel.cpp(19)
+msgctxt "Gotham.Objectives,ProgressFmt"
+msgid "{0} / {1}"
+msgstr "{0} / {1}"
+
+#. Key:	TabDisplay
+#. SourceLocation:	Source/MVVMSample/ViewModels/SettingsViewModel.cpp(66)
+#: Source/MVVMSample/ViewModels/SettingsViewModel.cpp(66)
+msgctxt "Gotham.Settings,TabDisplay"
+msgid "Display"
+msgstr "表示"
+
+#. Key:	TabAccessibility
+#. SourceLocation:	Source/MVVMSample/ViewModels/SettingsViewModel.cpp(68)
+#: Source/MVVMSample/ViewModels/SettingsViewModel.cpp(68)
+msgctxt "Gotham.Settings,TabAccessibility"
+msgid "Accessibility"
+msgstr "アクセシビリティ"
+
+#. Key:	TabControls
+#. SourceLocation:	Source/MVVMSample/ViewModels/SettingsViewModel.cpp(70)
+#: Source/MVVMSample/ViewModels/SettingsViewModel.cpp(70)
+msgctxt "Gotham.Settings,TabControls"
+msgid "Controls"
+msgstr "操作"
+
+#. Key:	TabLanguage
+#. SourceLocation:	Source/MVVMSample/ViewModels/SettingsViewModel.cpp(72)
+#: Source/MVVMSample/ViewModels/SettingsViewModel.cpp(72)
+msgctxt "Gotham.Settings,TabLanguage"
+msgid "Language"
+msgstr "言語"
+
