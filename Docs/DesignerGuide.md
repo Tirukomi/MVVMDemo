@@ -57,9 +57,11 @@ Never hard-code a colour that means something. Ask the palette for a token (`Goo
 
 ## Add a rebindable action
 
-Create the `UInputAction` in `AGothamPlayerController::BuildInputAssets`, register it with `MakeActionMappable` (or
-`MapPair` for a keyboard + gamepad pair), add a row to `GothamBindings::GetDefinitions`, and bind it. The controls
-screen picks it up from the definition list.
+Add a row to `GothamActions::GetTable` (`Input/GothamActionTable.cpp`) with its name, display text (under the
+`Gotham.Bindings` localization namespace), default keys and `bRebindable = true`, then bind its handler by name in
+`AGothamPlayerController::SetupInputComponent`. The action, its mappings and its Controls-screen row all come from the
+table. Add the name to `Gotham.Characterization.InputBindings`, and never rename an existing one: saved rebinds refer
+to it.
 
 ## Add a language
 

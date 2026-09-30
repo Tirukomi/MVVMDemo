@@ -88,8 +88,10 @@ hit-testing, layer/input-context tracking) so the rules are unit-tested without 
 
 ## Input
 
-Enhanced Input assets are created in code (`AGothamPlayerController::BuildInputAssets`): actions and mapping context
-need no binary assets. Rebindable actions carry player-mappable settings (ADR 0005); rebinding goes through
+Enhanced Input assets are created in code from one table (`Input/GothamActionTable`: name, display text, value type,
+default keyboard and gamepad keys, rebindable), so actions and the mapping context need no binary assets.
+`AGothamPlayerController::BuildInputAssets` loops over the table, `FindAction` looks actions up by name, and the
+Controls screen's rows (`GothamBindings::GetDefinitions`) are the table's rebindable entries in order. Rebindable actions carry player-mappable settings (ADR 0005); rebinding goes through
 `UEnhancedInputUserSettings`. Glyph widgets query the live mapping (`QueryKeysMappedToAction`) and follow the current
 input device (Common Input), so rebinding and device switches are reflected without extra code.
 
