@@ -120,3 +120,9 @@ side). Clues are `UClueDataAsset`s placed as `AClueActor`s; custom depth + stenc
 Automation specs live in `Source/MVVMSample/Tests`. They cover view-model behaviour, component logic (via `Advance()`
 so unregistered components can be driven), input/palette/settings rules and rebinding. Run them with
 `Scripts/run_tests.py` (exit code reflects failures). Visual verification uses the dev flags documented in the README.
+
+Everything that drives the running game on its own is a script for one runner, `FGothamScript`
+(`Core/GothamScript.h`): the dev flags (`Core/GothamDevAids.cpp`, compiled out of Shipping), the perf harness and the
+menu input test. A script is a list of steps (`At`, `Wait`, `Do`, `Expect`, `Sample`, `Screenshot`, `Quit`) run in
+real time on the core ticker, so paused and slowed screens do not stop it; its timing rules are unit-tested with a
+fake clock. A new demo or check is a short step list, not a new ticker.
