@@ -6,6 +6,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "UI/Slate/SGothamPanel.h"
 #include "UI/Widgets/GothamPanel.h"
+#include "UI/Widgets/GothamText.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
@@ -28,10 +29,10 @@ TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
 		Panel->SetContent(Column);
 
-		SpeakerText = WidgetTree->ConstructWidget<UTextBlock>();
+		SpeakerText = WidgetTree->ConstructWidget<UGothamText>();
 		Column->AddChildToVerticalBox(SpeakerText);
 
-		LineText = WidgetTree->ConstructWidget<UTextBlock>();
+		LineText = WidgetTree->ConstructWidget<UGothamText>();
 		LineText->SetAutoWrapText(true);
 		Column->AddChildToVerticalBox(LineText);
 	}

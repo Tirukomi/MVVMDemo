@@ -13,6 +13,7 @@
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/ComboMeter.h"
 #include "UI/Widgets/GothamPanel.h"
+#include "UI/Widgets/GothamText.h"
 #include "ViewModels/ComboViewModel.h"
 #include "ViewModels/GothamMVVM.h"
 
@@ -28,7 +29,7 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Row);
 
-		CountText = WidgetTree->ConstructWidget<UTextBlock>();
+		CountText = WidgetTree->ConstructWidget<UGothamText>();
 		Row->AddChildToHorizontalBox(CountText)->SetVerticalAlignment(VAlign_Center);
 
 		UVerticalBox* Side = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -36,14 +37,14 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		SideSlot->SetVerticalAlignment(VAlign_Center);
 		SideSlot->SetPadding(FMargin(10.f, 6.f, 0.f, 0.f));
 
-		HitsLabel = WidgetTree->ConstructWidget<UTextBlock>();
+		HitsLabel = WidgetTree->ConstructWidget<UGothamText>();
 		HitsLabel->SetText(LOCTEXT("Hits", "Hits"));
 		Side->AddChildToVerticalBox(HitsLabel);
 
 		MultiplierTag = WidgetTree->ConstructWidget<UGothamPanel>();
 		MultiplierTag->SetShape(5.f, EGothamChamfer::Opposite);
 		MultiplierTag->SetPanelPadding(FMargin(8.f, 1.f));
-		MultiplierText = WidgetTree->ConstructWidget<UTextBlock>();
+		MultiplierText = WidgetTree->ConstructWidget<UGothamText>();
 		MultiplierTag->SetContent(MultiplierText);
 		Side->AddChildToVerticalBox(MultiplierTag)->SetHorizontalAlignment(HAlign_Left);
 
@@ -54,7 +55,7 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		Column->AddChildToVerticalBox(DecayBar)->SetPadding(FMargin(2.f, 2.f, 0.f, 0.f));
 
 		// Milestone callout ("10-HIT COMBO"): shown on each multiple of ten, then fades.
-		MilestoneText = WidgetTree->ConstructWidget<UTextBlock>();
+		MilestoneText = WidgetTree->ConstructWidget<UGothamText>();
 		MilestoneText->SetRenderOpacity(0.f);
 		Column->AddChildToVerticalBox(MilestoneText)->SetPadding(FMargin(0.f, 8.f, 0.f, 0.f));
 	}

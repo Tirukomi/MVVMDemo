@@ -139,14 +139,17 @@ void USettingsScreen::NativeConstruct()
 	ShowDetail(Rows.IsEmpty() ? nullptr : Rows[0].Get());
 
 #if !UE_BUILD_SHIPPING
-	// Screenshot aid: -GothamSettingsTab=<Id> opens on that tab, focused on its first item.
+	// Screenshot aid: -GothamSettingsTab=<Id> opens on that tab, focused on its first item (or on item
+	// -GothamSettingsItem=<n>, counted from 0).
 	FString StartTab;
 	if (FParse::Value(FCommandLine::Get(), TEXT("GothamSettingsTab="), StartTab) && Tabs->SelectTabByID(FName(*StartTab)))
 	{
 		const int32 Index = USettingsViewModel::GetTabs().IndexOfByPredicate([&StartTab](const FGothamSettingsTab& Tab) { return Tab.Id == FName(*StartTab); });
-		if (Pages.IsValidIndex(Index) && !Pages[Index]->GetItems().IsEmpty())
+		int32 Item = 0;
+		FParse::Value(FCommandLine::Get(), TEXT("GothamSettingsItem="), Item);
+		if (Pages.IsValidIndex(Index) && Pages[Index]->GetItems().IsValidIndex(Item))
 		{
-			DefaultFocus = Pages[Index]->GetItems()[0];
+			DefaultFocus = Pages[Index]->GetItems()[Item];
 			ShowDetail(DefaultFocus);
 		}
 	}

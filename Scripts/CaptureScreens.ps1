@@ -22,6 +22,8 @@ $shots = @(
     @{ name = "settings-en";      flags = "-GothamOpenSettings";                           shot = "gotham_settings";  res = "1280 720" },
     @{ name = "settings-access";  flags = "-GothamOpenSettings -GothamSettingsTab=Accessibility"; shot = "gotham_settings"; res = "1280 720" },
     @{ name = "settings-de";      flags = "-GothamOpenSettings -GothamLanguage=de";        shot = "gotham_settings";  res = "1280 720" },
+    # German capitals: the detail header of "Untertitelgröße" must read UNTERTITELGRÖSSE (ß becomes SS).
+    @{ name = "settings-de-caps"; flags = "-GothamOpenSettings -GothamLanguage=de -GothamSettingsTab=Display -GothamSettingsItem=1"; shot = "gotham_settings"; res = "1280 720" },
     @{ name = "settings-ja";      flags = "-GothamOpenSettings -GothamLanguage=ja";        shot = "gotham_settings";  res = "1280 720" },
     @{ name = "settings-pseudo";  flags = "-GothamOpenSettings -GothamLanguage=en-XA";     shot = "gotham_settings";  res = "1280 720" },
     @{ name = "controls";         flags = "-GothamOpenControls";                           shot = "gotham_controls";  res = "1280 720" },

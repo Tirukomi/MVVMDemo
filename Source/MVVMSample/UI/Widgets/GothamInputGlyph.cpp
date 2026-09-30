@@ -13,6 +13,7 @@
 #include "Core/GothamPlayerController.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Layout/GothamUISubsystem.h"
+#include "UI/Widgets/GothamText.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
 
@@ -24,7 +25,7 @@ TSharedRef<SWidget> UGothamInputGlyph::RebuildWidget()
 		Frame->SetPanelPadding(FMargin(7.f, 1.f));
 		WidgetTree->RootWidget = Frame;
 
-		Text = WidgetTree->ConstructWidget<UTextBlock>();
+		Text = WidgetTree->ConstructWidget<UGothamText>();
 		GothamStyle::ApplyText(Text, EGothamTextStyle::Key, GothamStyle::Token(this, EGothamColorToken::TextPrimary));
 		Text->SetJustification(ETextJustify::Center);
 		Frame->SetContent(Text);

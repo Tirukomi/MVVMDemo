@@ -11,6 +11,7 @@
 #include "UI/Style/GothamMotion.h"
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GothamHudPrimitives.h"
+#include "UI/Widgets/GothamText.h"
 #include "ViewModels/GadgetViewModels.h"
 #include "ViewModels/GothamMVVM.h"
 
@@ -32,11 +33,11 @@ TSharedRef<SWidget> UGadgetSelectorWidget::RebuildWidget()
 		TextSlot->SetVerticalAlignment(VAlign_Center);
 		TextSlot->SetPadding(FMargin(0.f, 0.f, 12.f, 0.f));
 
-		SelectedName = WidgetTree->ConstructWidget<UTextBlock>();
+		SelectedName = WidgetTree->ConstructWidget<UGothamText>();
 		SelectedName->SetJustification(ETextJustify::Right);
 		Text->AddChildToVerticalBox(SelectedName)->SetHorizontalAlignment(HAlign_Right);
 
-		SelectedState = WidgetTree->ConstructWidget<UTextBlock>();
+		SelectedState = WidgetTree->ConstructWidget<UGothamText>();
 		SelectedState->SetJustification(ETextJustify::Right);
 		Text->AddChildToVerticalBox(SelectedState)->SetHorizontalAlignment(HAlign_Right);
 
@@ -148,7 +149,7 @@ void UGadgetSelectorWidget::RebuildEntries()
 		// Small entry: key above the icon.
 		UVerticalBox* Entry = WidgetTree->ConstructWidget<UVerticalBox>();
 		OthersRow->AddChildToHorizontalBox(Entry)->SetPadding(FMargin(8.f, 6.f, 0.f, 0.f));
-		UTextBlock* Key = WidgetTree->ConstructWidget<UTextBlock>();
+		UTextBlock* Key = WidgetTree->ConstructWidget<UGothamText>();
 		Key->SetJustification(ETextJustify::Center);
 		Entry->AddChildToVerticalBox(Key)->SetHorizontalAlignment(HAlign_Center);
 		UGadgetIcon* Icon = WidgetTree->ConstructWidget<UGadgetIcon>();

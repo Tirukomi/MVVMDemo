@@ -33,6 +33,9 @@ Follows Epic's Unreal coding standard, plus these project rules.
 ## Additional rules
 
 - Colours that carry meaning come from `GothamPalette` tokens, never literals.
+- Code-built text is `UGothamText`, and capitals go through `GothamText::SetUpperCase`, never
+  `ETextTransformPolicy::ToUpper`: Slate's transform cannot change a string's length, so German "ß" ("SS") ensures and
+  stays in mixed case.
 - Anything with a rule worth testing is UObject-free or exposes an `Advance(DeltaTime)`-style entry point.
 - Reflection to reach a protected engine property is allowed only in one documented helper (see ADR 0005).
 - Dev-only code sits under `#if !UE_BUILD_SHIPPING` and is enabled by a `-Gotham...` flag, never by default.

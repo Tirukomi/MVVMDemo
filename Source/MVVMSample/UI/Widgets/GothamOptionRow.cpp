@@ -14,6 +14,7 @@
 #include "Components/TextBlock.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Widgets/GothamSelectorDecor.h"
+#include "UI/Widgets/GothamText.h"
 #include "ViewModels/GothamMVVM.h"
 #include "ViewModels/SettingsViewModel.h"
 
@@ -41,7 +42,7 @@ TSharedRef<SWidget> UGothamOptionRow::RebuildWidget()
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Hit->SetContent(Row);
 
-		LabelText = WidgetTree->ConstructWidget<UTextBlock>();
+		LabelText = WidgetTree->ConstructWidget<UGothamText>();
 		LabelText->SetFont(GothamStyle::Font(EGothamTextStyle::BodyStrong));
 		LabelText->SetAutoWrapText(true);
 		UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(LabelText);
@@ -60,7 +61,7 @@ TSharedRef<SWidget> UGothamOptionRow::RebuildWidget()
 		DecorSlot->SetHorizontalAlignment(HAlign_Fill);
 		DecorSlot->SetVerticalAlignment(VAlign_Fill);
 
-		ValueText = WidgetTree->ConstructWidget<UTextBlock>();
+		ValueText = WidgetTree->ConstructWidget<UGothamText>();
 		ValueText->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
 		ValueText->SetJustification(ETextJustify::Center);
 		UOverlaySlot* ValueSlot = Selector->AddChildToOverlay(ValueText);

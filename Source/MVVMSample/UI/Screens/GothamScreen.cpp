@@ -28,6 +28,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "UI/Widgets/GothamMenuList.h"
 #include "UI/Widgets/GothamScrim.h"
+#include "UI/Widgets/GothamText.h"
 
 UGothamScreen::UGothamScreen(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -228,7 +229,7 @@ void UGothamScreen::AddFooter(UWidget* Footer)
 
 UTextBlock* UGothamScreen::MakeText(const FText& Text, EGothamTextStyle Style, EGothamColorToken Color)
 {
-	UTextBlock* Block = WidgetTree->ConstructWidget<UTextBlock>();
+	UTextBlock* Block = WidgetTree->ConstructWidget<UGothamText>();
 	GothamStyle::ApplyText(Block, Style, GothamStyle::Token(this, Color));
 	Block->SetText(Text);
 	TokenTexts.Add(Block);

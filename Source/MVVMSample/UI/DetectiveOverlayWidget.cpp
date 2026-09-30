@@ -13,6 +13,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Widgets/GothamInputGlyph.h"
+#include "UI/Widgets/GothamText.h"
 #include "ViewModels/DetectiveViewModel.h"
 #include "ViewModels/GothamMVVM.h"
 
@@ -47,9 +48,9 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 		StripSlot->SetVerticalAlignment(VAlign_Top);
 		StripSlot->SetPadding(FMargin(0.f, 48.f, 0.f, 0.f));
 
-		UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>();
+		UTextBlock* Label = WidgetTree->ConstructWidget<UGothamText>();
 		Label->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
-		Label->SetTextTransformPolicy(ETextTransformPolicy::ToUpper);
+		GothamText::SetUpperCase(Label, true);
 		Label->SetText(LOCTEXT("Mode", "DETECTIVE MODE"));
 		ModeLabel = Label;
 		UHorizontalBoxSlot* ModeSlot = Strip->AddChildToHorizontalBox(Label);
@@ -60,7 +61,7 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 		ScanGlyph->SetAction(TEXT("Scan"));
 		Strip->AddChildToHorizontalBox(ScanGlyph)->SetVerticalAlignment(VAlign_Center);
 
-		ScanLabel = WidgetTree->ConstructWidget<UTextBlock>();
+		ScanLabel = WidgetTree->ConstructWidget<UGothamText>();
 		// Centred on the key glyph: the default Fill alignment would pin the text to the top of the row.
 		UHorizontalBoxSlot* ScanSlot = Strip->AddChildToHorizontalBox(ScanLabel);
 		ScanSlot->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));

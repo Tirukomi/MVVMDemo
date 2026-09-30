@@ -14,6 +14,7 @@
 #include "Engine/Texture2D.h"
 #include "UI/Slate/SGothamPanel.h"
 #include "UI/Widgets/GothamPanel.h"
+#include "UI/Widgets/GothamText.h"
 #include "ViewModels/ClueViewModels.h"
 #include "ViewModels/GothamMVVM.h"
 
@@ -54,19 +55,19 @@ TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 		ThumbSlot->SetHorizontalAlignment(HAlign_Fill);
 		ThumbSlot->SetVerticalAlignment(VAlign_Fill);
 
-		UnknownMark = WidgetTree->ConstructWidget<UTextBlock>();
+		UnknownMark = WidgetTree->ConstructWidget<UGothamText>();
 		UnknownMark->SetText(FText::FromString(TEXT("?")));
 		UnknownMark->SetFont(GothamStyle::Font(EGothamTextStyle::Display));
 		UOverlaySlot* MarkSlot = Picture->AddChildToOverlay(UnknownMark);
 		MarkSlot->SetHorizontalAlignment(HAlign_Center);
 		MarkSlot->SetVerticalAlignment(VAlign_Center);
 
-		CaseNumber = WidgetTree->ConstructWidget<UTextBlock>();
+		CaseNumber = WidgetTree->ConstructWidget<UGothamText>();
 		CaseNumber->SetFont(GothamStyle::Font(EGothamTextStyle::Key));
 		UOverlaySlot* NumberSlot = Picture->AddChildToOverlay(CaseNumber);
 		NumberSlot->SetPadding(FMargin(5.f, 3.f));
 
-		TitleText = WidgetTree->ConstructWidget<UTextBlock>();
+		TitleText = WidgetTree->ConstructWidget<UGothamText>();
 		GothamStyle::ApplyText(TitleText, EGothamTextStyle::Label, FLinearColor::White);
 		TitleText->SetClipping(EWidgetClipping::ClipToBounds);
 		Column->AddChildToVerticalBox(TitleText)->SetPadding(FMargin(1.f, 6.f, 0.f, 0.f));

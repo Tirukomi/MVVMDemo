@@ -9,6 +9,7 @@
 #include "HAL/FileManager.h"
 #include "Misc/Paths.h"
 #include "Styling/CoreStyle.h"
+#include "UI/Widgets/GothamText.h"
 
 namespace
 {
@@ -133,7 +134,7 @@ namespace GothamStyle
 			return;
 		}
 		Text->SetFont(Font(Style));
-		Text->SetTextTransformPolicy(IsUpperCase(Style) ? ETextTransformPolicy::ToUpper : ETextTransformPolicy::None);
+		GothamText::SetUpperCase(Text, IsUpperCase(Style));
 		Text->SetColorAndOpacity(FSlateColor(Color));
 	}
 }

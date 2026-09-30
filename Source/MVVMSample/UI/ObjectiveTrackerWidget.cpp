@@ -14,6 +14,7 @@
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/ComboMeter.h"
 #include "UI/Widgets/GothamPanel.h"
+#include "UI/Widgets/GothamText.h"
 #include "ViewModels/GothamMVVM.h"
 #include "ViewModels/ObjectivesViewModel.h"
 
@@ -36,17 +37,17 @@ TSharedRef<SWidget> UObjectiveTrackerWidget::RebuildWidget()
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
 		Panel->SetContent(Column);
 
-		HeaderText = WidgetTree->ConstructWidget<UTextBlock>();
+		HeaderText = WidgetTree->ConstructWidget<UGothamText>();
 		HeaderText->SetText(LOCTEXT("Objective", "Objective"));
 		Column->AddChildToVerticalBox(HeaderText);
 
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Row)->SetPadding(FMargin(0.f, 2.f, 0.f, 6.f));
-		TitleText = WidgetTree->ConstructWidget<UTextBlock>();
+		TitleText = WidgetTree->ConstructWidget<UGothamText>();
 		UHorizontalBoxSlot* TitleSlot = Row->AddChildToHorizontalBox(TitleText);
 		TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 		TitleSlot->SetVerticalAlignment(VAlign_Bottom);
-		ProgressText = WidgetTree->ConstructWidget<UTextBlock>();
+		ProgressText = WidgetTree->ConstructWidget<UGothamText>();
 		UHorizontalBoxSlot* ProgressSlot = Row->AddChildToHorizontalBox(ProgressText);
 		ProgressSlot->SetVerticalAlignment(VAlign_Bottom);
 		ProgressSlot->SetPadding(FMargin(12.f, 0.f, 0.f, 0.f));

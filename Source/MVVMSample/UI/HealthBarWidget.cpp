@@ -10,6 +10,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/ComboMeter.h"
+#include "UI/Widgets/GothamText.h"
 #include "ViewModels/GothamMVVM.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 
@@ -37,10 +38,10 @@ TSharedRef<SWidget> UHealthBarWidget::RebuildWidget()
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Row)->SetPadding(FMargin(0.f, 6.f, 0.f, 0.f));
 
-		StatusText = WidgetTree->ConstructWidget<UTextBlock>();
+		StatusText = WidgetTree->ConstructWidget<UGothamText>();
 		Row->AddChildToHorizontalBox(StatusText)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
 
-		ValueText = WidgetTree->ConstructWidget<UTextBlock>();
+		ValueText = WidgetTree->ConstructWidget<UGothamText>();
 		Row->AddChildToHorizontalBox(ValueText);
 	}
 	return Super::RebuildWidget();

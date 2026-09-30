@@ -12,6 +12,7 @@
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamInputGlyph.h"
+#include "UI/Widgets/GothamText.h"
 
 UGothamHintButton::UGothamHintButton(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -32,7 +33,7 @@ bool UGothamHintButton::Initialize()
 		Glyph = WidgetTree->ConstructWidget<UGothamInputGlyph>();
 		Row->AddChildToHorizontalBox(Glyph)->SetVerticalAlignment(VAlign_Center);
 
-		Label = WidgetTree->ConstructWidget<UTextBlock>();
+		Label = WidgetTree->ConstructWidget<UGothamText>();
 		GothamStyle::ApplyText(Label, EGothamTextStyle::Label, GothamStyle::Token(this, EGothamColorToken::TextMuted));
 		UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
 		LabelSlot->SetVerticalAlignment(VAlign_Center);

@@ -8,6 +8,7 @@
 #include "UI/GothamWidgetTick.h"
 #include "UI/Slate/SGothamPanel.h"
 #include "UI/Widgets/GothamPanel.h"
+#include "UI/Widgets/GothamText.h"
 
 UGothamButtonStyle::UGothamButtonStyle()
 {
@@ -42,7 +43,7 @@ bool UGothamButton::Initialize()
 		Frame = WidgetTree->ConstructWidget<UGothamPanel>();
 		WidgetTree->RootWidget = Frame;
 
-		Label = WidgetTree->ConstructWidget<UTextBlock>();
+		Label = WidgetTree->ConstructWidget<UGothamText>();
 		Label->SetText(PendingLabel);
 		Frame->SetContent(Label);
 		ApplyKind();
@@ -94,20 +95,20 @@ void UGothamButton::ApplyKind()
 	{
 	case EGothamButtonKind::MenuItem:
 		Label->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
-		Label->SetTextTransformPolicy(ETextTransformPolicy::ToUpper);
+		GothamText::SetUpperCase(Label, true);
 		Label->SetJustification(ETextJustify::Left);
 		Frame->SetPanelPadding(FMargin(22.f, 9.f, 40.f, 9.f));
 		break;
 	case EGothamButtonKind::Tab:
 		Label->SetFont(GothamStyle::Font(EGothamTextStyle::Label));
-		Label->SetTextTransformPolicy(ETextTransformPolicy::ToUpper);
+		GothamText::SetUpperCase(Label, true);
 		Label->SetJustification(ETextJustify::Center);
 		Frame->SetPanelPadding(FMargin(20.f, 8.f));
 		Frame->SetShape(6.f, EGothamChamfer::Opposite);
 		break;
 	default:
 		Label->SetFont(GothamStyle::Font(EGothamTextStyle::BodyStrong));
-		Label->SetTextTransformPolicy(ETextTransformPolicy::None);
+		GothamText::SetUpperCase(Label, false);
 		Label->SetJustification(ETextJustify::Center);
 		Frame->SetPanelPadding(FMargin(22.f, 9.f));
 		Frame->SetShape(8.f, EGothamChamfer::Opposite);
