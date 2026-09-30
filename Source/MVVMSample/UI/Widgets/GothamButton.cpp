@@ -191,9 +191,9 @@ void UGothamButton::HandleFocusLost()
 void UGothamButton::NativeOnHovered()
 {
 	Super::NativeOnHovered();
-	bHoveredNow = true;
+	bHoveredNow = GothamUI::HoverEnabled();
 	// The mouse moves focus too, so there is only ever one "current" item and the highlight follows the pointer.
-	if (GetIsFocusable() && !bFocused && GothamUI::HoverMovesFocus())
+	if (bHoveredNow && GetIsFocusable() && !bFocused)
 	{
 		SetFocus();
 	}

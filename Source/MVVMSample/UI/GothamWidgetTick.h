@@ -58,14 +58,14 @@ namespace GothamUI
 	}
 
 	/**
-	 * Whether hovering a menu item moves focus to it (the normal behaviour). Screenshot runs pass
-	 * -GothamNoHoverFocus: the window opens wherever the real cursor rests, and focus must not follow it there.
+	 * Whether menu items react to the mouse hovering them (highlight, and focus follows): the normal behaviour.
+	 * Screenshot runs pass -GothamIgnoreHover, because the window opens wherever the real cursor happens to rest.
 	 */
-	inline bool HoverMovesFocus()
+	inline bool HoverEnabled()
 	{
 #if !UE_BUILD_SHIPPING
-		static const bool bNoHoverFocus = FParse::Param(FCommandLine::Get(), TEXT("GothamNoHoverFocus"));
-		return !bNoHoverFocus;
+		static const bool bIgnoreHover = FParse::Param(FCommandLine::Get(), TEXT("GothamIgnoreHover"));
+		return !bIgnoreHover;
 #else
 		return true;
 #endif

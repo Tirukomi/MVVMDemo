@@ -1,6 +1,7 @@
 # Captures the documentation screenshots into Docs/img using the game's own dev flags (no OS-level input or
 # screen grabs, so it never touches other windows). Close the editor first. ~30 s per image.
-# -GothamNoHoverFocus: the window opens under wherever the real cursor rests, which must not move menu focus.
+# -GothamIgnoreHover: the window opens under wherever the real cursor rests, which must not highlight or focus
+# the menu item there.
 # -OutDir writes somewhere else (Scripts/Verify.ps1 captures into Saved/Verify/Screens and diffs against Docs/img).
 param([string]$Only = "", [string]$OutDir = "")
 
@@ -37,7 +38,7 @@ foreach ($s in $shots) {
     if ($Only -and $s.name -ne $Only) { continue }
     $w, $h = $s.res -split " "
     Remove-Item (Join-Path $root "Saved\Screenshots") -Recurse -Force -ErrorAction SilentlyContinue
-    $arguments = "`"$root\MVVMSample.uproject`" /Game/Maps/L_Arena -game -windowed -ResX=$w -ResY=$h -nosplash -unattended $($s.flags) -GothamShotDelay=8 -GothamNoHoverFocus"
+    $arguments = "`"$root\MVVMSample.uproject`" /Game/Maps/L_Arena -game -windowed -ResX=$w -ResY=$h -nosplash -unattended $($s.flags) -GothamShotDelay=8 -GothamIgnoreHover"
     $p = Start-Process $engine -ArgumentList $arguments -PassThru
     # Stop as soon as the screenshot is on disk (and fully written) rather than always waiting the worst case.
     $src = Join-Path $root "Saved\Screenshots\WindowsEditor\$($s.shot).png"

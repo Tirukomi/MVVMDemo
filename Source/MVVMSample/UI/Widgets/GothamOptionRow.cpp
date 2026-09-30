@@ -140,7 +140,7 @@ FReply UGothamOptionRow::NativeOnMouseButtonDown(const FGeometry& InGeometry, co
 void UGothamOptionRow::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
-	if (!bFocused && GothamUI::HoverMovesFocus())
+	if (!bFocused && GothamUI::HoverEnabled())
 	{
 		SetFocus();
 	}

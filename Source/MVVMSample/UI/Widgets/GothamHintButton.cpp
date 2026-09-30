@@ -76,7 +76,7 @@ void UGothamHintButton::NativeDestruct()
 void UGothamHintButton::NativeOnHovered()
 {
 	Super::NativeOnHovered();
-	bHoveredNow = true;
+	bHoveredNow = GothamUI::HoverEnabled();
 	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
 	FocusBeforePointer = FSlateApplication::Get().GetUserFocusedWidget(LocalPlayer ? LocalPlayer->GetControllerId() : 0);
 	ApplyState();
