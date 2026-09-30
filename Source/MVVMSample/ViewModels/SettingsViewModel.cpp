@@ -83,15 +83,6 @@ FText USettingsViewModel::GetValueText(EGothamSetting Setting) const
 void USettingsViewModel::Recompute()
 {
 	UE_MVVM_SET_PROPERTY_VALUE_INLINE(bIsDirty, Current != Baseline);
-	UE_MVVM_SET_PROPERTY_VALUE(LanguageValue, GetValueText(EGothamSetting::Language));
-	UE_MVVM_SET_PROPERTY_VALUE(ColorVisionValue, GetValueText(EGothamSetting::ColorVision));
-	UE_MVVM_SET_PROPERTY_VALUE(UIScaleValue, GetValueText(EGothamSetting::UIScale));
-	UE_MVVM_SET_PROPERTY_VALUE(HighContrastValue, GetValueText(EGothamSetting::HighContrast));
-	UE_MVVM_SET_PROPERTY_VALUE(ReducedMotionValue, GetValueText(EGothamSetting::ReducedMotion));
-	UE_MVVM_SET_PROPERTY_VALUE(WheelModeValue, GetValueText(EGothamSetting::WheelMode));
-	UE_MVVM_SET_PROPERTY_VALUE(ScanModeValue, GetValueText(EGothamSetting::ScanMode));
-	UE_MVVM_SET_PROPERTY_VALUE(SubtitleSizeValue, GetValueText(EGothamSetting::SubtitleSize));
-	UE_MVVM_SET_PROPERTY_VALUE(SubtitleBackgroundValue, GetValueText(EGothamSetting::SubtitleBackground));
 	if (!bHasShown || Shown != Current)
 	{
 		Shown = Current;
@@ -107,18 +98,8 @@ void USettingsViewModel::BumpRevision()
 
 void USettingsViewModel::RefreshTexts()
 {
-	// After a language switch the FText objects can be identical while their displayed string changed,
-	// so notify unconditionally.
+	// After a language switch the values are the same but every text reads differently, so bump unconditionally.
 	Recompute();
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(LanguageValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ColorVisionValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(UIScaleValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(HighContrastValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ReducedMotionValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(WheelModeValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ScanModeValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SubtitleSizeValue);
-	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SubtitleBackgroundValue);
 	BumpRevision();
 }
 

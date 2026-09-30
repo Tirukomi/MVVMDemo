@@ -50,8 +50,8 @@ Never hard-code a colour that means something. Ask the palette for a token (`Goo
    storage, label, description (under the `Gotham.Settings` localization namespace), choice count, whether it wraps,
    and get / set / format functions. Stepping, the selector pips, the value text and the config round trip all come
    from the row.
-3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it. Add a `FieldNotify`
-   text property for it in `USettingsViewModel::Recompute` and subscribe the row to it in `UGothamOptionRow::Setup`.
+3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it, and the row refreshes
+   on the view model's `Revision` like every other.
 4. Read it wherever it matters through `UGothamSettingsSubsystem::Get(this)`. To react to changes, derive a
    widget from `UGothamSettingsAwareWidget` and override `OnSettingsApplied`, or, in any other class, keep an
    `FGothamSettingsListener` member and `Bind` it (it unsubscribes itself).

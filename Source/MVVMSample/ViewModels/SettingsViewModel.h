@@ -66,25 +66,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetRevision, meta = (AllowPrivateAccess = "true"))
 	int32 Revision = 0;
 
-	// Deprecated: one text per setting, superseded by Revision + GetValueText. Kept for one pass, then removed.
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText LanguageValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText ColorVisionValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText UIScaleValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText HighContrastValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText ReducedMotionValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText WheelModeValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText ScanModeValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText SubtitleSizeValue;
-	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
-	FText SubtitleBackgroundValue;
 
 private:
 	void Recompute();
