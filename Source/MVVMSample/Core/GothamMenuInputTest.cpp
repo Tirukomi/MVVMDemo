@@ -8,6 +8,8 @@
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
 #include "HAL/PlatformMisc.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/TextBlock.h"
 #include "Slate/SObjectWidget.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamUISubsystem.h"
@@ -75,6 +77,18 @@ namespace GothamMenuInputTestPrivate
 		return nullptr;
 	}
 
+	/** The label colour of the [Esc] prompt in Screen (transparent if not found). */
+	FLinearColor PromptLabelColor(const UObject* Screen)
+	{
+		const UGothamHintButton* Hint = FindHint(Screen, EKeys::Escape);
+		UTextBlock* Label = nullptr;
+		if (Hint && Hint->WidgetTree)
+		{
+			Hint->WidgetTree->ForEachWidget([&Label](UWidget* W) { if (!Label) { Label = Cast<UTextBlock>(W); } });
+		}
+		return Label ? Label->GetColorAndOpacity().GetSpecifiedColor() : FLinearColor::Transparent;
+	}
+
 	struct FMenuTestRun : TSharedFromThis<FMenuTestRun>
 	{
 		struct FStep { float At; TFunction<void()> Do; };
@@ -118,6 +132,7 @@ void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 	// Steps use a raw pointer: the ticker below owns the run, and steps capturing the shared ref would form a cycle.
 	FMenuTestRun* Self = &Run.Get();
 	TSharedPtr<int32> ScaleBefore = MakeShared<int32>(0);
+	TSharedPtr<FLinearColor> LabelBefore = MakeShared<FLinearColor>(FLinearColor::Transparent);
 	auto Settings = [WeakPC]() { const UGothamSettingsSubsystem* S = UGothamSettingsSubsystem::Get(WeakPC.Get()); return S ? S->GetViewModel() : nullptr; };
 
 	// 1. The case file's own key (J) closes it.
@@ -162,7 +177,7 @@ void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 		if (VM) { VM->Revert(); }
 		Self->Check(Click(FindHint(ActiveScreen<USettingsScreen>(), EKeys::E)), TEXT("the [E] tab prompt is clickable"));
 	} });
-	Run->Steps.Add({ 8.6f, [Self]()
+	Run->Steps.Add({ 8.6f, [Self, Settings, LabelBefore]()
 	{
 		FName Tab;
 		for (TObjectIterator<UGothamTabList> It; It; ++It)
@@ -170,11 +185,22 @@ void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 			if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsIn(ActiveScreen<USettingsScreen>())) { Tab = It->GetSelectedTabId(); }
 		}
 		Self->Check(Tab == TEXT("Accessibility"), TEXT("clicking [E] switches to the next tab"));
+
+		// Live restyle: every widget subscribes to settings changes through FGothamSettingsListener. Turning high
+		// contrast on must recolour an open screen's prompts right away (a missed subscription would leave them).
+		*LabelBefore = PromptLabelColor(ActiveScreen<USettingsScreen>());
+		if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::HighContrast, +1); }
+	} });
+	Run->Steps.Add({ 8.9f, [Self, Settings, LabelBefore]()
+	{
+		const FLinearColor After = PromptLabelColor(ActiveScreen<USettingsScreen>());
+		Self->Check(LabelBefore->A > 0.f && !After.Equals(*LabelBefore, 0.01f), TEXT("turning high contrast on restyles an open screen live"));
+		if (USettingsViewModel* VM = Settings()) { VM->Revert(); }
 		Self->Check(Click(FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape)), TEXT("the [Esc] prompt is clickable"));
 	} });
-	Run->Steps.Add({ 9.3f, [Self]() { Self->Check(ActiveScreen<USettingsScreen>() == nullptr, TEXT("clicking [Esc] Back closes settings")); } });
+	Run->Steps.Add({ 9.6f, [Self]() { Self->Check(ActiveScreen<USettingsScreen>() == nullptr, TEXT("clicking [Esc] Back closes settings")); } });
 
-	Run->Steps.Add({ 9.8f, [Self]()
+	Run->Steps.Add({ 10.1f, [Self]()
 	{
 		UE_LOG(LogGothamMenuTest, Display, TEXT("Menu input test: %d passed, %d failed"), Self->Passed, Self->Failed);
 		FPlatformMisc::RequestExit(false);
