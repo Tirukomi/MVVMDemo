@@ -20,6 +20,7 @@
 #include "UI/ThreatIndicatorLayer.h"
 #include "UI/Style/GothamMotion.h"
 #include "UI/Widgets/GothamHudPrimitives.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 #include "ViewModels/ThreatViewModel.h"
@@ -129,9 +130,7 @@ void UGothamHudWidget::NativeConstruct()
 	VitalsVM = ViewModels->GetVitals();
 	LastDamageCount = VitalsVM->GetDamageCount();
 	using FVM = UPlayerVitalsViewModel::FFieldNotificationClassDescriptor;
-	const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UGothamHudWidget::OnVitalsChanged);
-	VitalsVM->AddFieldValueChangedDelegate(FVM::DamageCount, Delegate);
-	VitalsVM->AddFieldValueChangedDelegate(FVM::bIsLowHealth, Delegate);
+	GothamMVVM::Bind(VitalsVM, this, &UGothamHudWidget::OnVitalsChanged, { FVM::DamageCount, FVM::bIsLowHealth });
 	UpdateVignetteRest();
 }
 
@@ -139,10 +138,7 @@ void UGothamHudWidget::NativeDestruct()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(FlashHandle);
 	SettingsListener.Reset();
-	if (VitalsVM)
-	{
-		VitalsVM->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(VitalsVM, this);
 	Super::NativeDestruct();
 }
 

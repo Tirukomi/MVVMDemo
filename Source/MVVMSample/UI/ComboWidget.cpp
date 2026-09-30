@@ -14,6 +14,7 @@
 #include "UI/Widgets/ComboMeter.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "ViewModels/ComboViewModel.h"
+#include "ViewModels/GothamMVVM.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.Combo"
 
@@ -62,21 +63,13 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 
 void UComboWidget::SetViewModel(UComboViewModel* InViewModel)
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	using FVM = UComboViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
+	GothamMVVM::Bind(ViewModel, this, &UComboWidget::OnFieldChanged, { FVM::HitCount, FVM::DecayAlpha, FVM::MultiplierText, FVM::bIsActive });
+	GothamMVVM::Bind(ViewModel, this, &UComboWidget::OnMilestone, { FVM::MilestoneCount });
 	if (ViewModel)
 	{
-		using FVM = UComboViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UComboWidget::OnFieldChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::HitCount, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::DecayAlpha, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::MultiplierText, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::bIsActive, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::MilestoneCount,
-			INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UComboWidget::OnMilestone));
 		LastHits = ViewModel->GetHitCount();
 		LastMultiplier = ViewModel->GetMultiplier();
 	}

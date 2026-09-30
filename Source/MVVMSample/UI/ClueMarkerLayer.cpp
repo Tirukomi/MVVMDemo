@@ -8,6 +8,7 @@
 #include "UI/Slate/SClueMarkerLayer.h"
 #include "ViewModels/ClueViewModels.h"
 #include "ViewModels/DetectiveViewModel.h"
+#include "ViewModels/GothamMVVM.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.ClueMarkers"
 
@@ -34,17 +35,11 @@ void UClueMarkerLayer::ReleaseSlateResources(bool bReleaseChildren)
 
 void UClueMarkerLayer::SetViewModels(UClueListViewModel* InClues, UDetectiveViewModel* InDetective)
 {
-	if (Detective)
-	{
-		Detective->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(Detective, this);
 	Clues = InClues;
 	Detective = InDetective;
-	if (Detective)
-	{
-		Detective->AddFieldValueChangedDelegate(UDetectiveViewModel::FFieldNotificationClassDescriptor::bIsVisible,
-			INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UClueMarkerLayer::OnDetectiveChanged));
-	}
+	GothamMVVM::Bind(Detective, this, &UClueMarkerLayer::OnDetectiveChanged,
+		{ UDetectiveViewModel::FFieldNotificationClassDescriptor::bIsVisible });
 	if (SlateLayer.IsValid())
 	{
 		SlateLayer->SetActive(Detective && Detective->GetIsVisible());

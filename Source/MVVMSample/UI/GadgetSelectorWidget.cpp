@@ -12,6 +12,7 @@
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GothamHudPrimitives.h"
 #include "ViewModels/GadgetViewModels.h"
+#include "ViewModels/GothamMVVM.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.GadgetSelector"
 
@@ -52,18 +53,10 @@ TSharedRef<SWidget> UGadgetSelectorWidget::RebuildWidget()
 void UGadgetSelectorWidget::SetViewModel(UGadgetBarViewModel* InViewModel)
 {
 	UnbindSlots();
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	using FVM = UGadgetBarViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	if (ViewModel)
-	{
-		using FVM = UGadgetBarViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UGadgetSelectorWidget::OnBarChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::Slots, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::SelectedIndex, Delegate);
-	}
+	GothamMVVM::Bind(ViewModel, this, &UGadgetSelectorWidget::OnBarChanged, { FVM::Slots, FVM::SelectedIndex });
 	RebuildEntries();
 }
 
@@ -127,7 +120,7 @@ void UGadgetSelectorWidget::UnbindSlots()
 	{
 		for (UGadgetSlotViewModel* SlotVM : ViewModel->GetSlots())
 		{
-			SlotVM->RemoveAllFieldValueChangedDelegates(this);
+			GothamMVVM::Unbind(SlotVM, this);
 		}
 	}
 }
@@ -148,12 +141,9 @@ void UGadgetSelectorWidget::RebuildEntries()
 	}
 
 	using FSlotVM = UGadgetSlotViewModel::FFieldNotificationClassDescriptor;
-	const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UGadgetSelectorWidget::OnSlotChanged);
 	for (UGadgetSlotViewModel* SlotVM : ViewModel->GetSlots())
 	{
-		SlotVM->AddFieldValueChangedDelegate(FSlotVM::CooldownPercent, Delegate);
-		SlotVM->AddFieldValueChangedDelegate(FSlotVM::bIsReady, Delegate);
-		SlotVM->AddFieldValueChangedDelegate(FSlotVM::DisplayName, Delegate);
+		GothamMVVM::Bind(SlotVM, this, &UGadgetSelectorWidget::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady, FSlotVM::DisplayName });
 
 		// Small entry: key above the icon.
 		UVerticalBox* Entry = WidgetTree->ConstructWidget<UVerticalBox>();

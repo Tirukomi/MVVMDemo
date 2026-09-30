@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "UI/Slate/SThreatIndicatorLayer.h"
 #include "UI/Widgets/GothamInputGlyph.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/ThreatViewModel.h"
 
 TSharedRef<SWidget> UThreatIndicatorLayer::RebuildWidget()
@@ -32,16 +33,10 @@ void UThreatIndicatorLayer::ReleaseSlateResources(bool bReleaseChildren)
 
 void UThreatIndicatorLayer::SetViewModel(UThreatViewModel* InViewModel)
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	if (ViewModel)
-	{
-		ViewModel->AddFieldValueChangedDelegate(UThreatViewModel::FFieldNotificationClassDescriptor::ThreatCount,
-			INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UThreatIndicatorLayer::OnThreatsChanged));
-	}
+	GothamMVVM::Bind(ViewModel, this, &UThreatIndicatorLayer::OnThreatsChanged,
+		{ UThreatViewModel::FFieldNotificationClassDescriptor::ThreatCount });
 	if (SlateLayer.IsValid())
 	{
 		SlateLayer->SetActive(ShouldBeActive());

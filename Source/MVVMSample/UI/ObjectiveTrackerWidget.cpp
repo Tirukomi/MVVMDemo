@@ -14,6 +14,7 @@
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/ComboMeter.h"
 #include "UI/Widgets/GothamPanel.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/ObjectivesViewModel.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.Objectives"
@@ -61,19 +62,13 @@ TSharedRef<SWidget> UObjectiveTrackerWidget::RebuildWidget()
 
 void UObjectiveTrackerWidget::SetViewModel(UObjectivesViewModel* InViewModel)
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	using FVM = UObjectivesViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
+	GothamMVVM::Bind(ViewModel, this, &UObjectiveTrackerWidget::OnFieldChanged,
+		{ FVM::ObjectiveTitle, FVM::ProgressText, FVM::ProgressPercent, FVM::bIsComplete });
 	if (ViewModel)
 	{
-		using FVM = UObjectivesViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UObjectiveTrackerWidget::OnFieldChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::ObjectiveTitle, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::ProgressText, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::ProgressPercent, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::bIsComplete, Delegate);
 		LastFound = ViewModel->GetFoundCount();
 	}
 	Refresh();

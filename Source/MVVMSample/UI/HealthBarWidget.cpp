@@ -10,6 +10,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/ComboMeter.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.HealthBar"
@@ -47,19 +48,10 @@ TSharedRef<SWidget> UHealthBarWidget::RebuildWidget()
 
 void UHealthBarWidget::SetViewModel(UPlayerVitalsViewModel* InViewModel)
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	using FVM = UPlayerVitalsViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	if (ViewModel)
-	{
-		using FVM = UPlayerVitalsViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UHealthBarWidget::OnFieldChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::HealthPercent, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::Health, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::bIsLowHealth, Delegate);
-	}
+	GothamMVVM::Bind(ViewModel, this, &UHealthBarWidget::OnFieldChanged, { FVM::HealthPercent, FVM::Health, FVM::bIsLowHealth });
 	Refresh();
 }
 

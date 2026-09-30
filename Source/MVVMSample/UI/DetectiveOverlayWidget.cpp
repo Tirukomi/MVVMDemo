@@ -14,6 +14,7 @@
 #include "UI/GothamUISettings.h"
 #include "UI/Widgets/GothamInputGlyph.h"
 #include "ViewModels/DetectiveViewModel.h"
+#include "ViewModels/GothamMVVM.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.DetectiveOverlay"
 
@@ -70,18 +71,10 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 
 void UDetectiveOverlayWidget::SetViewModel(UDetectiveViewModel* InViewModel)
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	using FVM = UDetectiveViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	if (ViewModel)
-	{
-		using FVM = UDetectiveViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UDetectiveOverlayWidget::OnFieldChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::Alpha, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::bIsVisible, Delegate);
-	}
+	GothamMVVM::Bind(ViewModel, this, &UDetectiveOverlayWidget::OnFieldChanged, { FVM::Alpha, FVM::bIsVisible });
 	Refresh();
 }
 

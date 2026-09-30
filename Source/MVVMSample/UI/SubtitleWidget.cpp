@@ -9,6 +9,7 @@
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/SubtitleViewModel.h"
 
 TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
@@ -39,21 +40,11 @@ TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
 
 void USubtitleWidget::SetViewModel(USubtitleViewModel* InViewModel)
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	using FVM = USubtitleViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	if (ViewModel)
-	{
-		using FVM = USubtitleViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &USubtitleWidget::OnFieldChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::Line, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::Speaker, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::bIsVisible, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::FontSize, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::bHasBackground, Delegate);
-	}
+	GothamMVVM::Bind(ViewModel, this, &USubtitleWidget::OnFieldChanged,
+		{ FVM::Line, FVM::Speaker, FVM::bIsVisible, FVM::FontSize, FVM::bHasBackground });
 	Refresh();
 }
 
