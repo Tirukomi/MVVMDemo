@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsTypes.h"
 #include "Blueprint/UserWidget.h"
 #include "GothamOptionRow.generated.h"
@@ -47,7 +48,7 @@ private:
 
 	EGothamSetting Setting = EGothamSetting::Language;
 	bool bFocused = false;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 
 	UPROPERTY(Transient)
 	TObjectPtr<USettingsViewModel> ViewModel;

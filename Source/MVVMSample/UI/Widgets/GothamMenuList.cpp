@@ -2,6 +2,7 @@
 
 #include "UI/Widgets/GothamMenuList.h"
 
+#include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Overlay.h"
@@ -66,19 +67,13 @@ void UGothamMenuList::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { ApplyLook(); });
-	}
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyLook(); });
 	ApplyLook();
 }
 
 void UGothamMenuList::NativeDestruct()
 {
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(SettingsHandle);
-	}
+	SettingsListener.Reset();
 	Super::NativeDestruct();
 }
 

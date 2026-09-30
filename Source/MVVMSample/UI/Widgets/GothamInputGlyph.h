@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "CommonUserWidget.h"
 #include "Containers/Ticker.h"
 #include "InputCoreTypes.h"
@@ -54,7 +55,7 @@ private:
 	FKey FixedGamepad;
 	FDelegateHandle InputMethodHandle;
 	FDelegateHandle BindingsHandle;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> Text;

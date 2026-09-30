@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Widget.h"
 #include "GothamMenuList.generated.h"
@@ -65,5 +66,5 @@ private:
 	TArray<TObjectPtr<UWidget>> Items;
 
 	TWeakObjectPtr<UWidget> CurrentItem;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 };

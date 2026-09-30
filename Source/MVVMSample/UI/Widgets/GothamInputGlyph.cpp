@@ -2,6 +2,7 @@
 
 #include "UI/Widgets/GothamInputGlyph.h"
 
+#include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 
 #include "Blueprint/WidgetTree.h"
@@ -47,19 +48,13 @@ void UGothamInputGlyph::NativeConstruct()
 			BindingsHandle = UI->OnBindingsChanged.AddUObject(this, &UGothamInputGlyph::Refresh);
 		}
 	}
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { Refresh(); });
-	}
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { Refresh(); });
 	Refresh();
 }
 
 void UGothamInputGlyph::NativeDestruct()
 {
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(SettingsHandle);
-	}
+	SettingsListener.Reset();
 	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer()))
 	{
 		Input->OnInputMethodChangedNative.Remove(InputMethodHandle);
