@@ -37,7 +37,7 @@ More: [pause](Docs/img/pause.png), [quit confirmation](Docs/img/pause-quit.png),
 | **Performance and memory** | Measured harness, budgets, before/after numbers. [Docs/Performance.md](Docs/Performance.md) |
 | **Engineering standards** | 41 automation tests, ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
 
-Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). Refactoring ideas: [Docs/RefactoringProposal.md](Docs/RefactoringProposal.md). Plan and per-milestone notes:
+Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). Refactoring ideas: [Docs/RefactoringProposal.md](Docs/RefactoringProposal.md), plan: [Docs/RefactoringPlan.md](Docs/RefactoringPlan.md). Plan and per-milestone notes:
 [Docs/ProjectPlan.md](Docs/ProjectPlan.md).
 
 ## Run it
