@@ -65,6 +65,10 @@ namespace
 		int32 GameSamples = 0;
 		FTSTicker::FDelegateHandle Handle;
 		double StartMB = 0.0;
+		/** -GothamPerfInject=<scenario>:<ms>: busy-waits that long on the game thread every frame of one scenario, so
+		 *  the gate can prove it catches a real regression of a known size. */
+		FString InjectScenario;
+		double InjectMs = 0.0;
 
 		static double UsedMB() { return FPlatformMemory::GetStats().UsedPhysical / (1024.0 * 1024.0); }
 
@@ -153,6 +157,11 @@ namespace
 			{
 				Scenarios[Index].PerFrame(Elapsed);
 			}
+			if (InjectMs > 0.0 && Scenarios[Index].Name == InjectScenario)
+			{
+				const double Until = FPlatformTime::Seconds() + InjectMs / 1000.0;
+				while (FPlatformTime::Seconds() < Until) {}
+			}
 			if (Elapsed > WarmupSeconds)
 			{
 				FrameMs.Add(DeltaTime * 1000.f);
@@ -205,6 +214,16 @@ void FGothamPerfHarness::Start(AGothamPlayerController* Controller, const FStrin
 	TSharedRef<FRun> Run = MakeShared<FRun>();
 	Run->Controller = Controller;
 	Run->Label = Label;
+	FString Inject;
+	if (FParse::Value(FCommandLine::Get(), TEXT("GothamPerfInject="), Inject))
+	{
+		FString Ms;
+		if (Inject.Split(TEXT(":"), &Run->InjectScenario, &Ms))
+		{
+			Run->InjectMs = FCString::Atod(*Ms);
+			UE_LOG(LogGothamPerf, Log, TEXT("Injecting %.3f ms per frame into '%s' (gate self-test)"), Run->InjectMs, *Run->InjectScenario);
+		}
+	}
 
 	const TWeakObjectPtr<AGothamPlayerController> WeakPC(Controller);
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);

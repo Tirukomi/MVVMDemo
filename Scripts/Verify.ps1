@@ -1,22 +1,26 @@
 # The refactoring gate (Docs/RefactoringPlan.md). Runs every check, prints one PASS / FAIL line per check, writes a
 # report to Saved/Verify/<timestamp>.md and exits non-zero if anything failed. Close the editor first.
 #
-#   .\Scripts\Verify.ps1                         # the full gate, about 20 minutes
+#   .\Scripts\Verify.ps1                         # the full gate, about 25 minutes
 #   .\Scripts\Verify.ps1 -Quick                  # incremental build, no perf runs (about 13 minutes)
 #   .\Scripts\Verify.ps1 -Only G2,G3             # a subset
-#   .\Scripts\Verify.ps1 -RecordPerfBaseline     # record the perf baseline G5 compares against (two runs)
+#   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD  # perf noise check: this build against itself must pass
+#   .\Scripts\Verify.ps1 -Only G5 -PerfInject gadget-wheel:0.1   # sensitivity check: must fail on gadget-wheel
 #
 # G1 build (clean rebuild, zero project warnings)   G2 automation tests       G3 menu input test (Slate input)
-# G4 screenshots vs Docs/img (DiffScreens.ps1)      G5 perf vs baseline       G6 no ensures / project errors in logs
+# G4 screenshots vs Docs/img (DiffScreens.ps1)      G5 perf vs a reference build, measured side by side
+# G6 no ensures / project errors in logs
 param(
     [switch]$Quick,
     [string[]]$Only = @(),
-    [switch]$RecordPerfBaseline,
-    # A scenario's UI cost (its game-thread time minus no-ui in the same run) may move this much plus the baseline's
-    # own run-to-run spread before G5 fails.
+    # G5 compares against this commit (normally the last merged pass), built in a worktree under Saved/PerfRef.
+    [string]$PerfRef = "master",
+    # Alternating reference / current perf runs (ABBA order, so drift during the gate cancels out).
+    [int]$PerfRounds = 3,
+    # A scenario fails when the median, over rounds, of (current UI cost - reference UI cost) exceeds this.
     [double]$PerfToleranceMs = 0.05,
-    # A perf run whose scenarios all shift together by more than this (mean) is machine noise and gets repeated.
-    [double]$NoisyRunMs = 0.08
+    # Passed to the current build only as -GothamPerfInject=<scenario>:<ms>, to prove G5 catches a known cost.
+    [string]$PerfInject = ""
 )
 
 # Continue, not Stop: native tools (the build, python) write progress to stderr, which must not abort the gate.
@@ -41,8 +45,8 @@ function Record([string]$Id, [bool]$Ok, [string]$Summary, [string]$Detail = "") 
     Write-Host ("{0}  {1}  {2}" -f $tag, $Id, $Summary)
 }
 
-function Run-Game([string]$Flags, [int]$TimeoutSeconds) {
-    $gameArgs = "`"$project`" /Game/Maps/L_Arena -game -windowed -ResX=1920 -ResY=1080 -nosplash -unattended $Flags"
+function Run-Game([string]$Flags, [int]$TimeoutSeconds, [string]$Project = $project) {
+    $gameArgs = "`"$Project`" /Game/Maps/L_Arena -game -windowed -ResX=1920 -ResY=1080 -nosplash -unattended $Flags"
     $p = Start-Process $editor -ArgumentList $gameArgs -PassThru
     if (-not $p.WaitForExit($TimeoutSeconds * 1000)) { $p.Kill(); return $false }
     return $true
@@ -64,19 +68,32 @@ function UI-Cost($Table) {
     foreach ($k in $Table.Keys) { if ($k -ne "no-ui") { $cost[$k] = $Table[$k] - $Table["no-ui"] } }
     return $cost
 }
-function Run-Perf([string]$Label) {
-    Run-Game "-GothamPerf=$Label" 300 | Out-Null
-    $path = Join-Path $perfDir "$Label.md"
-    if (Test-Path $path) { return Read-Perf $path } else { return $null }
+# One harness run of a project (this one or the reference worktree) -> UI cost table, or $null.
+function Run-Perf([string]$Label, [string]$ProjectDir, [string]$Extra = "") {
+    Run-Game "-GothamPerf=$Label $Extra" 300 (Join-Path $ProjectDir "MVVMSample.uproject") | Out-Null
+    $path = Join-Path $ProjectDir "Saved\Perf\$Label.md"
+    if (Test-Path $path) { return UI-Cost (Read-Perf $path) } else { return $null }
 }
 
-if ($RecordPerfBaseline) {
-    foreach ($s in @("a", "b")) {
-        Run-Game "-GothamPerf=Baseline_$s" 300 | Out-Null
-        if (-not (Test-Path (Join-Path $perfDir "Baseline_$s.md"))) { Write-Host "FAIL  baseline run $s produced no report"; exit 1 }
+# Checks out $Ref into the reference worktree and builds it (only when the commit changed). Returns an error or "".
+function Prepare-PerfRef([string]$Ref, [string]$Dir) {
+    $sha = (git -C $root rev-parse --verify "$Ref^{commit}" 2>$null)
+    if (-not $sha) { return "unknown reference '$Ref'" }
+    if (-not (Test-Path (Join-Path $Dir ".git"))) {
+        git -C $root worktree add --detach $Dir $sha *> $null
+    } else {
+        git -C $Dir checkout -q --detach $sha *> $null
     }
-    Write-Host "Recorded Saved/Perf/Baseline_a.md and Baseline_b.md"
-    exit 0
+    if ((git -C $Dir rev-parse HEAD) -ne $sha) { return "could not check out $Ref into $Dir" }
+    $marker = Join-Path $Dir "Binaries\gotham-built.txt"
+    if ((Test-Path $marker) -and ((Get-Content $marker) -eq $sha)) { return "" }
+    $log = Join-Path $verifyDir "$stamp-perfref-build.log"
+    & "$engineDir\Build\BatchFiles\Build.bat" MVVMSampleEditor Win64 Development "-Project=$Dir\MVVMSample.uproject" -WaitMutex *> $log
+    if (-not (Get-Content $log | Select-String -SimpleMatch "Result: Succeeded")) { return "reference build failed (see $log)" }
+    Set-Content $marker $sha
+    # A freshly built project's first launch does one-off work (asset registry, shader lookups); keep it out of the numbers.
+    Run-Perf "Verify_${stamp}_warmup" $Dir | Out-Null
+    return ""
 }
 
 # G1: build. A clean rebuild compiles everything in unity blobs, which is where name clashes show up.
@@ -120,43 +137,47 @@ if (Should-Run "G4") {
     Record "G4" $ok ("{0} images, {1} need review (diff images in Saved/Verify/Screens)" -f @($diff).Count, $review) ($diff -join "`n")
 }
 
-# G5: perf against the recorded baseline, compared as UI cost so machine-wide noise cancels out.
+# G5: perf against a reference build measured in the same session. Comparing against numbers recorded earlier does not
+# work: on this machine one build's UI cost moves by more than the tolerance from one hour to the next. Measured side by
+# side in ABBA order, both builds share the machine's state and it cancels out. Each run is read as UI cost (scenario
+# game thread minus no-ui in the same run), each round gives current minus reference per scenario, and a scenario
+# fails when the median over rounds is beyond the tolerance.
 if (-not $Quick -and (Should-Run "G5")) {
-    $baseA = Join-Path $perfDir "Baseline_a.md"
-    $baseB = Join-Path $perfDir "Baseline_b.md"
-    if (-not ((Test-Path $baseA) -and (Test-Path $baseB))) {
-        Record "G5" $false "no baseline: run .\Scripts\Verify.ps1 -RecordPerfBaseline on the pass-0 code first"
+    $refDir = Join-Path $root "Saved\PerfRef"
+    $problem = Prepare-PerfRef $PerfRef $refDir
+    if ($problem) {
+        Record "G5" $false $problem
     } else {
-        $bA = UI-Cost (Read-Perf $baseA); $bB = UI-Cost (Read-Perf $baseB)
-        # A run is "noisy" when every scenario moves together against the baseline (the machine was slower or faster
-        # as a whole): its mean shift across scenarios is beyond $NoisyRunMs. That is not a UI change (a real
-        # regression moves one or two scenarios), so such a run is discarded and repeated, up to two extra runs.
-        $good = @(); $discarded = @(); $attempt = 0
-        while ($good.Count -lt 2 -and $attempt -lt 4) {
-            $attempt++
-            $run = Run-Perf "Verify_${stamp}_$attempt"
-            if (-not $run) { continue }
-            $cost = UI-Cost $run
-            $shifts = @($bA.Keys | ForEach-Object { $cost[$_] - ($bA[$_] + $bB[$_]) / 2 })
-            $mean = ($shifts | Measure-Object -Average).Average
-            if ([math]::Abs($mean) -gt $NoisyRunMs) { $discarded += ("run {0}: mean shift {1:N3} ms, discarded as noisy" -f $attempt, $mean) }
-            else { $good += , $cost }
-        }
-        if ($good.Count -lt 2) {
-            # Every run shifting the same way is machine noise, or a change that costs every screen (e.g. a HUD widget
-            # that started ticking). Either way it is not a pass.
-            Record "G5" $false ("only {0} usable perf runs of {1}: every run shifted uniformly (machine noise, or a cost added to every screen; investigate)" -f $good.Count, $attempt) ($discarded -join "`n")
-        } else {
-            $cA = $good[0]; $cB = $good[1]
-            $lines = @($discarded); $bad = 0
-            foreach ($k in ($bA.Keys | Sort-Object)) {
-                $base = ($bA[$k] + $bB[$k]) / 2
-                $now = ($cA[$k] + $cB[$k]) / 2
-                $allow = $PerfToleranceMs + [math]::Abs($bA[$k] - $bB[$k])
-                $flag = if ($now - $base -gt $allow) { $bad++; "SLOWER" } else { "ok" }
-                $lines += ("{0,-7} {1,-15} base {2,6:N3} ms  now {3,6:N3} ms  (allowed +{4:N3})" -f $flag, $k, $base, $now, $allow)
+        $extra = if ($PerfInject) { "-GothamPerfInject=$PerfInject" } else { "" }
+        $diffs = @{}; $missing = 0
+        for ($r = 1; $r -le $PerfRounds; $r++) {
+            $order = if ($r % 2 -eq 1) { @("ref", "cur") } else { @("cur", "ref") }
+            $costs = @{}
+            foreach ($which in $order) {
+                if ($which -eq "ref") { $costs.ref = Run-Perf "Verify_${stamp}_ref$r" $refDir }
+                else { $costs.cur = Run-Perf "Verify_${stamp}_cur$r" $root $extra }
             }
-            Record "G5" ($bad -eq 0) ("{0} scenarios, {1} slower than allowed, {2} noisy runs discarded" -f $bA.Count, $bad, $discarded.Count) ($lines -join "`n")
+            if (-not $costs.ref -or -not $costs.cur) { $missing++; continue }
+            foreach ($k in $costs.ref.Keys) {
+                if (-not $diffs.ContainsKey($k)) { $diffs[$k] = @() }
+                $diffs[$k] += , ($costs.cur[$k] - $costs.ref[$k])
+            }
+        }
+        if ($missing -gt 0) {
+            Record "G5" $false ("{0} of {1} rounds produced no perf report" -f $missing, $PerfRounds)
+        } else {
+            $refSha = (git -C $refDir rev-parse --short HEAD)
+            $lines = @("reference: $PerfRef ($refSha), $PerfRounds rounds, tolerance +$PerfToleranceMs ms on the median")
+            if ($PerfInject) { $lines += "self-test: current build injects $PerfInject" }
+            $bad = 0
+            foreach ($k in ($diffs.Keys | Sort-Object)) {
+                $sorted = @($diffs[$k] | Sort-Object)
+                $median = $sorted[[int][math]::Floor($sorted.Count / 2)]
+                $flag = if ($median -gt $PerfToleranceMs) { $bad++; "SLOWER" } else { "ok" }
+                $rounds = ($diffs[$k] | ForEach-Object { "{0:+0.000;-0.000}" -f $_ }) -join " "
+                $lines += ("{0,-7} {1,-15} median {2:+0.000;-0.000} ms   rounds {3}" -f $flag, $k, $median, $rounds)
+            }
+            Record "G5" ($bad -eq 0) ("{0} scenarios vs {1}, {2} slower than allowed" -f $diffs.Count, $PerfRef, $bad) ($lines -join "`n")
         }
     }
 }
