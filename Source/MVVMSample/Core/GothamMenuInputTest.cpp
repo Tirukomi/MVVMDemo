@@ -3,7 +3,6 @@
 #include "Core/GothamMenuInputTest.h"
 
 #include "Accessibility/GothamSettingsSubsystem.h"
-#include "Core/GothamScript.h"
 #include "Core/GothamPlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
@@ -91,22 +90,31 @@ namespace GothamMenuInputTestPrivate
 
 void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 {
+	if (const TSharedPtr<FGothamScript> Script = Build(Controller, [](bool bPassed, const FString& Rule)
+	{
+		UE_LOG(LogGothamMenuTest, Display, TEXT("%s: %s"), bPassed ? TEXT("PASS") : TEXT("FAIL"), *Rule);
+	}))
+	{
+		Script->Quit();
+		Script->Start();
+	}
+}
+
+TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* Controller, FGothamScript::FReporter Reporter)
+{
 	using namespace GothamMenuInputTestPrivate;
 	ULocalPlayer* LocalPlayer = Controller ? Controller->GetLocalPlayer() : nullptr;
 	UGothamUISubsystem* UI = LocalPlayer ? LocalPlayer->GetSubsystem<UGothamUISubsystem>() : nullptr;
 	if (!UI)
 	{
-		return;
+		return nullptr;
 	}
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
 	const TWeakObjectPtr<AGothamPlayerController> WeakPC(Controller);
 	TSharedRef<FGothamScript> Script = MakeShared<FGothamScript>();
 	// Steps use a raw pointer: the ticker owns the script, and steps capturing the shared ref would form a cycle.
 	FGothamScript* Self = &Script.Get();
-	Script->SetReporter([](bool bPassed, const FString& Rule)
-	{
-		UE_LOG(LogGothamMenuTest, Display, TEXT("%s: %s"), bPassed ? TEXT("PASS") : TEXT("FAIL"), *Rule);
-	});
+	Script->SetReporter(MoveTemp(Reporter));
 	TSharedPtr<int32> ScaleBefore = MakeShared<int32>(0);
 	TSharedPtr<FLinearColor> LabelBefore = MakeShared<FLinearColor>(FLinearColor::Transparent);
 	auto Settings = [WeakPC]() { const UGothamSettingsSubsystem* S = UGothamSettingsSubsystem::Get(WeakPC.Get()); return S ? S->GetViewModel() : nullptr; };
@@ -179,7 +187,6 @@ void FGothamMenuInputTest::Start(AGothamPlayerController* Controller)
 	Script->At(10.1f).Do([Self]()
 	{
 		UE_LOG(LogGothamMenuTest, Display, TEXT("Menu input test: %d passed, %d failed"), Self->GetPassed(), Self->GetFailed());
-	}).Quit();
-
-	Script->Start();
+	});
+	return Script;
 }
