@@ -11,7 +11,7 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
-#include "Input/GothamBindings.h"
+#include "Input/GothamActionTable.h"
 #include "InputModifiers.h"
 #include "PlayerMappableKeySettings.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
@@ -53,17 +53,11 @@ namespace
 	 * (keyboard/mouse first, gamepad second). Enhanced Input keeps the settings object protected because it is
 	 * normally authored on the asset; these actions are created in code, so it is set through reflection.
 	 */
-	void MakeActionMappable(UInputAction* Action, FName Name)
+	void MakeActionMappable(UInputAction* Action, const FGothamActionDef& Def)
 	{
 		UPlayerMappableKeySettings* Settings = NewObject<UPlayerMappableKeySettings>(Action);
-		Settings->Name = Name;
-		for (const FGothamBindingDef& Def : GothamBindings::GetDefinitions())
-		{
-			if (Def.Name == Name)
-			{
-				Settings->DisplayName = Def.DisplayName;
-			}
-		}
+		Settings->Name = Def.Name;
+		Settings->DisplayName = Def.DisplayName;
 		if (FObjectProperty* Property = FindFProperty<FObjectProperty>(UInputAction::StaticClass(), TEXT("PlayerMappableKeySettings")))
 		{
 			Property->SetObjectPropertyValue_InContainer(Action, Settings);
@@ -163,95 +157,61 @@ void AGothamPlayerController::SetupInputComponent()
 
 	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMove);
-		EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGothamPlayerController::OnLook);
-		for (int32 i = 0; i < MoveDirectionActions.Num(); ++i)
-		{
-			EIC->BindAction(MoveDirectionActions[i], ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMoveDirection, MoveDirections[i]);
-		}
-		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnAttack);
-		EIC->BindAction(CounterAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnCounter);
-		for (int32 i = 0; i < GadgetActions.Num(); ++i)
-		{
-			EIC->BindAction(GadgetActions[i], ETriggerEvent::Started, this, &AGothamPlayerController::OnGadget, i);
-		}
-		EIC->BindAction(PauseAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnPause);
-		EIC->BindAction(GadgetWheelAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnGadgetWheel);
-		EIC->BindAction(DetectiveAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDetective);
-		EIC->BindAction(ScanAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnScan);
-		EIC->BindAction(ScanAction, ETriggerEvent::Completed, this, &AGothamPlayerController::OnScanReleased);
-		EIC->BindAction(ScanAction, ETriggerEvent::Canceled, this, &AGothamPlayerController::OnScanReleased);
-		EIC->BindAction(ClueLogAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnClueLog);
-		EIC->BindAction(DebugDamageAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugDamage);
-		EIC->BindAction(DebugHealAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugHeal);
+		const auto Action = [this](const TCHAR* Name) { return FindAction(Name); };
+		EIC->BindAction(Action(TEXT("Move")), ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMove);
+		EIC->BindAction(Action(TEXT("Look")), ETriggerEvent::Triggered, this, &AGothamPlayerController::OnLook);
+		EIC->BindAction(Action(TEXT("MoveForward")), ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMoveDirection, FVector2D(0, 1));
+		EIC->BindAction(Action(TEXT("MoveBack")), ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMoveDirection, FVector2D(0, -1));
+		EIC->BindAction(Action(TEXT("MoveLeft")), ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMoveDirection, FVector2D(-1, 0));
+		EIC->BindAction(Action(TEXT("MoveRight")), ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMoveDirection, FVector2D(1, 0));
+		EIC->BindAction(Action(TEXT("Attack")), ETriggerEvent::Started, this, &AGothamPlayerController::OnAttack);
+		EIC->BindAction(Action(TEXT("Counter")), ETriggerEvent::Started, this, &AGothamPlayerController::OnCounter);
+		EIC->BindAction(Action(TEXT("Gadget1")), ETriggerEvent::Started, this, &AGothamPlayerController::OnGadget, 0);
+		EIC->BindAction(Action(TEXT("Gadget2")), ETriggerEvent::Started, this, &AGothamPlayerController::OnGadget, 1);
+		EIC->BindAction(Action(TEXT("Gadget3")), ETriggerEvent::Started, this, &AGothamPlayerController::OnGadget, 2);
+		EIC->BindAction(Action(TEXT("Pause")), ETriggerEvent::Started, this, &AGothamPlayerController::OnPause);
+		EIC->BindAction(Action(TEXT("GadgetWheel")), ETriggerEvent::Started, this, &AGothamPlayerController::OnGadgetWheel);
+		EIC->BindAction(Action(TEXT("Detective")), ETriggerEvent::Started, this, &AGothamPlayerController::OnDetective);
+		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Started, this, &AGothamPlayerController::OnScan);
+		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Completed, this, &AGothamPlayerController::OnScanReleased);
+		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Canceled, this, &AGothamPlayerController::OnScanReleased);
+		EIC->BindAction(Action(TEXT("ClueLog")), ETriggerEvent::Started, this, &AGothamPlayerController::OnClueLog);
+		EIC->BindAction(Action(TEXT("DebugDamage")), ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugDamage);
+		EIC->BindAction(Action(TEXT("DebugHeal")), ETriggerEvent::Started, this, &AGothamPlayerController::OnDebugHeal);
 	}
 }
 
 void AGothamPlayerController::BuildInputAssets()
 {
 	GameplayContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Gameplay"));
-	MoveAction = MakeAction(this, TEXT("IA_Move"), EInputActionValueType::Axis2D);
-	LookAction = MakeAction(this, TEXT("IA_Look"), EInputActionValueType::Axis2D);
-	AttackAction = MakeAction(this, TEXT("IA_Attack"), EInputActionValueType::Boolean);
-	CounterAction = MakeAction(this, TEXT("IA_Counter"), EInputActionValueType::Boolean);
-	DebugDamageAction = MakeAction(this, TEXT("IA_DebugDamage"), EInputActionValueType::Boolean);
-	DebugHealAction = MakeAction(this, TEXT("IA_DebugHeal"), EInputActionValueType::Boolean);
-	PauseAction = MakeAction(this, TEXT("IA_Pause"), EInputActionValueType::Boolean);
-	GadgetWheelAction = MakeAction(this, TEXT("IA_GadgetWheel"), EInputActionValueType::Boolean);
-	DetectiveAction = MakeAction(this, TEXT("IA_Detective"), EInputActionValueType::Boolean);
-	ScanAction = MakeAction(this, TEXT("IA_Scan"), EInputActionValueType::Boolean);
-	ClueLogAction = MakeAction(this, TEXT("IA_ClueLog"), EInputActionValueType::Boolean);
-
-	// Move: WASD, one rebindable action per direction, plus the left stick (fixed).
-	const struct { const TCHAR* Name; FKey Key; FVector2D Direction; } MoveKeys[] = {
-		{ TEXT("MoveForward"), EKeys::W, FVector2D(0, 1) },
-		{ TEXT("MoveBack"), EKeys::S, FVector2D(0, -1) },
-		{ TEXT("MoveLeft"), EKeys::A, FVector2D(-1, 0) },
-		{ TEXT("MoveRight"), EKeys::D, FVector2D(1, 0) },
-	};
-	for (const auto& Move : MoveKeys)
+	Actions.Reset();
+	// Rebindable actions map their keyboard / mouse key first and their gamepad key second: those are the two slots.
+	for (const FGothamActionDef& Def : GothamActions::GetTable())
 	{
-		UInputAction* Action = MakeAction(this, *FString::Printf(TEXT("IA_%s"), Move.Name), EInputActionValueType::Boolean);
-		MakeActionMappable(Action, Move.Name);
-		GameplayContext->MapKey(Action, Move.Key);
-		MoveDirectionActions.Add(Action);
-		MoveDirections.Add(Move.Direction);
+		UInputAction* Action = MakeAction(this, *FString::Printf(TEXT("IA_%s"), *Def.Name.ToString()), Def.ValueType);
+		if (Def.bRebindable)
+		{
+			MakeActionMappable(Action, Def);
+		}
+		for (const FKey& Key : { Def.KeyboardKey, Def.GamepadKey })
+		{
+			if (!Key.IsValid())
+			{
+				continue;
+			}
+			if (Def.bInvertY)
+			{
+				MapNegatedY(GameplayContext, Action, Key);
+			}
+			else
+			{
+				GameplayContext->MapKey(Action, Key);
+			}
+		}
+		Actions.Add(Def.Name, Action);
 	}
-	GameplayContext->MapKey(MoveAction, EKeys::Gamepad_Left2D);
-
-	// Look: mouse + right stick (fixed).
-	MapNegatedY(GameplayContext, LookAction, EKeys::Mouse2D);
-	MapNegatedY(GameplayContext, LookAction, EKeys::Gamepad_Right2D);
-
-	// Every rebindable action gets its keyboard/mouse key first and its gamepad button second (the two slots).
-	auto MapPair = [this](UInputAction* Action, const TCHAR* Name, const FKey& Keyboard, const FKey& Pad)
-	{
-		MakeActionMappable(Action, Name);
-		GameplayContext->MapKey(Action, Keyboard);
-		GameplayContext->MapKey(Action, Pad);
-	};
-
-	MapPair(AttackAction, TEXT("Attack"), EKeys::LeftMouseButton, EKeys::Gamepad_FaceButton_Bottom);
-	MapPair(CounterAction, TEXT("Counter"), EKeys::RightMouseButton, EKeys::Gamepad_RightShoulder);
-
-	const FKey GadgetKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };
-	const FKey GadgetPadKeys[] = { EKeys::Gamepad_FaceButton_Left, EKeys::Gamepad_FaceButton_Top, EKeys::Gamepad_FaceButton_Right };
-	for (int32 i = 0; i < 3; ++i)
-	{
-		UInputAction* Action = MakeAction(this, *FString::Printf(TEXT("IA_Gadget%d"), i + 1), EInputActionValueType::Boolean);
-		MapPair(Action, *FString::Printf(TEXT("Gadget%d"), i + 1), GadgetKeys[i], GadgetPadKeys[i]);
-		GadgetActions.Add(Action);
-	}
-
-	MapPair(DetectiveAction, TEXT("Detective"), EKeys::V, EKeys::Gamepad_DPad_Up);
-	MapPair(ScanAction, TEXT("Scan"), EKeys::E, EKeys::Gamepad_DPad_Right);
-	MapPair(ClueLogAction, TEXT("ClueLog"), EKeys::J, EKeys::Gamepad_Special_Left);
-	MapPair(GadgetWheelAction, TEXT("GadgetWheel"), EKeys::Q, EKeys::Gamepad_LeftShoulder);
-	MapPair(PauseAction, TEXT("Pause"), EKeys::Escape, EKeys::Gamepad_Special_Right);
-
-	GameplayContext->MapKey(DebugDamageAction, EKeys::F1);
-	GameplayContext->MapKey(DebugHealAction, EKeys::F2);
-	GameplayContext->MapKey(AttackAction, EKeys::F3);
+	// Dev shortcut: F3 also attacks.
+	GameplayContext->MapKey(Actions.FindRef(TEXT("Attack")), EKeys::F3);
 }
 
 void AGothamPlayerController::OnPossess(APawn* InPawn)
@@ -406,19 +366,8 @@ void AGothamPlayerController::OnGadgetWheel()
 
 const UInputAction* AGothamPlayerController::FindAction(FName Name) const
 {
-	if (Name == TEXT("Move")) return MoveAction;
-	if (Name == TEXT("Look")) return LookAction;
-	if (Name == TEXT("Attack")) return AttackAction;
-	if (Name == TEXT("Counter")) return CounterAction;
-	if (Name == TEXT("Pause")) return PauseAction;
-	if (Name == TEXT("GadgetWheel")) return GadgetWheelAction;
-	if (Name == TEXT("Detective")) return DetectiveAction;
-	if (Name == TEXT("Scan")) return ScanAction;
-	if (Name == TEXT("ClueLog")) return ClueLogAction;
-	if (Name == TEXT("Gadget1")) return GadgetActions.IsValidIndex(0) ? GadgetActions[0].Get() : nullptr;
-	if (Name == TEXT("Gadget2")) return GadgetActions.IsValidIndex(1) ? GadgetActions[1].Get() : nullptr;
-	if (Name == TEXT("Gadget3")) return GadgetActions.IsValidIndex(2) ? GadgetActions[2].Get() : nullptr;
-	return nullptr;
+	const TObjectPtr<UInputAction>* Found = Actions.Find(Name);
+	return Found ? Found->Get() : nullptr;
 }
 
 /** The gameplay mapping context is live only while no menu owns input. */

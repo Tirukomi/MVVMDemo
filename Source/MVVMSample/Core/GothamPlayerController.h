@@ -58,33 +58,8 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UInputMappingContext> GameplayContext;
 
+	/** Every gameplay action by table name (Input/GothamActionTable). */
 	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> MoveAction;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> LookAction;
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UInputAction>> MoveDirectionActions;
-	TArray<FVector2D> MoveDirections;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> AttackAction;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> CounterAction;
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UInputAction>> GadgetActions;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> DebugDamageAction;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> DebugHealAction;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> PauseAction;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> GadgetWheelAction;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> DetectiveAction;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> ScanAction;
-	UPROPERTY(Transient)
-	TObjectPtr<UInputAction> ClueLogAction;
+	TMap<FName, TObjectPtr<UInputAction>> Actions;
 
 };
