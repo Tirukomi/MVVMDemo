@@ -4,6 +4,12 @@
 
 void UGothamText::SetText(FText InText)
 {
+	// FText::ToUpper makes a new text every call, which Slate would treat as a change and lay out again; widgets
+	// that re-set the same text (most refreshes) must stay free, as they are for a plain text block.
+	if (bUpperCase && bHasSource && SourceText.IdenticalTo(InText, ETextIdenticalModeFlags::DeepCompare | ETextIdenticalModeFlags::LexicalCompareInvariants))
+	{
+		return;
+	}
 	SourceText = MoveTemp(InText);
 	bHasSource = true;
 	ApplyText();
