@@ -2,21 +2,7 @@
 
 #include "Accessibility/GothamSettingsTypes.h"
 
-namespace
-{
-	template<typename TEnum>
-	TEnum ClampEnum(int32 Value, TEnum Fallback)
-	{
-		return (Value >= 0 && Value < static_cast<int32>(TEnum::Count)) ? static_cast<TEnum>(Value) : Fallback;
-	}
-
-	template<typename TEnum>
-	TEnum Step(TEnum Value, int32 Direction)
-	{
-		const int32 Count = static_cast<int32>(TEnum::Count);
-		return static_cast<TEnum>(((static_cast<int32>(Value) + Direction) % Count + Count) % Count);
-	}
-}
+#include "Accessibility/GothamSettingsTable.h"
 
 const TArray<float>& FGothamSettingsData::GetUIScaleSteps()
 {
@@ -56,54 +42,28 @@ int32 FGothamSettingsData::GetSubtitleFontSize() const
 
 bool FGothamSettingsData::Cycle(EGothamSetting Setting, int32 Direction)
 {
+	if (Setting >= EGothamSetting::Count)
+	{
+		return false;
+	}
+	const FGothamSettingDescriptor& Desc = GothamSettingsTable::Find(Setting);
 	const FGothamSettingsData Before = *this;
-	switch (Setting)
-	{
-	case EGothamSetting::Language:
-	{
-		const TArray<FGothamLanguageOption>& Languages = GetLanguages();
-		int32 Index = Languages.IndexOfByPredicate([this](const FGothamLanguageOption& L) { return Language == L.Culture; });
-		Index = ((FMath::Max(Index, 0) + Direction) % Languages.Num() + Languages.Num()) % Languages.Num();
-		Language = Languages[Index].Culture;
-		break;
-	}
-	case EGothamSetting::ColorVision:        ColorMode = Step(ColorMode, Direction); break;
-	case EGothamSetting::UIScale:            UIScaleIndex = FMath::Clamp(UIScaleIndex + Direction, 0, GetUIScaleSteps().Num() - 1); break;
-	case EGothamSetting::HighContrast:       bHighContrast = !bHighContrast; break;
-	case EGothamSetting::ReducedMotion:      bReducedMotion = !bReducedMotion; break;
-	case EGothamSetting::WheelMode:          WheelMode = Step(WheelMode, Direction); break;
-	case EGothamSetting::ScanMode:           ScanMode = Step(ScanMode, Direction); break;
-	case EGothamSetting::SubtitleSize:       SubtitleSize = Step(SubtitleSize, Direction); break;
-	case EGothamSetting::SubtitleBackground: bSubtitleBackground = !bSubtitleBackground; break;
-	default: break;
-	}
+	// A value outside the choices (a language set by a dev flag) steps from the first choice.
+	Desc.SetIndex(*this, Desc.Stepped(FMath::Max(Desc.GetIndex(*this), 0), Direction));
 	return *this != Before;
 }
 
 void FGothamSettingsData::GetOptionPosition(EGothamSetting Setting, int32& OutIndex, int32& OutCount) const
 {
-	auto Enum = [&OutIndex, &OutCount](auto Value)
+	if (Setting >= EGothamSetting::Count)
 	{
-		OutIndex = static_cast<int32>(Value);
-		OutCount = static_cast<int32>(decltype(Value)::Count);
-	};
-	auto Bool = [&OutIndex, &OutCount](bool bValue) { OutIndex = bValue ? 1 : 0; OutCount = 2; };
-	switch (Setting)
-	{
-	case EGothamSetting::Language:
-		OutCount = GetLanguages().Num();
-		OutIndex = FMath::Max(0, GetLanguages().IndexOfByPredicate([this](const FGothamLanguageOption& L) { return Language == L.Culture; }));
-		break;
-	case EGothamSetting::ColorVision:        Enum(ColorMode); break;
-	case EGothamSetting::UIScale:            OutCount = GetUIScaleSteps().Num(); OutIndex = FMath::Clamp(UIScaleIndex, 0, OutCount - 1); break;
-	case EGothamSetting::HighContrast:       Bool(bHighContrast); break;
-	case EGothamSetting::ReducedMotion:      Bool(bReducedMotion); break;
-	case EGothamSetting::WheelMode:          Enum(WheelMode); break;
-	case EGothamSetting::ScanMode:           Enum(ScanMode); break;
-	case EGothamSetting::SubtitleSize:       Enum(SubtitleSize); break;
-	case EGothamSetting::SubtitleBackground: Bool(bSubtitleBackground); break;
-	default:                                 OutIndex = 0; OutCount = 1; break;
+		OutIndex = 0;
+		OutCount = 1;
+		return;
 	}
+	const FGothamSettingDescriptor& Desc = GothamSettingsTable::Find(Setting);
+	OutCount = Desc.ChoiceCount;
+	OutIndex = FMath::Clamp(Desc.GetIndex(*this), 0, OutCount - 1);
 }
 
 bool FGothamSettingsData::operator==(const FGothamSettingsData& Other) const
@@ -116,36 +76,64 @@ bool FGothamSettingsData::operator==(const FGothamSettingsData& Other) const
 void FGothamSettingsData::LoadFromConfig(const FConfigFile& File, const TCHAR* Section)
 {
 	*this = FGothamSettingsData();
-
-	FString Lang;
-	if (File.GetString(Section, TEXT("Language"), Lang) && GetLanguages().ContainsByPredicate([&Lang](const FGothamLanguageOption& L) { return Lang == L.Culture; }))
+	for (const FGothamSettingDescriptor& Desc : GothamSettingsTable::Get())
 	{
-		Language = Lang;
+		switch (Desc.Storage)
+		{
+		case EGothamSettingStorage::Culture:
+		{
+			// Only a language the game offers; anything else keeps the default.
+			FString Culture;
+			const int32 Index = File.GetString(Section, Desc.ConfigKey, Culture)
+				? GetLanguages().IndexOfByPredicate([&Culture](const FGothamLanguageOption& L) { return Culture == L.Culture; })
+				: INDEX_NONE;
+			if (Index != INDEX_NONE)
+			{
+				Desc.SetIndex(*this, Index);
+			}
+			break;
+		}
+		case EGothamSettingStorage::Bool:
+		{
+			bool bValue = false;
+			if (File.GetBool(Section, Desc.ConfigKey, bValue))
+			{
+				Desc.SetIndex(*this, bValue ? 1 : 0);
+			}
+			break;
+		}
+		case EGothamSettingStorage::Int:
+		{
+			// Out of range: a wrapping option keeps its default, UI scale clamps to its nearest step.
+			int32 Value = 0;
+			if (File.GetInt(Section, Desc.ConfigKey, Value))
+			{
+				if (Value >= 0 && Value < Desc.ChoiceCount)
+				{
+					Desc.SetIndex(*this, Value);
+				}
+				else if (!Desc.bWraps)
+				{
+					Desc.SetIndex(*this, FMath::Clamp(Value, 0, Desc.ChoiceCount - 1));
+				}
+			}
+			break;
+		}
+		}
 	}
-
-	int32 Int = 0;
-	bool bBool = false;
-	if (File.GetInt(Section, TEXT("ColorMode"), Int)) { ColorMode = ClampEnum(Int, ColorMode); }
-	if (File.GetInt(Section, TEXT("UIScaleIndex"), Int)) { UIScaleIndex = FMath::Clamp(Int, 0, GetUIScaleSteps().Num() - 1); }
-	if (File.GetBool(Section, TEXT("HighContrast"), bBool)) { bHighContrast = bBool; }
-	if (File.GetBool(Section, TEXT("ReducedMotion"), bBool)) { bReducedMotion = bBool; }
-	if (File.GetInt(Section, TEXT("WheelMode"), Int)) { WheelMode = ClampEnum(Int, WheelMode); }
-	if (File.GetInt(Section, TEXT("ScanMode"), Int)) { ScanMode = ClampEnum(Int, ScanMode); }
-	if (File.GetInt(Section, TEXT("SubtitleSize"), Int)) { SubtitleSize = ClampEnum(Int, SubtitleSize); }
-	if (File.GetBool(Section, TEXT("SubtitleBackground"), bBool)) { bSubtitleBackground = bBool; }
 }
 
 void FGothamSettingsData::SaveToConfig(FConfigFile& File, const TCHAR* Section) const
 {
-	File.SetString(Section, TEXT("Language"), *Language);
-	File.SetInt64(Section, TEXT("ColorMode"), static_cast<int64>(ColorMode));
-	File.SetInt64(Section, TEXT("UIScaleIndex"), UIScaleIndex);
-	File.SetString(Section, TEXT("HighContrast"), bHighContrast ? TEXT("True") : TEXT("False"));
-	File.SetString(Section, TEXT("ReducedMotion"), bReducedMotion ? TEXT("True") : TEXT("False"));
-	File.SetInt64(Section, TEXT("WheelMode"), static_cast<int64>(WheelMode));
-	File.SetInt64(Section, TEXT("ScanMode"), static_cast<int64>(ScanMode));
-	File.SetInt64(Section, TEXT("SubtitleSize"), static_cast<int64>(SubtitleSize));
-	File.SetString(Section, TEXT("SubtitleBackground"), bSubtitleBackground ? TEXT("True") : TEXT("False"));
+	for (const FGothamSettingDescriptor& Desc : GothamSettingsTable::Get())
+	{
+		switch (Desc.Storage)
+		{
+		case EGothamSettingStorage::Culture: File.SetString(Section, Desc.ConfigKey, *Language); break;
+		case EGothamSettingStorage::Bool:    File.SetString(Section, Desc.ConfigKey, Desc.GetIndex(*this) != 0 ? TEXT("True") : TEXT("False")); break;
+		case EGothamSettingStorage::Int:     File.SetInt64(Section, Desc.ConfigKey, Desc.GetIndex(*this)); break;
+		}
+	}
 }
 
 namespace GothamPalette

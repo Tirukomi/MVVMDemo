@@ -2,15 +2,9 @@
 
 #include "ViewModels/SettingsViewModel.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Settings"
+#include "Accessibility/GothamSettingsTable.h"
 
-namespace
-{
-	FText OnOff(bool bOn)
-	{
-		return bOn ? LOCTEXT("On", "On") : LOCTEXT("Off", "Off");
-	}
-}
+#define LOCTEXT_NAMESPACE "Gotham.Settings"
 
 void USettingsViewModel::Initialize(const FGothamSettingsData& Saved)
 {
@@ -58,36 +52,12 @@ void USettingsViewModel::ResetDefaults()
 
 FText USettingsViewModel::GetLabel(EGothamSetting Setting)
 {
-	switch (Setting)
-	{
-	case EGothamSetting::Language:           return LOCTEXT("LanguageLabel", "Language");
-	case EGothamSetting::ColorVision:        return LOCTEXT("ColorVisionLabel", "Colour vision");
-	case EGothamSetting::UIScale:            return LOCTEXT("UIScaleLabel", "UI scale");
-	case EGothamSetting::HighContrast:       return LOCTEXT("HighContrastLabel", "High contrast");
-	case EGothamSetting::ReducedMotion:      return LOCTEXT("ReducedMotionLabel", "Reduced motion");
-	case EGothamSetting::WheelMode:          return LOCTEXT("WheelModeLabel", "Gadget wheel");
-	case EGothamSetting::ScanMode:           return LOCTEXT("ScanModeLabel", "Clue analysis");
-	case EGothamSetting::SubtitleSize:       return LOCTEXT("SubtitleSizeLabel", "Subtitle size");
-	case EGothamSetting::SubtitleBackground: return LOCTEXT("SubtitleBackgroundLabel", "Subtitle background");
-	default: return FText::GetEmpty();
-	}
+	return Setting < EGothamSetting::Count ? GothamSettingsTable::Find(Setting).Label : FText::GetEmpty();
 }
 
 FText USettingsViewModel::GetDescription(EGothamSetting Setting)
 {
-	switch (Setting)
-	{
-	case EGothamSetting::Language:           return LOCTEXT("LanguageDesc", "Language for all menus, the HUD and subtitles. Changes preview immediately.");
-	case EGothamSetting::ColorVision:        return LOCTEXT("ColorVisionDesc", "Swaps the clue, danger and highlight colours for palettes that stay distinct with protanopia, deuteranopia or tritanopia.");
-	case EGothamSetting::UIScale:            return LOCTEXT("UIScaleDesc", "Scales every menu and HUD element. Layouts reflow, so nothing is cut off at larger sizes.");
-	case EGothamSetting::HighContrast:       return LOCTEXT("HighContrastDesc", "Solid panels and brighter text and edges, for readability over busy scenes.");
-	case EGothamSetting::ReducedMotion:      return LOCTEXT("ReducedMotionDesc", "Turns off pops, slides, pulses, screen transitions and rain streaks. Colour cues stay on.");
-	case EGothamSetting::WheelMode:          return LOCTEXT("WheelModeDesc", "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close.");
-	case EGothamSetting::ScanMode:           return LOCTEXT("ScanModeDesc", "Hold: keep the button held to analyse a clue. Tap: a single press analyses it.");
-	case EGothamSetting::SubtitleSize:       return LOCTEXT("SubtitleSizeDesc", "Text size for subtitles and speaker names.");
-	case EGothamSetting::SubtitleBackground: return LOCTEXT("SubtitleBackgroundDesc", "Draws a solid panel behind subtitles so they read over any scene.");
-	default: return FText::GetEmpty();
-	}
+	return Setting < EGothamSetting::Count ? GothamSettingsTable::Find(Setting).Description : FText::GetEmpty();
 }
 
 const TArray<FGothamSettingsTab>& USettingsViewModel::GetTabs()
@@ -107,43 +77,7 @@ const TArray<FGothamSettingsTab>& USettingsViewModel::GetTabs()
 
 FText USettingsViewModel::GetValueText(EGothamSetting Setting) const
 {
-	switch (Setting)
-	{
-	case EGothamSetting::Language:
-		for (const FGothamLanguageOption& Option : FGothamSettingsData::GetLanguages())
-		{
-			if (Current.Language == Option.Culture)
-			{
-				return FText::FromString(Option.NativeName);
-			}
-		}
-		return FText::FromString(Current.Language);
-	case EGothamSetting::ColorVision:
-		switch (Current.ColorMode)
-		{
-		case EGothamColorMode::Protanopia:   return LOCTEXT("Protanopia", "Protanopia");
-		case EGothamColorMode::Deuteranopia: return LOCTEXT("Deuteranopia", "Deuteranopia");
-		case EGothamColorMode::Tritanopia:   return LOCTEXT("Tritanopia", "Tritanopia");
-		default:                             return LOCTEXT("ColorDefault", "Standard");
-		}
-	case EGothamSetting::UIScale:
-		return FText::Format(LOCTEXT("PercentFmt", "{0}%"), FText::AsNumber(FMath::RoundToInt(Current.GetUIScale() * 100.f)));
-	case EGothamSetting::HighContrast:       return OnOff(Current.bHighContrast);
-	case EGothamSetting::ReducedMotion:      return OnOff(Current.bReducedMotion);
-	case EGothamSetting::WheelMode:
-		return Current.WheelMode == EGothamWheelMode::Hold ? LOCTEXT("WheelHold", "Hold") : LOCTEXT("WheelToggle", "Toggle");
-	case EGothamSetting::ScanMode:
-		return Current.ScanMode == EGothamScanMode::Hold ? LOCTEXT("ScanHold", "Hold") : LOCTEXT("ScanTap", "Tap");
-	case EGothamSetting::SubtitleSize:
-		switch (Current.SubtitleSize)
-		{
-		case EGothamSubtitleSize::Small: return LOCTEXT("SizeSmall", "Small");
-		case EGothamSubtitleSize::Large: return LOCTEXT("SizeLarge", "Large");
-		default:                         return LOCTEXT("SizeMedium", "Medium");
-		}
-	case EGothamSetting::SubtitleBackground: return OnOff(Current.bSubtitleBackground);
-	default: return FText::GetEmpty();
-	}
+	return Setting < EGothamSetting::Count ? GothamSettingsTable::Find(Setting).FormatValue(Current) : FText::GetEmpty();
 }
 
 void USettingsViewModel::Recompute()

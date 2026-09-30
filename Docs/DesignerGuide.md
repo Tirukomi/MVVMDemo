@@ -44,12 +44,14 @@ Never hard-code a colour that means something. Ask the palette for a token (`Goo
 
 ## Add a setting
 
-1. Add the value to `FGothamSettingsData` and an entry in `EGothamSetting` (`Accessibility/GothamSettingsTypes.h`);
-   extend `Cycle`, `operator==`, `LoadFromConfig` / `SaveToConfig`.
-2. Add its label, description and value text in `USettingsViewModel` (`GetLabel`, `GetDescription`, `GetValueText`,
-   a `FieldNotify` text property) and its position in `FGothamSettingsData::GetOptionPosition` (the selector pips).
-3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it. Subscribe the row to the
-   new field in `UGothamOptionRow::Setup`.
+1. Add the value to `FGothamSettingsData` and an entry in `EGothamSetting` (`Accessibility/GothamSettingsTypes.h`),
+   and extend `operator==`.
+2. Add its row to `GothamSettingsTable::Get` (`Accessibility/GothamSettingsTable.cpp`), in enum order: config key,
+   storage, label, description (under the `Gotham.Settings` localization namespace), choice count, whether it wraps,
+   and get / set / format functions. Stepping, the selector pips, the value text and the config round trip all come
+   from the row.
+3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it. Add a `FieldNotify`
+   text property for it in `USettingsViewModel::Recompute` and subscribe the row to it in `UGothamOptionRow::Setup`.
 4. Read it wherever it matters through `UGothamSettingsSubsystem::Get(this)`. To react to changes, derive a
    widget from `UGothamSettingsAwareWidget` and override `OnSettingsApplied`, or, in any other class, keep an
    `FGothamSettingsListener` member and `Bind` it (it unsubscribes itself).
