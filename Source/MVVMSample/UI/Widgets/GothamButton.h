@@ -51,10 +51,6 @@ public:
 
 	void SetLabel(const FText& InLabel);
 	void SetKind(EGothamButtonKind InKind);
-	EGothamButtonKind GetKind() const { return Kind; }
-
-	/** True while the button (not just its row) has keyboard or gamepad focus. */
-	bool IsFocusedNow() const { return bFocused; }
 
 protected:
 	virtual bool Initialize() override;

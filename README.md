@@ -101,9 +101,9 @@ Project-settings soft references (materials, clue assets) are listed under `Dire
 
 ## Honest limitations
 
-- **No real input has been driven.** Behaviour was verified through unit tests, dev flags and screenshots. Mouse and
-  gamepad interaction (focus navigation, key capture, hold-to-use wheel) is written and unit-tested in its logic but
-  should be tried by hand before relying on it.
+- **Little real input has been driven by a script.** `-GothamMenuInputTest` drives menu keys, prompt clicks and
+  toggles through Slate's own input path, and the project owner has played it by hand. Everything else (combat
+  counters, hold-to-use wheel, rebinding capture) is verified through unit tests, dev flags and screenshots.
 - The HUD widgets are C++-built rather than designer-authored; see [ADR 0002](Docs/ADR/0002-code-built-widgets.md).
 - High contrast recolours tokens, menus and subtitle panels but not every HUD panel; "UI scale" scales the whole UI; Arabic /
   right-to-left is not covered.

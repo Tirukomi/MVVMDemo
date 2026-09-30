@@ -67,7 +67,7 @@ Run-to-run noise is about 0.05 ms (compare the two "before" runs), so difference
 ### Already in the design (not a change, but measured to hold)
 
 - **Virtualised clue log.** 505 clues create 5 row widgets, not 505 (`UListView` pooling, rows rebind and cancel
-  in-flight thumbnail loads when recycled). `case-file-505` costs about as much as the empty HUD.
+  in-flight thumbnail loads when recycled). Since V4 it is a tile view: 20 tiles for 505 clues. `case-file-505` costs about as much as the empty HUD.
 - **Idle custom Slate widgets are free.** `SGadgetWheel` and `SComboMeter` register an active timer only while
   animating and unregister once settled; they never tick.
 - **Detective overlay collapses when off**, so it costs nothing outside the mode.

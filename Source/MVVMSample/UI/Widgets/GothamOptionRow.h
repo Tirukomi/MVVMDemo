@@ -28,9 +28,6 @@ public:
 	void Setup(EGothamSetting InSetting, USettingsViewModel* InViewModel);
 	EGothamSetting GetSetting() const { return Setting; }
 
-	/** The widget that should receive focus when the row is first targeted. */
-	UWidget* GetPrimaryFocusTarget() { return this; }
-
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;

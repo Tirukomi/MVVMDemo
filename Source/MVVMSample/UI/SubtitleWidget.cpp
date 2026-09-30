@@ -28,7 +28,6 @@ TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
 		Panel->SetContent(Column);
 
 		SpeakerText = WidgetTree->ConstructWidget<UTextBlock>();
-		SpeakerText->SetColorAndOpacity(FSlateColor(FLinearColor(0.4f, 0.85f, 1.f)));
 		Column->AddChildToVerticalBox(SpeakerText);
 
 		LineText = WidgetTree->ConstructWidget<UTextBlock>();

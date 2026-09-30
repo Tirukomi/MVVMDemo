@@ -30,7 +30,6 @@ public:
 	FLinearColor RingColor = FLinearColor(1.f, 1.f, 1.f, 0.2f);
 
 	void SetIconIndex(int32 InIndex);
-	void SetIconSize(float InSize);
 	void SetColors(const FLinearColor& InColor, const FLinearColor& InRing);
 	void SetCooldown(float InPercent);
 

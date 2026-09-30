@@ -27,8 +27,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scrim", meta = (ClampMin = "0", ClampMax = "1"))
 	float RightAlpha = 0.5f;
 
-	void SetAlphas(float InLeft, float InRight);
-
 	virtual void SynchronizeProperties() override;
 	virtual void ReleaseSlateResources(bool bReleaseChildren) override;
 

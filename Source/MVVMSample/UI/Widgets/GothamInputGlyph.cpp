@@ -2,6 +2,8 @@
 
 #include "UI/Widgets/GothamInputGlyph.h"
 
+#include "Accessibility/GothamSettingsSubsystem.h"
+
 #include "Blueprint/WidgetTree.h"
 #include "CommonInputSubsystem.h"
 #include "UI/Slate/SGothamPanel.h"
@@ -20,11 +22,10 @@ TSharedRef<SWidget> UGothamInputGlyph::RebuildWidget()
 	{
 		Frame = WidgetTree->ConstructWidget<UGothamPanel>();
 		Frame->SetPanelPadding(FMargin(7.f, 1.f));
-		Frame->SetColors(FLinearColor(0.88f, 0.91f, 0.95f, 0.12f), FLinearColor(0.88f, 0.91f, 0.95f, 0.55f));
 		WidgetTree->RootWidget = Frame;
 
 		Text = WidgetTree->ConstructWidget<UTextBlock>();
-		GothamStyle::ApplyText(Text, EGothamTextStyle::Key, FLinearColor(0.88f, 0.91f, 0.95f));
+		GothamStyle::ApplyText(Text, EGothamTextStyle::Key, GothamStyle::Token(this, EGothamColorToken::TextPrimary));
 		Text->SetJustification(ETextJustify::Center);
 		Frame->SetContent(Text);
 	}
@@ -46,11 +47,19 @@ void UGothamInputGlyph::NativeConstruct()
 			BindingsHandle = UI->OnBindingsChanged.AddUObject(this, &UGothamInputGlyph::Refresh);
 		}
 	}
+	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { Refresh(); });
+	}
 	Refresh();
 }
 
 void UGothamInputGlyph::NativeDestruct()
 {
+	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		Settings->OnSettingsChanged.Remove(SettingsHandle);
+	}
 	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer()))
 	{
 		Input->OnInputMethodChangedNative.Remove(InputMethodHandle);
@@ -142,6 +151,10 @@ void UGothamInputGlyph::Refresh()
 	const bool bGamepad = Input && Input->GetCurrentInputType() == ECommonInputType::Gamepad;
 	const FKey Key = ActionName.IsNone() ? (bGamepad ? FixedGamepad : FixedKeyboardMouse) : FindKeyForAction(GetOwningPlayer(), ActionName);
 	Text->SetText(Key.IsValid() ? GetKeyLabel(Key) : FText::GetEmpty());
+	// Palette tokens, so the key caps follow high contrast like everything else.
+	const FLinearColor Ink = GothamStyle::Token(this, EGothamColorToken::TextPrimary);
+	Text->SetColorAndOpacity(Ink);
+	Frame->SetColors(FLinearColor(Ink.R, Ink.G, Ink.B, 0.12f), FLinearColor(Ink.R, Ink.G, Ink.B, 0.55f));
 	// Key caps get one cut corner; gamepad face buttons read as round-ish octagons.
 	const bool bFaceButton = Key == EKeys::Gamepad_FaceButton_Bottom || Key == EKeys::Gamepad_FaceButton_Right
 		|| Key == EKeys::Gamepad_FaceButton_Left || Key == EKeys::Gamepad_FaceButton_Top;

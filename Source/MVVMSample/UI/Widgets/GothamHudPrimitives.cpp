@@ -44,12 +44,6 @@ void UGadgetIcon::SetIconIndex(int32 InIndex)
 	if (SlateIcon.IsValid()) { SlateIcon->SetIcon(ToIcon(IconIndex)); }
 }
 
-void UGadgetIcon::SetIconSize(float InSize)
-{
-	IconSize = InSize;
-	if (SlateIcon.IsValid()) { SlateIcon->SetSize(IconSize); }
-}
-
 void UGadgetIcon::SetColors(const FLinearColor& InColor, const FLinearColor& InRing)
 {
 	Color = InColor;

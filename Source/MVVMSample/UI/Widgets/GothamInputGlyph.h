@@ -54,6 +54,7 @@ private:
 	FKey FixedGamepad;
 	FDelegateHandle InputMethodHandle;
 	FDelegateHandle BindingsHandle;
+	FDelegateHandle SettingsHandle;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> Text;

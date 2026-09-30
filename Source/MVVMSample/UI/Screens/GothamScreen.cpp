@@ -232,15 +232,6 @@ void UGothamScreen::AddFooter(UWidget* Footer)
 	}
 }
 
-UTextBlock* UGothamScreen::MakeTitle(const FText& Text) const
-{
-	UTextBlock* Title = WidgetTree->ConstructWidget<UTextBlock>();
-	Title->SetFont(GothamStyle::Font(EGothamTextStyle::Title));
-	Title->SetTextTransformPolicy(ETextTransformPolicy::ToUpper);
-	Title->SetText(Text);
-	return Title;
-}
-
 UTextBlock* UGothamScreen::MakeText(const FText& Text, EGothamTextStyle Style, EGothamColorToken Color)
 {
 	UTextBlock* Block = WidgetTree->ConstructWidget<UTextBlock>();
@@ -249,16 +240,6 @@ UTextBlock* UGothamScreen::MakeText(const FText& Text, EGothamTextStyle Style, E
 	TokenTexts.Add(Block);
 	TokenTextColors.Add(Color);
 	return Block;
-}
-
-UGothamButton* UGothamScreen::AddButton(UVerticalBox* Parent, const FText& Label) const
-{
-	UGothamButton* Button = WidgetTree->ConstructWidget<UGothamButton>();
-	Button->SetLabel(Label);
-	UVerticalBoxSlot* ButtonSlot = Parent->AddChildToVerticalBox(Button);
-	ButtonSlot->SetPadding(FMargin(0.f, 6.f));
-	ButtonSlot->SetHorizontalAlignment(HAlign_Fill);
-	return Button;
 }
 
 UGothamButton* UGothamScreen::AddMenuItem(UGothamMenuList* List, const FText& Label) const

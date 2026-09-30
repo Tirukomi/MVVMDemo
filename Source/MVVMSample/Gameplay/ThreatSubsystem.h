@@ -42,8 +42,6 @@ public:
 	/** Dev aid: the idle thug most behind the camera starts warning now (shows the edge arrow). */
 	AGothamThug* ForceWarningBehind();
 
-	const TArray<TWeakObjectPtr<AGothamThug>>& GetThugs() const { return Thugs; }
-
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
 	/** The base class already ticks conditionally (and never for the class default object): tick only with thugs. */

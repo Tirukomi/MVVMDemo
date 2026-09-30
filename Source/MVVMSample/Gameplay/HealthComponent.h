@@ -31,8 +31,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Health")
 	float GetMaxHealth() const { return MaxHealth; }
 
-	void SetMaxHealth(float NewMax, bool bRefill = true);
-
 	/** Re-broadcasts current state so late-bound observers get an initial value. */
 	void BroadcastCurrent() const { OnHealthChanged.Broadcast(Health, MaxHealth); }
 

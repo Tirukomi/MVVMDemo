@@ -41,12 +41,7 @@ class MVVMSAMPLE_API UGothamMenuList : public UUserWidget
 public:
 	/** Adds an item below the others. The item, or something inside it, should be focusable. */
 	UVerticalBoxSlot* AddItem(UWidget* Item);
-	/** Adds a non-focusable row (e.g. a section label) without making it a highlight target. */
-	UVerticalBoxSlot* AddSpacerRow(UWidget* Row);
 	const TArray<TObjectPtr<UWidget>>& GetItems() const { return Items; }
-
-	/** The item currently under the highlight (null before anything was focused). */
-	UWidget* GetCurrentItem() const { return CurrentItem.Get(); }
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCurrentItemChanged, UWidget*);
 	FOnCurrentItemChanged OnCurrentItemChanged;

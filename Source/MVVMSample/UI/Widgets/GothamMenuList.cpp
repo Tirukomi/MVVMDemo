@@ -56,12 +56,6 @@ UVerticalBoxSlot* UGothamMenuList::AddItem(UWidget* Item)
 	return ItemSlot;
 }
 
-UVerticalBoxSlot* UGothamMenuList::AddSpacerRow(UWidget* Row)
-{
-	EnsureTree(WidgetTree, Highlight, Box);
-	return Box->AddChildToVerticalBox(Row);
-}
-
 TSharedRef<SWidget> UGothamMenuList::RebuildWidget()
 {
 	EnsureTree(WidgetTree, Highlight, Box);

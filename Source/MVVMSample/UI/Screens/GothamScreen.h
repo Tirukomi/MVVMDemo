@@ -79,10 +79,8 @@ protected:
 	void AddFooter(UWidget* Footer);
 
 	// Small builders so screens stay short and consistent.
-	UTextBlock* MakeTitle(const FText& Text) const;
 	/** A text block in a type-scale style, coloured from a palette token (kept in sync with settings). */
 	UTextBlock* MakeText(const FText& Text, EGothamTextStyle Style, EGothamColorToken Color);
-	UGothamButton* AddButton(UVerticalBox* Parent, const FText& Label) const;
 	/** A big left-aligned menu item in a highlight list. */
 	UGothamButton* AddMenuItem(UGothamMenuList* List, const FText& Label) const;
 	/** "[Enter/A] Select   [Esc/B] Back" prompt row. Each prompt is also a button that does what its key does. */

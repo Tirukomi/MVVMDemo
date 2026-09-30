@@ -42,6 +42,4 @@ namespace GothamStyle
 	/** Panel fill alpha under the current contrast setting. */
 	MVVMSAMPLE_API float PanelAlpha(const UObject* Context);
 
-	/** Convenience: construct-and-style is the common case in code-built widgets. */
-	MVVMSAMPLE_API bool AreCustomFontsAvailable();
 }

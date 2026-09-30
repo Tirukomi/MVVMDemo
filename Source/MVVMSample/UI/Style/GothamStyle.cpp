@@ -96,11 +96,6 @@ namespace
 
 namespace GothamStyle
 {
-	bool AreCustomFontsAvailable()
-	{
-		return Condensed().IsValid() && BodyFamily().IsValid();
-	}
-
 	FSlateFontInfo Font(EGothamTextStyle Style)
 	{
 		const FStyleSpec S = Spec(Style);

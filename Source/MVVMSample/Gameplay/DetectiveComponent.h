@@ -83,8 +83,6 @@ public:
 	/** Records a clue as scanned (used by TryScan and by tests). */
 	void RegisterScan(const UClueDataAsset* Clue);
 
-	/** Setup hook for tests: supplies the clue list without a world. */
-	void SetClueDefinitions(const TArray<const UClueDataAsset*>& Clues) { AllClues = Clues; }
 
 	void BroadcastCurrent() const { OnDetectiveChanged.Broadcast(bActive, Alpha); }
 

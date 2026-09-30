@@ -77,10 +77,3 @@ void UGothamScrim::ReleaseSlateResources(bool bReleaseChildren)
 	Super::ReleaseSlateResources(bReleaseChildren);
 	MyScrim.Reset();
 }
-
-void UGothamScrim::SetAlphas(float InLeft, float InRight)
-{
-	LeftAlpha = InLeft;
-	RightAlpha = InRight;
-	if (MyScrim.IsValid()) { MyScrim->Set(Color, LeftAlpha, RightAlpha); }
-}

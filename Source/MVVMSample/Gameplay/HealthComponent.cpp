@@ -30,13 +30,6 @@ void UHealthComponent::Heal(float Amount)
 	}
 }
 
-void UHealthComponent::SetMaxHealth(float NewMax, bool bRefill)
-{
-	MaxHealth = FMath::Max(1.f, NewMax);
-	SetHealth(bRefill ? MaxHealth : Health);
-	BroadcastCurrent();
-}
-
 void UHealthComponent::SetHealth(float NewHealth)
 {
 	const float Clamped = FMath::Clamp(NewHealth, 0.f, MaxHealth);
