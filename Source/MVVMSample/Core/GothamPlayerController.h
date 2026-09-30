@@ -52,7 +52,6 @@ private:
 	void OnScan();
 	void OnScanReleased();
 	void OnClueLog();
-	void RunDevAids(class UGothamUISubsystem* UI);
 	void ApplyInputContext(EGothamInputContext Context);
 
 	UPROPERTY(Transient)
