@@ -55,19 +55,13 @@ void UGothamButton::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { ApplyState(); });
-	}
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyState(); });
 	ApplyState();
 }
 
 void UGothamButton::NativeDestruct()
 {
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(SettingsHandle);
-	}
+	SettingsListener.Reset();
 	Super::NativeDestruct();
 }
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "CommonButtonBase.h"
 #include "InputCoreTypes.h"
 #include "GothamHintButton.generated.h"
@@ -56,6 +57,6 @@ private:
 	FText PendingLabel;
 	bool bHoveredNow = false;
 	bool bPressedNow = false;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 	TWeakPtr<SWidget> FocusBeforePointer;
 };

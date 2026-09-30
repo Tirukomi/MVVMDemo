@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "CommonButtonBase.h"
 #include "UI/Style/GothamStyle.h"
 #include "GothamButton.generated.h"
@@ -84,5 +85,5 @@ private:
 	bool bFocused = false;
 	bool bHoveredNow = false;
 	bool bPressedNow = false;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 };
