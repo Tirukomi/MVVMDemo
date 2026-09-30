@@ -14,6 +14,7 @@
 #include "Components/TextBlock.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Widgets/GothamSelectorDecor.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/SettingsViewModel.h"
 
 namespace
@@ -72,27 +73,14 @@ TSharedRef<SWidget> UGothamOptionRow::RebuildWidget()
 
 void UGothamOptionRow::Setup(EGothamSetting InSetting, USettingsViewModel* InViewModel)
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(ViewModel, this);
 	Setting = InSetting;
 	ViewModel = InViewModel;
-	if (ViewModel)
-	{
-		// Any value change (or a language switch, which re-broadcasts every text) refreshes the row.
-		using FVM = USettingsViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UGothamOptionRow::OnFieldChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::LanguageValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::ColorVisionValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::UIScaleValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::HighContrastValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::ReducedMotionValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::WheelModeValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::ScanModeValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::SubtitleSizeValue, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::SubtitleBackgroundValue, Delegate);
-	}
+	// Any value change (or a language switch, which re-broadcasts every text) refreshes the row.
+	using FVM = USettingsViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Bind(ViewModel, this, &UGothamOptionRow::OnFieldChanged, {
+		FVM::LanguageValue, FVM::ColorVisionValue, FVM::UIScaleValue, FVM::HighContrastValue, FVM::ReducedMotionValue,
+		FVM::WheelModeValue, FVM::ScanModeValue, FVM::SubtitleSizeValue, FVM::SubtitleBackgroundValue });
 	Refresh();
 }
 
@@ -106,10 +94,7 @@ void UGothamOptionRow::NativeConstruct()
 
 void UGothamOptionRow::NativeDestruct()
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(ViewModel, this);
 	SettingsListener.Reset();
 	Super::NativeDestruct();
 }

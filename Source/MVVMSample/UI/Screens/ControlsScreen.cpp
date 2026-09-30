@@ -18,6 +18,7 @@
 #include "UI/Widgets/GothamMenuList.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "ViewModels/ControlsViewModel.h"
+#include "ViewModels/GothamMVVM.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGothamControls, Log, All);
 
@@ -128,9 +129,7 @@ void UControlsScreen::NativeConstruct()
 
 	ViewModel = NewObject<UControlsViewModel>(this);
 	using FVM = UControlsViewModel::FFieldNotificationClassDescriptor;
-	const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UControlsScreen::OnViewModelChanged);
-	ViewModel->AddFieldValueChangedDelegate(FVM::Revision, Delegate);
-	ViewModel->AddFieldValueChangedDelegate(FVM::StatusText, Delegate);
+	GothamMVVM::Bind(ViewModel, this, &UControlsScreen::OnViewModelChanged, { FVM::Revision, FVM::StatusText });
 	ViewModel->OnChangesPlanned.AddUObject(this, &UControlsScreen::ApplyChanges);
 
 	PullSnapshot();
@@ -140,7 +139,7 @@ void UControlsScreen::NativeDestruct()
 {
 	if (ViewModel)
 	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
+		GothamMVVM::Unbind(ViewModel, this);
 		ViewModel->OnChangesPlanned.RemoveAll(this);
 	}
 	Super::NativeDestruct();

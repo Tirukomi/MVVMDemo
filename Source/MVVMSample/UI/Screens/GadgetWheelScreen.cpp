@@ -11,6 +11,7 @@
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GadgetWheel.h"
 #include "ViewModels/GadgetViewModels.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 
 namespace
@@ -53,11 +54,9 @@ void UGadgetWheelScreen::NativeConstruct()
 		{
 			GadgetBar = ViewModels->GetGadgetBar();
 			using FSlotVM = UGadgetSlotViewModel::FFieldNotificationClassDescriptor;
-			const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UGadgetWheelScreen::OnSlotChanged);
 			for (UGadgetSlotViewModel* SlotVM : GadgetBar->GetSlots())
 			{
-				SlotVM->AddFieldValueChangedDelegate(FSlotVM::CooldownPercent, Delegate);
-				SlotVM->AddFieldValueChangedDelegate(FSlotVM::bIsReady, Delegate);
+				GothamMVVM::Bind(SlotVM, this, &UGadgetWheelScreen::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady });
 			}
 		}
 	}
@@ -75,7 +74,7 @@ void UGadgetWheelScreen::NativeDestruct()
 	{
 		for (UGadgetSlotViewModel* SlotVM : GadgetBar->GetSlots())
 		{
-			SlotVM->RemoveAllFieldValueChangedDelegates(this);
+			GothamMVVM::Unbind(SlotVM, this);
 		}
 	}
 	Super::NativeDestruct();

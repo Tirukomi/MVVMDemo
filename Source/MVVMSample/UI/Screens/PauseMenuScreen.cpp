@@ -21,6 +21,7 @@
 #include "UI/Widgets/GothamMenuList.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "ViewModels/ClueViewModels.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 #include "ViewModels/ObjectivesViewModel.h"
 
@@ -110,17 +111,16 @@ void UPauseMenuScreen::NativeConstruct()
 	}
 	Objectives = ViewModels->GetObjectives();
 	Clues = ViewModels->GetClues();
-	const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UPauseMenuScreen::OnStatusChanged);
-	Objectives->AddFieldValueChangedDelegate(UObjectivesViewModel::FFieldNotificationClassDescriptor::ObjectiveTitle, Delegate);
-	Clues->AddFieldValueChangedDelegate(UClueListViewModel::FFieldNotificationClassDescriptor::Entries, Delegate);
-	Clues->AddFieldValueChangedDelegate(UClueListViewModel::FFieldNotificationClassDescriptor::DiscoveredCount, Delegate);
+	using FClues = UClueListViewModel::FFieldNotificationClassDescriptor;
+	GothamMVVM::Bind(Objectives, this, &UPauseMenuScreen::OnStatusChanged, { UObjectivesViewModel::FFieldNotificationClassDescriptor::ObjectiveTitle });
+	GothamMVVM::Bind(Clues, this, &UPauseMenuScreen::OnStatusChanged, { FClues::Entries, FClues::DiscoveredCount });
 	RefreshStatus();
 }
 
 void UPauseMenuScreen::NativeDestruct()
 {
-	if (Objectives) { Objectives->RemoveAllFieldValueChangedDelegates(this); }
-	if (Clues) { Clues->RemoveAllFieldValueChangedDelegates(this); }
+	GothamMVVM::Unbind(Objectives, this);
+	GothamMVVM::Unbind(Clues, this);
 	Super::NativeDestruct();
 }
 

@@ -15,6 +15,7 @@
 #include "UI/Slate/SGothamPanel.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "ViewModels/ClueViewModels.h"
+#include "ViewModels/GothamMVVM.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.ClueLog"
 
@@ -112,17 +113,14 @@ void UClueEntryWidget::Bind(UClueEntryViewModel* InViewModel)
 {
 	if (ViewModel)
 	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
+		GothamMVVM::Unbind(ViewModel, this);
 		ViewModel->CancelThumbnail();
 	}
 	ViewModel = InViewModel;
 	if (ViewModel)
 	{
 		using FVM = UClueEntryViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UClueEntryWidget::OnFieldChanged);
-		ViewModel->AddFieldValueChangedDelegate(FVM::DisplayTitle, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::bIsDiscovered, Delegate);
-		ViewModel->AddFieldValueChangedDelegate(FVM::Thumbnail, Delegate);
+		GothamMVVM::Bind(ViewModel, this, &UClueEntryWidget::OnFieldChanged, { FVM::DisplayTitle, FVM::bIsDiscovered, FVM::Thumbnail });
 		if (ViewModel->GetIsDiscovered())
 		{
 			ViewModel->RequestThumbnail();

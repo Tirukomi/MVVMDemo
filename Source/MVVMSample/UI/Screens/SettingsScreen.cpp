@@ -21,6 +21,7 @@
 #include "UI/Widgets/GothamOptionRow.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "UI/Widgets/GothamTabList.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/SettingsViewModel.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.SettingsScreen"
@@ -132,10 +133,7 @@ void USettingsScreen::NativeConstruct()
 			Rows[i]->Setup(RowSettings[i], ViewModel);
 		}
 		using FVM = USettingsViewModel::FFieldNotificationClassDescriptor;
-		ViewModel->AddFieldValueChangedDelegate(FVM::bIsDirty,
-			INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &USettingsScreen::OnViewModelChanged));
-		ViewModel->AddFieldValueChangedDelegate(FVM::LanguageValue,
-			INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &USettingsScreen::OnViewModelChanged));
+		GothamMVVM::Bind(ViewModel, this, &USettingsScreen::OnViewModelChanged, { FVM::bIsDirty, FVM::LanguageValue });
 	}
 	RefreshDirtyNote();
 	ShowDetail(Rows.IsEmpty() ? nullptr : Rows[0].Get());
@@ -157,10 +155,7 @@ void USettingsScreen::NativeConstruct()
 
 void USettingsScreen::NativeDestruct()
 {
-	if (ViewModel)
-	{
-		ViewModel->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(ViewModel, this);
 	Super::NativeDestruct();
 }
 

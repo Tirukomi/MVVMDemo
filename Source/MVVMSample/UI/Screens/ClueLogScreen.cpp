@@ -18,6 +18,7 @@
 #include "UI/Slate/SGothamPanel.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "ViewModels/ClueViewModels.h"
+#include "ViewModels/GothamMVVM.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
 
 #define LOCTEXT_NAMESPACE "Gotham.ClueLog"
@@ -106,9 +107,7 @@ void UClueLogScreen::NativeConstruct()
 		{
 			Clues = ViewModels->GetClues();
 			using FVM = UClueListViewModel::FFieldNotificationClassDescriptor;
-			const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UClueLogScreen::OnClueListChanged);
-			Clues->AddFieldValueChangedDelegate(FVM::Entries, Delegate);
-			Clues->AddFieldValueChangedDelegate(FVM::DiscoveredCount, Delegate);
+			GothamMVVM::Bind(Clues, this, &UClueLogScreen::OnClueListChanged, { FVM::Entries, FVM::DiscoveredCount });
 		}
 	}
 	RefreshList();
@@ -116,10 +115,7 @@ void UClueLogScreen::NativeConstruct()
 
 void UClueLogScreen::NativeDestruct()
 {
-	if (Clues)
-	{
-		Clues->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(Clues, this);
 	BindDetail(nullptr);
 	Super::NativeDestruct();
 }
@@ -169,19 +165,13 @@ void UClueLogScreen::OnSelectionChanged(UObject* Item)
 
 void UClueLogScreen::BindDetail(UClueEntryViewModel* Entry)
 {
-	if (DetailEntry)
-	{
-		DetailEntry->RemoveAllFieldValueChangedDelegates(this);
-	}
+	GothamMVVM::Unbind(DetailEntry, this);
 	DetailEntry = Entry;
 	if (DetailEntry)
 	{
 		using FVM = UClueEntryViewModel::FFieldNotificationClassDescriptor;
-		const auto Delegate = INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UClueLogScreen::OnDetailChanged);
-		DetailEntry->AddFieldValueChangedDelegate(FVM::DisplayTitle, Delegate);
-		DetailEntry->AddFieldValueChangedDelegate(FVM::DisplayDescription, Delegate);
-		DetailEntry->AddFieldValueChangedDelegate(FVM::bIsDiscovered, Delegate);
-		DetailEntry->AddFieldValueChangedDelegate(FVM::Thumbnail, Delegate);
+		GothamMVVM::Bind(DetailEntry, this, &UClueLogScreen::OnDetailChanged,
+			{ FVM::DisplayTitle, FVM::DisplayDescription, FVM::bIsDiscovered, FVM::Thumbnail });
 		if (DetailEntry->GetIsDiscovered())
 		{
 			DetailEntry->RequestThumbnail();
