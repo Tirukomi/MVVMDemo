@@ -14,7 +14,9 @@ param(
     [switch]$RecordPerfBaseline,
     # A scenario's UI cost (its game-thread time minus no-ui in the same run) may move this much plus the baseline's
     # own run-to-run spread before G5 fails.
-    [double]$PerfToleranceMs = 0.05
+    [double]$PerfToleranceMs = 0.05,
+    # A perf run whose scenarios all shift together by more than this (mean) is machine noise and gets repeated.
+    [double]$NoisyRunMs = 0.08
 )
 
 # Continue, not Stop: native tools (the build, python) write progress to stderr, which must not abort the gate.
@@ -126,12 +128,27 @@ if (-not $Quick -and (Should-Run "G5")) {
         Record "G5" $false "no baseline: run .\Scripts\Verify.ps1 -RecordPerfBaseline on the pass-0 code first"
     } else {
         $bA = UI-Cost (Read-Perf $baseA); $bB = UI-Cost (Read-Perf $baseB)
-        $runA = Run-Perf "Verify_${stamp}_a"; $runB = Run-Perf "Verify_${stamp}_b"
-        if (-not $runA -or -not $runB) {
-            Record "G5" $false "a perf run produced no report"
+        # A run is "noisy" when every scenario moves together against the baseline (the machine was slower or faster
+        # as a whole): its mean shift across scenarios is beyond $NoisyRunMs. That is not a UI change (a real
+        # regression moves one or two scenarios), so such a run is discarded and repeated, up to two extra runs.
+        $good = @(); $discarded = @(); $attempt = 0
+        while ($good.Count -lt 2 -and $attempt -lt 4) {
+            $attempt++
+            $run = Run-Perf "Verify_${stamp}_$attempt"
+            if (-not $run) { continue }
+            $cost = UI-Cost $run
+            $shifts = @($bA.Keys | ForEach-Object { $cost[$_] - ($bA[$_] + $bB[$_]) / 2 })
+            $mean = ($shifts | Measure-Object -Average).Average
+            if ([math]::Abs($mean) -gt $NoisyRunMs) { $discarded += ("run {0}: mean shift {1:N3} ms, discarded as noisy" -f $attempt, $mean) }
+            else { $good += , $cost }
+        }
+        if ($good.Count -lt 2) {
+            # Every run shifting the same way is machine noise, or a change that costs every screen (e.g. a HUD widget
+            # that started ticking). Either way it is not a pass.
+            Record "G5" $false ("only {0} usable perf runs of {1}: every run shifted uniformly (machine noise, or a cost added to every screen; investigate)" -f $good.Count, $attempt) ($discarded -join "`n")
         } else {
-            $cA = UI-Cost $runA; $cB = UI-Cost $runB
-            $lines = @(); $bad = 0
+            $cA = $good[0]; $cB = $good[1]
+            $lines = @($discarded); $bad = 0
             foreach ($k in ($bA.Keys | Sort-Object)) {
                 $base = ($bA[$k] + $bB[$k]) / 2
                 $now = ($cA[$k] + $cB[$k]) / 2
@@ -139,7 +156,7 @@ if (-not $Quick -and (Should-Run "G5")) {
                 $flag = if ($now - $base -gt $allow) { $bad++; "SLOWER" } else { "ok" }
                 $lines += ("{0,-7} {1,-15} base {2,6:N3} ms  now {3,6:N3} ms  (allowed +{4:N3})" -f $flag, $k, $base, $now, $allow)
             }
-            Record "G5" ($bad -eq 0) ("{0} scenarios, {1} slower than allowed" -f $lines.Count, $bad) ($lines -join "`n")
+            Record "G5" ($bad -eq 0) ("{0} scenarios, {1} slower than allowed, {2} noisy runs discarded" -f $bA.Count, $bad, $discarded.Count) ($lines -join "`n")
         }
     }
 }
