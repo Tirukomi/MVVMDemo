@@ -73,6 +73,7 @@ Check the result with `-GothamLanguage=<culture>`; use `en-XA` to see whether a 
 ## Add a HUD widget
 
 Derive `UGothamSettingsAwareWidget` (restyles on settings changes), build the tree in `RebuildWidget`, bind to a view
-model with `AddFieldValueChangedDelegate`, and call `GothamUI::DisableTick(this)` if it has no widget animations
+model with `GothamMVVM::Bind(ViewModel, this, &UMyWidget::OnFieldChanged, { FVM::Health, ... })` (and
+`GothamMVVM::Unbind(ViewModel, this)` before swapping or dropping it), and call `GothamUI::DisableTick(this)` if it has no widget animations
 (`UGothamSettingsAwareWidget` already does). Place it in `UGothamHudWidget::RebuildWidget` and hand it its view model
 in `NativeConstruct`. Add the view model to `UGothamViewModelSubsystem`. Do not read gameplay components from a widget.

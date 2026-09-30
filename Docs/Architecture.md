@@ -73,7 +73,9 @@ hit-testing, layer/input-context tracking) so the rules are unit-tested without 
 - **Tabs.** Settings uses `UCommonTabListWidgetBase` (`UGothamTabList`) linked to a `UCommonAnimatedSwitcher`; the
   grouping is data (`USettingsViewModel::GetTabs`).
 - **Widgets build their own tree** in `RebuildWidget` (see ADR 0002) and bind to view models with field-notify
-  delegates. Anything that restyles on settings changes subscribes through `FGothamSettingsListener` (a member
+  delegates through `GothamMVVM::Bind(VM, this, &Handler, { Fields... })` / `GothamMVVM::Unbind(VM, this)`
+  (`ViewModels/GothamMVVM.h`). Fields on a per-frame fast path (combo decay, gadget cooldowns) are routed by field
+  id inside the handler, or bound to their own handler with a second `Bind`. Anything that restyles on settings changes subscribes through `FGothamSettingsListener` (a member
   that unsubscribes itself, scoped to its owner); `UGothamSettingsAwareWidget` wraps it for plain user widgets.
 - **Custom Slate.** `SGadgetWheel` (custom vertices, angle hit-testing) and `SComboMeter` (segmented, eased) wrapped as
   `UWidget`s (`UGadgetWheel`, `UComboMeter`) so designers can place and bind them.
