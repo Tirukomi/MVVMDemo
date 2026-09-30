@@ -431,6 +431,14 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bCombatDemo = FParse::Param(Cmd, TEXT("GothamCombatDemo"));
 	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot")) || bHudDemo || bCombatDemo;
 
+	// -GothamQuitAfterLoad quits as soon as the level and HUD are up: a cheap first launch that gets a freshly built
+	// project's one-off start-up work out of the way (the perf gate's warm-up).
+	if (FParse::Param(Cmd, TEXT("GothamQuitAfterLoad")))
+	{
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([](float) { FPlatformMisc::RequestExit(false); return false; }), 1.f);
+		return;
+	}
+
 	// -GothamMenuInputTest drives the menus through Slate input and logs PASS / FAIL per rule, then quits.
 	if (FParse::Param(Cmd, TEXT("GothamMenuInputTest")))
 	{
@@ -486,7 +494,9 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	{
 		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
 	}
-	const FString ShotName = bPlainShot ? TEXT("gotham_hud") : bQuit ? TEXT("gotham_quit") : bRebindDemo ? TEXT("gotham_controls") : bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : bSettings ? TEXT("gotham_settings") : bControls ? TEXT("gotham_controls") : TEXT("gotham_cluelog");
+	FString ShotName = bPlainShot ? TEXT("gotham_hud") : bQuit ? TEXT("gotham_quit") : bRebindDemo ? TEXT("gotham_controls") : bPause ? TEXT("gotham_pause") : bWheel ? TEXT("gotham_wheel") : bDetective ? TEXT("gotham_detective") : bSettings ? TEXT("gotham_settings") : bControls ? TEXT("gotham_controls") : TEXT("gotham_cluelog");
+	// -GothamShotName=<name> overrides the file name, so parallel captures of the same screen never collide.
+	FParse::Value(Cmd, TEXT("GothamShotName="), ShotName);
 	const TWeakObjectPtr<AGothamPlayerController> WeakThis(this);
 	const TWeakObjectPtr<UGothamUISubsystem> WeakUI(UI);
 

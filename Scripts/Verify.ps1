@@ -4,8 +4,8 @@
 #   .\Scripts\Verify.ps1                         # the full gate, about 30 minutes
 #   .\Scripts\Verify.ps1 -Quick                  # incremental build, no perf runs (about 13 minutes)
 #   .\Scripts\Verify.ps1 -Only G2,G3             # a subset
-#   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD  # perf noise check: this build against itself must pass
-#   .\Scripts\Verify.ps1 -Only G5 -PerfInject gadget-wheel:0.1   # sensitivity check: must fail on gadget-wheel
+#   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD -ForcePerf  # perf noise check: this build against itself must pass
+#   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD -PerfInject gadget-wheel:0.1   # sensitivity: must fail on gadget-wheel
 #
 # G1 build (clean rebuild, zero project warnings)   G2 automation tests       G3 menu input test (Slate input)
 # G4 screenshots vs Docs/img (DiffScreens.ps1)      G5 perf vs a reference build, measured side by side
@@ -20,7 +20,11 @@ param(
     # A scenario fails when the median, over rounds, of (current UI cost - reference UI cost) exceeds this.
     [double]$PerfToleranceMs = 0.05,
     # Passed to the current build only as -GothamPerfInject=<scenario>:<ms>, to prove G5 catches a known cost.
-    [string]$PerfInject = ""
+    [string]$PerfInject = "",
+    # Sampled seconds per perf scenario (the harness's own default is 8). Five measured as precise: see RefactoringPlan.md.
+    [int]$PerfSampleSeconds = 5,
+    # Measure perf even when nothing under Source, Config or Content differs from the reference.
+    [switch]$ForcePerf
 )
 
 # Continue, not Stop: native tools (the build, python) write progress to stderr, which must not abort the gate.
@@ -70,7 +74,7 @@ function UI-Cost($Table) {
 }
 # One harness run of a project (one of the two perf worktrees) -> UI cost table, or $null.
 function Run-Perf([string]$Label, [string]$ProjectDir, [string]$Extra = "") {
-    Run-Game "-GothamPerf=$Label $Extra" 300 (Join-Path $ProjectDir "MVVMSample.uproject") | Out-Null
+    Run-Game "-GothamPerf=$Label -GothamPerfSeconds=$PerfSampleSeconds $Extra" 300 (Join-Path $ProjectDir "MVVMSample.uproject") | Out-Null
     $path = Join-Path $ProjectDir "Saved\Perf\$Label.md"
     if (Test-Path $path) { return UI-Cost (Read-Perf $path) } else { return $null }
 }
@@ -100,7 +104,7 @@ function Prepare-PerfTree([string]$Sha, [string]$Dir, [bool]$MirrorWorkingTree, 
     $text = Get-Content $log
     if (-not ($text | Select-String -SimpleMatch "Result: Succeeded")) { return "$Name build failed (see $log)" }
     # A freshly built project's first launch does one-off work (asset registry, shader lookups); keep it out of the numbers.
-    if (-not ($text | Select-String -SimpleMatch "Target is up to date")) { Run-Perf "Verify_${stamp}_${Name}warmup" $Dir | Out-Null }
+    if (-not ($text | Select-String -SimpleMatch "Target is up to date")) { Run-Game "-GothamQuitAfterLoad" 60 (Join-Path $Dir "MVVMSample.uproject") | Out-Null }
     return ""
 }
 
@@ -156,6 +160,12 @@ if (-not $Quick -and (Should-Run "G5")) {
     $refDir = Join-Path $root "Saved\PerfRef"
     $curDir = Join-Path $root "Saved\PerfCur"
     $refSha = (git -C $root rev-parse --verify "$PerfRef^{commit}" 2>$null)
+    # Only Source, Config and Content can change what the game does at run time (committed or not).
+    $runtime = @("Source", "Config", "Content")
+    $changed = $refSha -and ((git -C $root diff --name-only $refSha -- $runtime) -or (git -C $root status --porcelain --untracked-files=all -- $runtime))
+    if ($refSha -and -not $changed -and -not $ForcePerf -and -not $PerfInject) {
+        Record "G5" $true "skipped: nothing under Source, Config or Content differs from $PerfRef (-ForcePerf measures anyway)"
+    } else {
     $problem = if (-not $refSha) { "unknown reference '$PerfRef'" } else { Prepare-PerfTree $refSha $refDir $false "ref" }
     if (-not $problem) { $problem = Prepare-PerfTree (git -C $root rev-parse HEAD) $curDir $true "cur" }
     if ($problem) {
@@ -192,6 +202,7 @@ if (-not $Quick -and (Should-Run "G5")) {
             }
             Record "G5" ($bad -eq 0) ("{0} scenarios vs {1}, {2} slower than allowed" -f $diffs.Count, $PerfRef, $bad) ($lines -join "`n")
         }
+    }
     }
 }
 

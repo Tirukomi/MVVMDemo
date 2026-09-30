@@ -48,7 +48,17 @@ namespace
 	};
 
 	constexpr float WarmupSeconds = 2.f;
-	constexpr float SampleSeconds = 8.f;
+	/** Sampled seconds per scenario; -GothamPerfSeconds=<s> overrides (the gate uses 5). */
+	float SampleSeconds()
+	{
+		static const float Seconds = []
+		{
+			float Value = 8.f;
+			FParse::Value(FCommandLine::Get(), TEXT("GothamPerfSeconds="), Value);
+			return FMath::Clamp(Value, 1.f, 60.f);
+		}();
+		return Seconds;
+	}
 
 	class FRun : public TSharedFromThis<FRun>
 	{
@@ -168,7 +178,7 @@ namespace
 				GameMsSum += FPlatformTime::ToMilliseconds(GGameThreadTime);
 				++GameSamples;
 			}
-			if (Elapsed >= WarmupSeconds + SampleSeconds)
+			if (Elapsed >= WarmupSeconds + SampleSeconds())
 			{
 				FinishScenario();
 				if (++Index >= Scenarios.Num())
@@ -185,7 +195,7 @@ namespace
 		void WriteReport()
 		{
 			FString Md = FString::Printf(TEXT("# UI performance run: %s\n\nResolution %ux%u, uncapped, %.0fs warm-up + %.0fs sampled per scenario. Start memory %.0f MB.\n\n"),
-				*Label, GSystemResolution.ResX, GSystemResolution.ResY, WarmupSeconds, SampleSeconds, StartMB);
+				*Label, GSystemResolution.ResX, GSystemResolution.ResY, WarmupSeconds, SampleSeconds(), StartMB);
 			Md += TEXT("| Scenario | Frames | Avg frame (ms) | P95 frame (ms) | Avg game thread (ms) | UUserWidgets | ticking | UObjects | Used MB |\n|---|---|---|---|---|---|---|---|---|\n");
 			for (const FResult& R : Results)
 			{

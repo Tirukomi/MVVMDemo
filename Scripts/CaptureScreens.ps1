@@ -1,9 +1,9 @@
 # Captures the documentation screenshots into Docs/img using the game's own dev flags (no OS-level input or
-# screen grabs, so it never touches other windows). Close the editor first. ~30 s per image.
+# screen grabs, so it never touches other windows). Close the editor first. ~20 s per image, -Parallel of them at once.
 # -GothamIgnoreHover: the window opens under wherever the real cursor rests, which must not highlight or focus
 # the menu item there.
 # -OutDir writes somewhere else (Scripts/Verify.ps1 captures into Saved/Verify/Screens and diffs against Docs/img).
-param([string]$Only = "", [string]$OutDir = "")
+param([string]$Only = "", [string]$OutDir = "", [int]$Parallel = 3)
 
 $root = Split-Path -Parent $PSScriptRoot
 $engine = "D:\UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe"
@@ -34,19 +34,30 @@ $shots = @(
     @{ name = "ultrawide";        flags = "-GothamDetective";                              shot = "gotham_detective"; res = "2560 1080" }
 )
 
-foreach ($s in $shots) {
-    if ($Only -and $s.name -ne $Only) { continue }
-    $w, $h = $s.res -split " "
-    Remove-Item (Join-Path $root "Saved\Screenshots") -Recurse -Force -ErrorAction SilentlyContinue
-    $arguments = "`"$root\MVVMSample.uproject`" /Game/Maps/L_Arena -game -windowed -ResX=$w -ResY=$h -nosplash -unattended $($s.flags) -GothamShotDelay=8 -GothamIgnoreHover"
-    $p = Start-Process $engine -ArgumentList $arguments -PassThru
-    # Stop as soon as the screenshot is on disk (and fully written) rather than always waiting the worst case.
-    $src = Join-Path $root "Saved\Screenshots\WindowsEditor\$($s.shot).png"
-    $deadline = (Get-Date).AddSeconds(45)
-    while ((Get-Date) -lt $deadline -and -not (Test-Path $src)) { Start-Sleep -Milliseconds 500 }
-    Start-Sleep -Seconds 1
-    if (-not $p.HasExited) { $p.Kill() }
-    Start-Sleep -Seconds 2
-    if (Test-Path $src) { Copy-Item $src (Join-Path $out "$($s.name).png") -Force; Write-Host "captured $($s.name)" }
-    else { Write-Host "MISSING $($s.name)" }
+# Up to $Parallel captures run at once; each writes its own file name (-GothamShotName), so they never collide.
+$shotDir = Join-Path $root "Saved\Screenshots\WindowsEditor"
+Remove-Item (Join-Path $root "Saved\Screenshots") -Recurse -Force -ErrorAction SilentlyContinue
+$queue = [System.Collections.Queue]::new(@($shots | Where-Object { -not $Only -or $_.name -eq $Only }))
+$running = @()
+while ($queue.Count -gt 0 -or $running.Count -gt 0) {
+    while ($queue.Count -gt 0 -and $running.Count -lt [math]::Max(1, $Parallel)) {
+        $s = $queue.Dequeue()
+        $w, $h = $s.res -split " "
+        $file = "cap_$($s.name)"
+        $arguments = "`"$root\MVVMSample.uproject`" /Game/Maps/L_Arena -game -windowed -ResX=$w -ResY=$h -nosplash -unattended $($s.flags) -GothamShotDelay=8 -GothamIgnoreHover -GothamShotName=$file"
+        $running += [pscustomobject]@{ Shot = $s; Process = (Start-Process $engine -ArgumentList $arguments -PassThru); Src = (Join-Path $shotDir "$file.png"); Deadline = (Get-Date).AddSeconds(60) }
+    }
+    Start-Sleep -Milliseconds 500
+    # Stop each game as soon as its screenshot is on disk (and fully written) rather than always waiting the worst case.
+    $still = @()
+    foreach ($r in $running) {
+        $done = Test-Path $r.Src
+        if (-not $done -and (Get-Date) -lt $r.Deadline) { $still += $r; continue }
+        Start-Sleep -Seconds 1
+        if (-not $r.Process.HasExited) { $r.Process.Kill() }
+        if ($done) { Copy-Item $r.Src (Join-Path $out "$($r.Shot.name).png") -Force; Write-Host "captured $($r.Shot.name)" }
+        else { Write-Host "MISSING $($r.Shot.name)" }
+    }
+    $running = $still
 }
+Start-Sleep -Seconds 2
