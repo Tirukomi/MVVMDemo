@@ -385,7 +385,7 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	Script->Do([Settings]() { if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::SubtitleSize, +1); } })
 		.Do(Push(&UGothamUISettings::ControlsScreenClass))
 		.WaitUntil([Settled]() { return Settled(ActiveScreen<UControlsScreen>()); }, Open, TEXT("key bindings open over settings (precondition)"))
-		.Do([Self, Settings]() { Self->CheckKnownBug(Settings() && Settings()->GetIsDirty(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); })
+		.Do([Self, Settings]() { Self->Check(Settings() && Settings()->GetIsDirty(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); })
 		.Do([]() { if (UControlsScreen* Controls = ActiveScreen<UControlsScreen>()) { Controls->DeactivateWidget(); } })
 		.WaitUntil([Settled]() { return Settled(ActiveScreen<USettingsScreen>()); }, Open, TEXT("back on settings (precondition)"))
 		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
@@ -401,13 +401,13 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		.WaitUntil([Closed, WeakUI]() { return ActiveScreen<USettingsScreen>() && WeakUI.IsValid() && !WeakUI->IsTransitioning(); }, Open, TEXT("settings open over pause (precondition)"))
 		// Seen on some runs: focus lands on the game viewport, so a gamepad has nothing to move. The pause screen
 		// deactivating underneath (finding 2) is the likely cause.
-		.Do([Self]() { Self->CheckKnownBug(HasFocusWithin(ActiveScreen<USettingsScreen>()), TEXT("settings opened from pause receive focus (review 2)"), /*bIntermittent*/ true); })
-		.Do([Self, WeakPC]() { Self->CheckKnownBug(WeakPC.IsValid() && UGameplayStatics::IsGamePaused(WeakPC.Get()), TEXT("the game stays paused under settings opened from pause (review 2)")); })
+		.Do([Self]() { Self->Check(HasFocusWithin(ActiveScreen<USettingsScreen>()), TEXT("settings opened from pause receive focus (review 2)")); })
+		.Do([Self, WeakPC]() { Self->Check(WeakPC.IsValid() && UGameplayStatics::IsGamePaused(WeakPC.Get()), TEXT("the game stays paused under settings opened from pause (review 2)")); })
 		.Do([]() { if (USettingsScreen* Screen = ActiveScreen<USettingsScreen>()) { Screen->DeactivateWidget(); } })
 		.WaitUntil([Settled]() { return Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("back on pause (precondition)"))
 		.Do([]() { SendKey(EKeys::J); })
 		.WaitUntil([WeakUI]() { return WeakUI.IsValid() && !WeakUI->IsTransitioning(); }, Quick, TEXT("the case file key is handled (precondition)"))
-		.Do([Self]() { Self->CheckKnownBug(ActiveScreen<UClueLogScreen>() != nullptr, TEXT("the case file key opens the case file over pause (review 7)")); })
+		.Do([Self]() { Self->Check(ActiveScreen<UClueLogScreen>() != nullptr, TEXT("the case file key opens the case file over pause (review 7)")); })
 		// One screen per settled frame: a closed screen leaves the stack only after its transition.
 		.WaitUntil([WeakUI]()
 		{
@@ -433,7 +433,7 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 			Algo::Reverse(Reversed);
 			Clues->SetEntries(Reversed);
 			const UGothamClueTileView* Tiles = FindTileView(ActiveScreen<UClueLogScreen>());
-			Self->CheckKnownBug(Tiles && Tiles->GetItemAt(0) == Reversed[0], TEXT("the case file shows a reordered clue list (review 9)"));
+			Self->Check(Tiles && Tiles->GetItemAt(0) == Reversed[0], TEXT("the case file shows a reordered clue list (review 9)"));
 			Algo::Reverse(Reversed);
 			Clues->SetEntries(Reversed);
 		})
@@ -444,7 +444,7 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	Script->Do([Self, WeakPC]()
 	{
 		const UGothamViewModelSubsystem* ViewModels = ViewModelsOf(WeakPC);
-		Self->CheckKnownBug(ViewModels && ViewModels->FindViewModel(USubtitleViewModel::StaticClass()) != nullptr, TEXT("the resolver finds the subtitles view model (review 8)"));
+		Self->Check(ViewModels && ViewModels->FindViewModel(USubtitleViewModel::StaticClass()) != nullptr, TEXT("the resolver finds the subtitles view model (review 8)"));
 	});
 
 	// Review findings 3, 4, 6 and 10: the gadget wheel and gadget keys follow rebinding, the wheel's slow motion survives
@@ -459,7 +459,7 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		{
 			const UGothamViewModelSubsystem* ViewModels = ViewModelsOf(WeakPC);
 			const UGadgetSlotViewModel* First = ViewModels ? ViewModels->GetGadgetBar()->GetSlot(0) : nullptr;
-			Self->CheckKnownBug(First && First->GetHotkey().ToString() == UGothamInputGlyph::GetKeyLabel(EKeys::X).ToString(), TEXT("the HUD's gadget key hint follows rebinding (review 4)"));
+			Self->Check(First && First->GetHotkey().ToString() == UGothamInputGlyph::GetKeyLabel(EKeys::X).ToString(), TEXT("the HUD's gadget key hint follows rebinding (review 4)"));
 		})
 		.Do([WeakPC, WeakUI]()
 		{
@@ -470,18 +470,18 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		.Wait(GothamFeel::HitStopSeconds * 3.f)
 		.Do([Self, WeakPC, Settings]()
 		{
-			Self->CheckKnownBug(WeakPC.IsValid() && UGameplayStatics::GetGlobalTimeDilation(WeakPC.Get()) < 0.5f, TEXT("the wheel's slow motion survives a hit-stop (review 6)"));
+			Self->Check(WeakPC.IsValid() && UGameplayStatics::GetGlobalTimeDilation(WeakPC.Get()) < 0.5f, TEXT("the wheel's slow motion survives a hit-stop (review 6)"));
 			if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::ReducedMotion, +1); }
 		})
 		.Do([Self, Settings]()
 		{
 			const UGadgetWheel* Wheel = FindWheel(ActiveScreen<UGadgetWheelScreen>());
-			Self->CheckKnownBug(Wheel && Wheel->bReduceMotion, TEXT("the open wheel follows reduced motion live (review 10)"));
+			Self->Check(Wheel && Wheel->bReduceMotion, TEXT("the open wheel follows reduced motion live (review 10)"));
 			if (Settings()) { Settings()->Revert(); }
 			ReleaseKey(EKeys::Z);
 		})
 		.Wait(0.5f)
-		.Do([Self]() { Self->CheckKnownBug(ActiveScreen<UGadgetWheelScreen>() == nullptr, TEXT("releasing the rebound wheel key closes the wheel (review 3)")); })
+		.Do([Self]() { Self->Check(ActiveScreen<UGadgetWheelScreen>() == nullptr, TEXT("releasing the rebound wheel key closes the wheel (review 3)")); })
 		.Do([WeakPC, WeakUI, Undo]()
 		{
 			if (UGadgetWheelScreen* Wheel = ActiveScreen<UGadgetWheelScreen>()) { Wheel->DeactivateWidget(); }
