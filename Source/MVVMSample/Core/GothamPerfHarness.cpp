@@ -14,6 +14,7 @@
 #include "HAL/PlatformMemory.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "DynamicRHI.h"
 #include "RenderTimer.h"
 #include "Gameplay/ThreatSubsystem.h"
 #include "UI/ClueEntryWidget.h"
@@ -42,6 +43,8 @@ namespace
 		double AvgFrameMs = 0.0;
 		double P95FrameMs = 0.0;
 		double AvgGameMs = 0.0;
+		/** GPU time of the whole frame (RHIGetGPUFrameCycles, as stat unit shows it). */
+		double AvgGpuMs = 0.0;
 		int32 UserWidgets = 0;
 		int32 Ticking = 0;
 		int32 UObjects = 0;
@@ -72,6 +75,7 @@ namespace
 		int32 Index = -1;
 		TArray<float> FrameMs;
 		double GameMsSum = 0.0;
+		double GpuMsSum = 0.0;
 		int32 GameSamples = 0;
 		double StartMB = 0.0;
 		/** -GothamPerfInject=<scenario>:<ms>: busy-waits that long on the game thread every frame of one scenario, so
@@ -123,6 +127,7 @@ namespace
 			Index = InIndex;
 			FrameMs.Reset();
 			GameMsSum = 0.0;
+			GpuMsSum = 0.0;
 			GameSamples = 0;
 			if (Scenarios.IsValidIndex(Index) && Scenarios[Index].Setup)
 			{
@@ -145,6 +150,7 @@ namespace
 				Result.P95FrameMs = Sorted[FMath::Min(Sorted.Num() - 1, static_cast<int32>(Sorted.Num() * 0.95))];
 			}
 			Result.AvgGameMs = GameSamples > 0 ? GameMsSum / GameSamples : 0.0;
+			Result.AvgGpuMs = GameSamples > 0 ? GpuMsSum / GameSamples : 0.0;
 			Result.UserWidgets = CountUserWidgets();
 			Result.Ticking = CountUserWidgets(true);
 			Result.UObjects = GUObjectArray.GetObjectArrayNumMinusAvailable();
@@ -177,6 +183,7 @@ namespace
 			{
 				FrameMs.Add(DeltaTime * 1000.f);
 				GameMsSum += FPlatformTime::ToMilliseconds(GGameThreadTime);
+				GpuMsSum += FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles());
 				++GameSamples;
 			}
 		}
@@ -185,11 +192,12 @@ namespace
 		{
 			FString Md = FString::Printf(TEXT("# UI performance run: %s\n\nResolution %ux%u, uncapped, %.0fs warm-up + %.0fs sampled per scenario. Start memory %.0f MB.\n\n"),
 				*Label, GSystemResolution.ResX, GSystemResolution.ResY, WarmupSeconds, SampleSeconds(), StartMB);
-			Md += TEXT("| Scenario | Frames | Avg frame (ms) | P95 frame (ms) | Avg game thread (ms) | UUserWidgets | ticking | UObjects | Used MB |\n|---|---|---|---|---|---|---|---|---|\n");
+			// Columns are only ever appended: G5 reads the first five, so reports from older builds stay comparable.
+			Md += TEXT("| Scenario | Frames | Avg frame (ms) | P95 frame (ms) | Avg game thread (ms) | UUserWidgets | ticking | UObjects | Used MB | Avg GPU (ms) |\n|---|---|---|---|---|---|---|---|---|---|\n");
 			for (const FResult& R : Results)
 			{
-				Md += FString::Printf(TEXT("| %s | %d | %.3f | %.3f | %.3f | %d | %d | %d | %.0f |\n"),
-					*R.Name, R.Frames, R.AvgFrameMs, R.P95FrameMs, R.AvgGameMs, R.UserWidgets, R.Ticking, R.UObjects, R.UsedMB);
+				Md += FString::Printf(TEXT("| %s | %d | %.3f | %.3f | %.3f | %d | %d | %d | %.0f | %.3f |\n"),
+					*R.Name, R.Frames, R.AvgFrameMs, R.P95FrameMs, R.AvgGameMs, R.UserWidgets, R.Ticking, R.UObjects, R.UsedMB, R.AvgGpuMs);
 			}
 			const IConsoleVariable* Invalidation = IConsoleManager::Get().FindConsoleVariable(TEXT("Slate.EnableGlobalInvalidation"));
 			Md += FString::Printf(TEXT("\nSlate.EnableGlobalInvalidation = %d\n"), Invalidation ? Invalidation->GetInt() : -1);

@@ -20,7 +20,7 @@ public class MVVMSample : ModuleRules
 			"GameplayTags", "DeveloperSettings", "RenderCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { "RHI" }); // GPU frame time for the perf harness
 
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
