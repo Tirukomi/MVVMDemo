@@ -9,19 +9,13 @@ void UGothamSettingsAwareWidget::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		SettingsHandle = Settings->OnSettingsChanged.AddUObject(this, &UGothamSettingsAwareWidget::HandleSettingsChanged);
-	}
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { OnSettingsApplied(); });
 	OnSettingsApplied();
 }
 
 void UGothamSettingsAwareWidget::NativeDestruct()
 {
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(SettingsHandle);
-	}
+	SettingsListener.Reset();
 	Super::NativeDestruct();
 }
 

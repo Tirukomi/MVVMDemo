@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "CommonActivatableWidget.h"
 #include "UI/Style/GothamStyle.h"
 #include "GothamScreen.generated.h"
@@ -104,5 +105,5 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UWidget> HeaderRule;
 
-	FDelegateHandle PaletteHandle;
+	FGothamSettingsListener SettingsListener;
 };

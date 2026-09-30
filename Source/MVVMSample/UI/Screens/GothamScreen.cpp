@@ -2,6 +2,7 @@
 
 #include "UI/Screens/GothamScreen.h"
 
+#include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Containers/Ticker.h"
 #include "Blueprint/WidgetTree.h"
@@ -45,19 +46,13 @@ void UGothamScreen::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		PaletteHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { OnPaletteChanged(); });
-	}
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { OnPaletteChanged(); });
 	OnPaletteChanged();
 }
 
 void UGothamScreen::NativeDestruct()
 {
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(PaletteHandle);
-	}
+	SettingsListener.Reset();
 	Super::NativeDestruct();
 }
 

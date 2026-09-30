@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "Containers/Ticker.h"
 #include "UI/Screens/GothamScreen.h"
 #include "GothamHudWidget.generated.h"
@@ -77,7 +78,7 @@ private:
 	TObjectPtr<UPlayerVitalsViewModel> VitalsVM;
 
 	FTSTicker::FDelegateHandle FlashHandle;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 	float FlashElapsed = 0.f;
 	int32 LastDamageCount = 0;
 };

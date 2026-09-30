@@ -2,6 +2,7 @@
 
 #include "UI/Layout/GothamPrimaryLayout.h"
 
+#include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Overlay.h"
@@ -43,19 +44,13 @@ void UGothamPrimaryLayout::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { ApplyMotionSetting(); });
-	}
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyMotionSetting(); });
 	ApplyMotionSetting();
 }
 
 void UGothamPrimaryLayout::NativeDestruct()
 {
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(SettingsHandle);
-	}
+	SettingsListener.Reset();
 	Super::NativeDestruct();
 }
 

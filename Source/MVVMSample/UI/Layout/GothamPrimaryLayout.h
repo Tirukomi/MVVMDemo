@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "CommonUserWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "UI/Layout/GothamUITypes.h"
@@ -38,7 +39,7 @@ protected:
 private:
 	/** Reduced motion turns the transition off (duration 0). */
 	void ApplyMotionSetting();
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UCommonActivatableWidgetStack>> Layers;

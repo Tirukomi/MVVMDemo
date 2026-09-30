@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsTypes.h"
 #include "Blueprint/UserWidget.h"
 #include "GothamSettingsAwareWidget.generated.h"
@@ -31,7 +32,5 @@ protected:
 	float GetPanelAlpha() const;
 
 private:
-	void HandleSettingsChanged(const FGothamSettingsData& Data) { OnSettingsApplied(); }
-
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 };

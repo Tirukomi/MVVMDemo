@@ -2,6 +2,7 @@
 
 #include "UI/GothamHudWidget.h"
 
+#include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
@@ -122,10 +123,7 @@ void UGothamHudWidget::NativeConstruct()
 	Subtitles->SetViewModel(ViewModels->GetSubtitles());
 	ClueMarkers->SetViewModels(ViewModels->GetClues(), ViewModels->GetDetective());
 	ThreatIndicators->SetViewModel(ViewModels->GetThreats());
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { ApplyMarkerColors(); UpdateVignetteRest(); });
-	}
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyMarkerColors(); UpdateVignetteRest(); });
 	ApplyMarkerColors();
 
 	VitalsVM = ViewModels->GetVitals();
@@ -140,10 +138,7 @@ void UGothamHudWidget::NativeConstruct()
 void UGothamHudWidget::NativeDestruct()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(FlashHandle);
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(SettingsHandle);
-	}
+	SettingsListener.Reset();
 	if (VitalsVM)
 	{
 		VitalsVM->RemoveAllFieldValueChangedDelegates(this);
