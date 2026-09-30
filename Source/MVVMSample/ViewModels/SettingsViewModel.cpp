@@ -92,6 +92,17 @@ void USettingsViewModel::Recompute()
 	UE_MVVM_SET_PROPERTY_VALUE(ScanModeValue, GetValueText(EGothamSetting::ScanMode));
 	UE_MVVM_SET_PROPERTY_VALUE(SubtitleSizeValue, GetValueText(EGothamSetting::SubtitleSize));
 	UE_MVVM_SET_PROPERTY_VALUE(SubtitleBackgroundValue, GetValueText(EGothamSetting::SubtitleBackground));
+	if (!bHasShown || Shown != Current)
+	{
+		Shown = Current;
+		bHasShown = true;
+		BumpRevision();
+	}
+}
+
+void USettingsViewModel::BumpRevision()
+{
+	UE_MVVM_SET_PROPERTY_VALUE_INLINE(Revision, Revision + 1);
 }
 
 void USettingsViewModel::RefreshTexts()
@@ -108,6 +119,7 @@ void USettingsViewModel::RefreshTexts()
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ScanModeValue);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SubtitleSizeValue);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(SubtitleBackgroundValue);
+	BumpRevision();
 }
 
 #undef LOCTEXT_NAMESPACE

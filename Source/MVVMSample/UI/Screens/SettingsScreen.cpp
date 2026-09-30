@@ -133,7 +133,7 @@ void USettingsScreen::NativeConstruct()
 			Rows[i]->Setup(RowSettings[i], ViewModel);
 		}
 		using FVM = USettingsViewModel::FFieldNotificationClassDescriptor;
-		GothamMVVM::Bind(ViewModel, this, &USettingsScreen::OnViewModelChanged, { FVM::bIsDirty, FVM::LanguageValue });
+		GothamMVVM::Bind(ViewModel, this, &USettingsScreen::OnViewModelChanged, { FVM::bIsDirty, FVM::Revision });
 	}
 	RefreshDirtyNote();
 	ShowDetail(Rows.IsEmpty() ? nullptr : Rows[0].Get());
@@ -221,7 +221,7 @@ void USettingsScreen::ShowDetail(UWidget* Item)
 void USettingsScreen::OnViewModelChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId)
 {
 	RefreshDirtyNote();
-	// A language change re-texts the detail pane too.
+	// A language change (a Revision bump) re-texts the detail pane too.
 	ShowDetail(DetailItem.Get());
 }
 

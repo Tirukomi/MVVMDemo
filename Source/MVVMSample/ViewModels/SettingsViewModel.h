@@ -45,6 +45,7 @@ public:
 
 	const FGothamSettingsData& GetCurrent() const { return Current; }
 	bool GetIsDirty() const { return bIsDirty; }
+	int32 GetRevision() const { return Revision; }
 
 	static FText GetLabel(EGothamSetting Setting);
 	/** One or two sentences for the settings screen's detail pane. */
@@ -57,6 +58,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetIsDirty, meta = (AllowPrivateAccess = "true"))
 	bool bIsDirty = false;
 
+	/**
+	 * Bumps whenever any displayed value may have changed: a value stepped, reverted or reset, or the language
+	 * changed (which re-texts everything). Views subscribe to this one field and re-read what they show
+	 * (GetValueText, GetLabel, GetCurrent).
+	 */
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetRevision, meta = (AllowPrivateAccess = "true"))
+	int32 Revision = 0;
+
+	// Deprecated: one text per setting, superseded by Revision + GetValueText. Kept for one pass, then removed.
 	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
 	FText LanguageValue;
 	UPROPERTY(BlueprintReadOnly, FieldNotify, meta = (AllowPrivateAccess = "true"))
@@ -78,7 +88,11 @@ protected:
 
 private:
 	void Recompute();
+	void BumpRevision();
 
 	FGothamSettingsData Current;
 	FGothamSettingsData Baseline;
+	/** The values the last Revision described. */
+	FGothamSettingsData Shown;
+	bool bHasShown = false;
 };

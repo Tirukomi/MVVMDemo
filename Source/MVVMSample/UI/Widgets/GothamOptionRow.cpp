@@ -77,11 +77,8 @@ void UGothamOptionRow::Setup(EGothamSetting InSetting, USettingsViewModel* InVie
 	GothamMVVM::Unbind(ViewModel, this);
 	Setting = InSetting;
 	ViewModel = InViewModel;
-	// Any value change (or a language switch, which re-broadcasts every text) refreshes the row.
-	using FVM = USettingsViewModel::FFieldNotificationClassDescriptor;
-	GothamMVVM::Bind(ViewModel, this, &UGothamOptionRow::OnFieldChanged, {
-		FVM::LanguageValue, FVM::ColorVisionValue, FVM::UIScaleValue, FVM::HighContrastValue, FVM::ReducedMotionValue,
-		FVM::WheelModeValue, FVM::ScanModeValue, FVM::SubtitleSizeValue, FVM::SubtitleBackgroundValue });
+	// Any value change, or a language switch, bumps Revision and refreshes the row.
+	GothamMVVM::Bind(ViewModel, this, &UGothamOptionRow::OnFieldChanged, { USettingsViewModel::FFieldNotificationClassDescriptor::Revision });
 	Refresh();
 }
 

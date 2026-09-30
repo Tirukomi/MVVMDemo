@@ -90,4 +90,36 @@ bool FGothamSettingsEdgeCasesTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+// Views refresh on one field, Revision: it must bump whenever a displayed value can have changed, and only then.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamSettingsRevisionTest, "Gotham.Settings.Revision",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FGothamSettingsRevisionTest::RunTest(const FString& Parameters)
+{
+	USettingsViewModel* ViewModel = NewObject<USettingsViewModel>();
+	ViewModel->Initialize(FGothamSettingsData());
+	int32 Notifies = 0;
+	ViewModel->AddFieldValueChangedDelegate(USettingsViewModel::FFieldNotificationClassDescriptor::Revision,
+		INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateLambda([&Notifies](UObject*, UE::FieldNotification::FFieldId) { ++Notifies; }));
+	const int32 Start = ViewModel->GetRevision();
+
+	ViewModel->Cycle(EGothamSetting::HighContrast, +1);
+	TestEqual("a value change bumps", ViewModel->GetRevision(), Start + 1);
+	ViewModel->Apply();
+	TestEqual("applying changes nothing on screen", ViewModel->GetRevision(), Start + 1);
+	ViewModel->Revert();
+	TestEqual("reverting to identical values changes nothing", ViewModel->GetRevision(), Start + 1);
+
+	FGothamSettingsData AtSmallest;
+	AtSmallest.UIScaleIndex = 0;
+	ViewModel->Initialize(AtSmallest);
+	const int32 BeforeClamp = ViewModel->GetRevision();
+	ViewModel->Cycle(EGothamSetting::UIScale, -1);
+	TestEqual("a clamped step that changes nothing does not bump", ViewModel->GetRevision(), BeforeClamp);
+
+	ViewModel->RefreshTexts();
+	TestEqual("a language refresh always bumps", ViewModel->GetRevision(), BeforeClamp + 1);
+	TestEqual("every bump notifies", Notifies, ViewModel->GetRevision() - Start);
+	return true;
+}
+
 #endif
