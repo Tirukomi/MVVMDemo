@@ -141,15 +141,16 @@ void UClueLogScreen::RefreshList()
 	Summary->SetText(FText::Format(LOCTEXT("SummaryFmt", "{0} of {1} clues discovered"),
 		FText::AsNumber(Clues->GetDiscoveredCount()), FText::AsNumber(Clues->GetTotalCount())));
 
-	// Only reset the list when the set of entries changed; a discovery just updates the tile in place.
-	if (TileView->GetNumItems() != Clues->GetEntries().Num())
+	// Only reset the list when the entries themselves changed (which ones, or their order); a discovery just updates
+	// the tile in place.
+	TArray<UObject*> Items;
+	Items.Reserve(Clues->GetEntries().Num());
+	for (UClueEntryViewModel* Entry : Clues->GetEntries())
 	{
-		TArray<UObject*> Items;
-		Items.Reserve(Clues->GetEntries().Num());
-		for (UClueEntryViewModel* Entry : Clues->GetEntries())
-		{
-			Items.Add(Entry);
-		}
+		Items.Add(Entry);
+	}
+	if (TileView->GetListItems() != Items)
+	{
 		TileView->SetListItems(Items);
 		if (!Items.IsEmpty())
 		{
