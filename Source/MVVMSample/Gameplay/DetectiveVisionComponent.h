@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "Components/ActorComponent.h"
 #include "Gameplay/DetectiveTypes.h"
 #include "DetectiveVisionComponent.generated.h"
@@ -49,7 +50,7 @@ private:
 
 	float BaseFOV = 90.f;
 	bool bReducedMotion = false;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 	FDelegateHandle PulseHandle;
 
 	/** Ring currently travelling through the world. */

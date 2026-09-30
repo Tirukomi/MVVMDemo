@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "Containers/Ticker.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GothamViewModelSubsystem.generated.h"
@@ -114,6 +115,6 @@ private:
 	FDelegateHandle ScanHandle;
 	FDelegateHandle AnalysisHandle;
 	FDelegateHandle CluesHandle;
-	FDelegateHandle SettingsHandle;
+	FGothamSettingsListener SettingsListener;
 	FTSTicker::FDelegateHandle SubtitleHideHandle;
 };

@@ -44,7 +44,7 @@ void UDetectiveVisionComponent::BeginPlay()
 	PushPulseParameters();
 	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
 	{
-		SettingsHandle = Settings->OnSettingsChanged.AddUObject(this, &UDetectiveVisionComponent::ApplySettings);
+		SettingsListener.Bind(Settings, this, [this](const FGothamSettingsData& Data) { ApplySettings(Data); });
 		ApplySettings(Settings->GetSettings());
 	}
 	HandleDetectiveChanged(Detective->IsActive(), Detective->GetAlpha());
@@ -57,10 +57,7 @@ void UDetectiveVisionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 		Detective->OnDetectiveChanged.Remove(Handle);
 		Detective->OnScanPulse.Remove(PulseHandle);
 	}
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		Settings->OnSettingsChanged.Remove(SettingsHandle);
-	}
+	SettingsListener.Reset();
 	Super::EndPlay(EndPlayReason);
 }
 

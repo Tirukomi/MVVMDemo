@@ -43,7 +43,8 @@ void UGothamViewModelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		{
 			if (UGothamSettingsSubsystem* Settings = GameInstance->GetSubsystem<UGothamSettingsSubsystem>())
 			{
-				SettingsHandle = Settings->OnSettingsChanged.AddUObject(this, &UGothamViewModelSubsystem::HandleSettings);
+				// A local-player subsystem has no world, so the settings subsystem is passed in directly.
+				SettingsListener.Bind(Settings, this, [this](const FGothamSettingsData& Data) { HandleSettings(Data); });
 				HandleSettings(Settings->GetSettings());
 			}
 		}
@@ -53,16 +54,7 @@ void UGothamViewModelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UGothamViewModelSubsystem::Deinitialize()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(SubtitleHideHandle);
-	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
-	{
-		if (UGameInstance* GameInstance = LocalPlayer->GetGameInstance())
-		{
-			if (UGothamSettingsSubsystem* Settings = GameInstance->GetSubsystem<UGothamSettingsSubsystem>())
-			{
-				Settings->OnSettingsChanged.Remove(SettingsHandle);
-			}
-		}
-	}
+	SettingsListener.Reset();
 	Unbind();
 	Super::Deinitialize();
 }
