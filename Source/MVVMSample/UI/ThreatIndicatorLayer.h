@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/Widget.h"
+#include "UI/GothamWorldOverlayLayer.h"
 #include "ThreatIndicatorLayer.generated.h"
 
-class SThreatIndicatorLayer;
 class UThreatViewModel;
 
 /**
@@ -14,7 +13,7 @@ class UThreatViewModel;
  * player's camera and hands the result to SThreatIndicatorLayer. Its active timer runs only while hostiles exist.
  */
 UCLASS()
-class MVVMSAMPLE_API UThreatIndicatorLayer : public UWidget
+class MVVMSAMPLE_API UThreatIndicatorLayer : public UGothamWorldOverlayLayer
 {
 	GENERATED_BODY()
 
@@ -27,18 +26,14 @@ public:
 	void SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText);
 	void SetReducedMotion(bool bInReduced);
 
-	virtual void ReleaseSlateResources(bool bReleaseChildren) override;
-
 protected:
-	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual TSharedRef<SGothamWorldOverlayBase> MakeOverlay() override;
+	virtual bool ShouldBeActive() const override;
 
 private:
 	void OnThreatsChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
 	void BuildIndicators(TArray<struct FGothamThreatIndicator>& Out) const;
-	bool ShouldBeActive() const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UThreatViewModel> ViewModel;
-
-	TSharedPtr<SThreatIndicatorLayer> SlateLayer;
 };

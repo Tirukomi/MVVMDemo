@@ -2,7 +2,6 @@
 
 #include "UI/ThreatIndicatorLayer.h"
 
-#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/Slate/SThreatIndicatorLayer.h"
@@ -10,25 +9,11 @@
 #include "ViewModels/GothamMVVM.h"
 #include "ViewModels/ThreatViewModel.h"
 
-TSharedRef<SWidget> UThreatIndicatorLayer::RebuildWidget()
+TSharedRef<SGothamWorldOverlayBase> UThreatIndicatorLayer::MakeOverlay()
 {
-	SlateLayer = SNew(SThreatIndicatorLayer);
-	const TWeakObjectPtr<UThreatIndicatorLayer> Weak(this);
-	SlateLayer->SetProvider([Weak](TArray<FGothamThreatIndicator>& Out)
-	{
-		if (const UThreatIndicatorLayer* Self = Weak.Get())
-		{
-			Self->BuildIndicators(Out);
-		}
-	});
-	SlateLayer->SetActive(ShouldBeActive());
-	return SlateLayer.ToSharedRef();
-}
-
-void UThreatIndicatorLayer::ReleaseSlateResources(bool bReleaseChildren)
-{
-	Super::ReleaseSlateResources(bReleaseChildren);
-	SlateLayer.Reset();
+	TSharedRef<SThreatIndicatorLayer> Layer = SNew(SThreatIndicatorLayer);
+	Layer->SetProvider(MakeProvider(&UThreatIndicatorLayer::BuildIndicators));
+	return Layer;
 }
 
 void UThreatIndicatorLayer::SetViewModel(UThreatViewModel* InViewModel)
@@ -37,25 +22,22 @@ void UThreatIndicatorLayer::SetViewModel(UThreatViewModel* InViewModel)
 	ViewModel = InViewModel;
 	GothamMVVM::Bind(ViewModel, this, &UThreatIndicatorLayer::OnThreatsChanged,
 		{ UThreatViewModel::FFieldNotificationClassDescriptor::ThreatCount });
-	if (SlateLayer.IsValid())
-	{
-		SlateLayer->SetActive(ShouldBeActive());
-	}
+	UpdateActive();
 }
 
 void UThreatIndicatorLayer::SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText)
 {
-	if (SlateLayer.IsValid())
+	if (SThreatIndicatorLayer* Layer = GetOverlay<SThreatIndicatorLayer>())
 	{
-		SlateLayer->SetColors(InDanger, InIdle, InPanel, InText);
+		Layer->SetColors(InDanger, InIdle, InPanel, InText);
 	}
 }
 
 void UThreatIndicatorLayer::SetReducedMotion(bool bInReduced)
 {
-	if (SlateLayer.IsValid())
+	if (SThreatIndicatorLayer* Layer = GetOverlay<SThreatIndicatorLayer>())
 	{
-		SlateLayer->SetReducedMotion(bInReduced);
+		Layer->SetReducedMotion(bInReduced);
 	}
 }
 
@@ -66,10 +48,7 @@ bool UThreatIndicatorLayer::ShouldBeActive() const
 
 void UThreatIndicatorLayer::OnThreatsChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId)
 {
-	if (SlateLayer.IsValid())
-	{
-		SlateLayer->SetActive(ShouldBeActive());
-	}
+	UpdateActive();
 }
 
 void UThreatIndicatorLayer::BuildIndicators(TArray<FGothamThreatIndicator>& Out) const
@@ -95,15 +74,14 @@ void UThreatIndicatorLayer::BuildIndicators(TArray<FGothamThreatIndicator>& Out)
 		// Stunned thugs are no threat for now: their arrow dims.
 		Indicator.Opacity = Threat.State == EGothamThugState::Stunned ? 0.35f : 1.f;
 		Indicator.ViewDirection = CameraRotation.UnrotateVector(Threat.PromptLocation - CameraLocation);
-		// Viewport-relative and DPI-adjusted: the same space as the full-screen HUD canvas this layer fills.
-		Indicator.bProjected = Indicator.ViewDirection.X > 0.f
-			&& UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PC, Threat.PromptLocation, Indicator.Screen, true);
+		Indicator.bProjected = Indicator.ViewDirection.X > 0.f && ProjectToLayer(Threat.PromptLocation, Indicator.Screen);
 		bAnyWarning |= bWarning;
 	}
-	if (bAnyWarning && SlateLayer.IsValid())
+	SThreatIndicatorLayer* Layer = GetOverlay<SThreatIndicatorLayer>();
+	if (bAnyWarning && Layer)
 	{
 		// Follows rebinding and device switches: the prompt always names the key that counters right now.
 		const FKey Key = UGothamInputGlyph::FindKeyForAction(PC, TEXT("Counter"));
-		SlateLayer->SetKeyLabel(Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key) : FText::GetEmpty());
+		Layer->SetKeyLabel(Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key) : FText::GetEmpty());
 	}
 }

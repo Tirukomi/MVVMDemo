@@ -19,23 +19,7 @@ namespace
 
 void SThreatIndicatorLayer::Construct(const FArguments& InArgs)
 {
-	SetCanTick(false);
-	SetVisibility(EVisibility::HitTestInvisible);
-}
-
-void SThreatIndicatorLayer::SetActive(bool bInActive)
-{
-	if (bInActive && !Timer.IsValid())
-	{
-		Timer = RegisterActiveTimer(0.f, FWidgetActiveTimerDelegate::CreateSP(this, &SThreatIndicatorLayer::Refresh));
-	}
-	else if (!bInActive && Timer.IsValid())
-	{
-		UnRegisterActiveTimer(Timer.ToSharedRef());
-		Timer.Reset();
-		Threats.Reset();
-		Invalidate(EInvalidateWidgetReason::Paint);
-	}
+	ConstructOverlay();
 }
 
 void SThreatIndicatorLayer::SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText)
@@ -47,24 +31,12 @@ void SThreatIndicatorLayer::SetColors(const FLinearColor& InDanger, const FLinea
 	Invalidate(EInvalidateWidgetReason::Paint);
 }
 
-EActiveTimerReturnType SThreatIndicatorLayer::Refresh(double InCurrentTime, float InDeltaTime)
-{
-	Time = InCurrentTime;
-	Threats.Reset();
-	if (Provider)
-	{
-		Provider(Threats);
-	}
-	Invalidate(EInvalidateWidgetReason::Paint);
-	return EActiveTimerReturnType::Continue;
-}
-
 int32 SThreatIndicatorLayer::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
 	FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {
 	const FVector2D Size = AllottedGeometry.GetLocalSize();
 	const float Opacity = InWidgetStyle.GetColorAndOpacityTint().A;
-	for (const FGothamThreatIndicator& Threat : Threats)
+	for (const FGothamThreatIndicator& Threat : GetItems())
 	{
 		const bool bOnScreen = Threat.bProjected && GothamThreat::IsOnScreen(Threat.Screen, Size, OnScreenMargin);
 		if (bOnScreen)
@@ -89,7 +61,7 @@ void SThreatIndicatorLayer::PaintPrompt(FSlateWindowElementList& Out, int32 Laye
 
 	// Three alert strokes fanning up from the head. They pulse unless motion is reduced; colour and shape carry the
 	// warning either way, and the key below says what to press.
-	const float Pulse = bReducedMotion ? 1.f : 1.f + 0.18f * FMath::Sin(static_cast<float>(Time) * 18.f);
+	const float Pulse = bReducedMotion ? 1.f : 1.f + 0.18f * FMath::Sin(static_cast<float>(GetRefreshTime()) * 18.f);
 	const float Length = 24.f * Pulse;
 	for (const float Degrees : { -34.f, 0.f, 34.f })
 	{
@@ -132,7 +104,7 @@ void SThreatIndicatorLayer::PaintArrow(FSlateWindowElementList& Out, int32 Layer
 	float Angle = 0.f;
 	GothamThreat::EdgeArrow(Threat.ViewDirection, Geometry.GetLocalSize(), EdgeInset, Position, Angle);
 
-	const float Pulse = (!Threat.bWarning || bReducedMotion) ? 1.f : 1.f + 0.2f * FMath::Sin(static_cast<float>(Time) * 16.f);
+	const float Pulse = (!Threat.bWarning || bReducedMotion) ? 1.f : 1.f + 0.2f * FMath::Sin(static_cast<float>(GetRefreshTime()) * 16.f);
 	const float Size = (Threat.bWarning ? 28.f : 14.f) * Pulse;
 	FLinearColor Color = Threat.bWarning ? Danger : Idle;
 	Color.A *= Opacity * (Threat.bWarning ? 1.f : 0.7f);
