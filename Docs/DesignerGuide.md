@@ -9,7 +9,7 @@ How to change things without reading the C++ first. Everything here is checked a
 2. Add a row to `CLUES` in `Scripts/CreateDetectiveAssets.py` (id, thumbnail, world position) and run
    `Scripts/CreateDetectiveAssets.bat` (editor closed). This creates the `UClueDataAsset`, places an `AClueActor`
    in `L_Arena` and references the string-table entries.
-3. Run `Scripts/Localize.bat` so the new text is gathered and can be translated.
+3. Run `Scripts/Localize.bat` so the new text is gathered into each culture's `.po`, then translate it there.
 
 Or in the editor: create a *Clue Data Asset*, set `Clue Id`, `Title`, `Description` (use a string-table reference for
 the text), optionally `Thumbnail`; drop an *AClueActor* into the level and assign the asset.
@@ -67,10 +67,12 @@ to it.
 
 ## Add a language
 
-1. Add the culture to `Config/Localization/Game_Gather.ini` and `Game_Compile.ini` (`CulturesToGenerate`), to
+1. Add the culture to every `Config/Localization/Game_*.ini` (`CulturesToGenerate`), to
    `FGothamSettingsData::GetLanguages`, and to `+CulturesToStage` in `DefaultGame.ini`.
-2. Add a translation table to `Scripts/TranslateLocalization.py` (keyed by source text).
-3. Run `Scripts/Localize.bat`. Untranslated strings stay English rather than blank.
+2. Run `Scripts/Localize.bat` once: it creates `Content/Localization/Game/<culture>/Game.po` with every string.
+3. Translate the `msgstr` lines in that `.po` (any PO editor works) and run `Scripts/Localize.bat` again.
+   Untranslated strings stay English rather than blank, and so does any string whose English changed after it was
+   translated, until its `.po` entry is updated.
 
 Check the result with `-GothamLanguage=<culture>`; use `en-XA` to see whether a layout survives 40% longer text.
 

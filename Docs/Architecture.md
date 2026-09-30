@@ -106,7 +106,7 @@ input device (Common Input), so rebinding and device switches are reflected with
   preview and Apply / Revert / Defaults. `UGothamSettingsSubsystem` applies side effects and broadcasts.
 - Colours are semantic tokens (`GothamPalette`), resolved per colour-vision preset and high contrast; nothing in UI code
   uses a literal colour for meaning. The Detective post-process takes its clue colours as material parameters.
-- Text is `FText` (LOCTEXT / string table). `Scripts/Localize.bat` runs UE's gather -> translate -> compile; English,
+- Text is `FText` (LOCTEXT / string table). `Scripts/Localize.bat` runs UE's gather -> `.po` import / export -> compile (translations live in one `.po` per culture); English,
   German, Japanese and an `en-XA` pseudo-locale are included.
 
 ## Detective Mode (the cross-cutting feature)

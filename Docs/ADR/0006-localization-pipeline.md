@@ -10,8 +10,14 @@ Text that lives in data assets (clue titles and descriptions) is a code-register
 generated (accents, +40% length) to stress layouts.
 
 ## Consequences
-- Adding a language is: add it to the gather config and `FGothamSettingsData::GetLanguages`, add a table to
-  `TranslateLocalization.py`, run `Scripts/Localize.bat`.
+- Adding a language is: add it to the localization configs and `FGothamSettingsData::GetLanguages`, run
+  `Scripts/Localize.bat`, translate the new `.po`, run it again.
+- **Update (refactoring pass P8):** translations live in `Content/Localization/Game/<culture>/Game.po`, imported and
+  exported by the engine (`Game_ImportPO.ini`, `Game_ExportPO.ini`). This replaced `TranslateLocalization.py`, whose
+  tables were keyed by English text and had to re-point entries whose source changed. The engine now handles that
+  case: a translation made against old English is not compiled in, so the string shows in English until its `.po`
+  entry is updated (verified). `Scripts/PseudoLocalize.py` still generates the `en-XA` `.po`. Switching produced
+  byte-identical `.locres` files for every culture.
 - CJK renders through the engine's fallback font; a shipped title would set an explicit composite font.
 - Widgets re-read text when settings change (`RefreshTexts` re-broadcasts every value even if the `FText` object is
   identical), so a language switch updates open screens.
