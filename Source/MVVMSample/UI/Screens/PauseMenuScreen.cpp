@@ -30,6 +30,8 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
+		// The key that opened this screen (Pause) closes it again.
+		ToggleActionName = TEXT("Pause");
 		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "Blackwater Ops"), LOCTEXT("Title", "Paused"));
 
 		UHorizontalBox* Split = WidgetTree->ConstructWidget<UHorizontalBox>();

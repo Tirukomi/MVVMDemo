@@ -9,7 +9,7 @@
 #include "UI/GothamWidgetTick.h"
 #include "UI/Style/GothamMotion.h"
 #include "UI/Widgets/GothamButton.h"
-#include "UI/Widgets/GothamInputGlyph.h"
+#include "UI/Widgets/GothamHintButton.h"
 
 UGothamSwitcher::UGothamSwitcher(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -28,16 +28,18 @@ void UGothamTabList::EnsureTree()
 	UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 	WidgetTree->RootWidget = Row;
 
-	auto AddPrompt = [&](const FKey& Keyboard, const FKey& Pad)
+	// The Q / E (LB / RB) prompts are buttons too: clicking one steps the tab, as the key does.
+	auto AddPrompt = [&](const FKey& Keyboard, const FKey& Pad, int32 Direction)
 	{
-		UGothamInputGlyph* Glyph = WidgetTree->ConstructWidget<UGothamInputGlyph>();
-		Glyph->SetFixedKeys(Keyboard, Pad);
-		Row->AddChildToHorizontalBox(Glyph)->SetVerticalAlignment(VAlign_Center);
+		UGothamHintButton* Prompt = WidgetTree->ConstructWidget<UGothamHintButton>();
+		Prompt->SetHint(Keyboard, Pad, FText::GetEmpty());
+		Prompt->OnClicked().AddWeakLambda(this, [this, Direction]() { SelectRelative(Direction); });
+		Row->AddChildToHorizontalBox(Prompt)->SetVerticalAlignment(VAlign_Center);
 	};
-	AddPrompt(EKeys::Q, EKeys::Gamepad_LeftShoulder);
+	AddPrompt(EKeys::Q, EKeys::Gamepad_LeftShoulder, -1);
 	TabBox = WidgetTree->ConstructWidget<UHorizontalBox>();
 	Row->AddChildToHorizontalBox(TabBox)->SetPadding(FMargin(10.f, 0.f));
-	AddPrompt(EKeys::E, EKeys::Gamepad_RightShoulder);
+	AddPrompt(EKeys::E, EKeys::Gamepad_RightShoulder, +1);
 }
 
 TSharedRef<SWidget> UGothamTabList::RebuildWidget()

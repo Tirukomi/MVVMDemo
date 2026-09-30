@@ -22,6 +22,7 @@
 #include "UI/GothamUISettings.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Containers/Ticker.h"
+#include "Core/GothamMenuInputTest.h"
 #include "Core/GothamPerfHarness.h"
 #include "ViewModels/SettingsViewModel.h"
 #include "EngineUtils.h"
@@ -444,6 +445,7 @@ void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
  * Dev aids for headless verification, enabled by command-line flags. Each saves a screenshot after 4s.
  *   -GothamOpenPause     opens the pause menu
  *   -GothamOpenQuit      opens the pause menu, then its (destructive) quit confirmation
+ *   -GothamMenuInputTest toggle-key and clickable-prompt checks through Slate input; logs PASS / FAIL, then quits
  *   -GothamCombatDemo    a thug in view and one behind telegraph at once (prompt + arrow), with a 10-hit combo
  *   Thugs never start attacks on their own during these runs (except -GothamCombatDemo's forced ones).
  *   -GothamOpenWheel     opens the gadget wheel, hovers a segment and builds a combo
@@ -479,6 +481,13 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bHudDemo = FParse::Param(Cmd, TEXT("GothamHudDemo"));
 	const bool bCombatDemo = FParse::Param(Cmd, TEXT("GothamCombatDemo"));
 	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot")) || bHudDemo || bCombatDemo;
+
+	// -GothamMenuInputTest drives the menus through Slate input and logs PASS / FAIL per rule, then quits.
+	if (FParse::Param(Cmd, TEXT("GothamMenuInputTest")))
+	{
+		FGothamMenuInputTest::Start(this);
+		return;
+	}
 
 	// -GothamPerf=<label> runs the UI performance harness and quits (see Docs/Performance.md).
 	FString PerfLabel;

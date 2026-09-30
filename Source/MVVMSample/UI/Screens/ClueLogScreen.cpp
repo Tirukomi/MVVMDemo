@@ -31,6 +31,8 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
+		// The key that opened this screen (ClueLog) closes it again.
+		ToggleActionName = TEXT("ClueLog");
 		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "Investigation"), LOCTEXT("Title", "Case file"));
 
 		Summary = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::TextMuted);

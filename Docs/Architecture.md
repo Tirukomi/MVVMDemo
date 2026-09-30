@@ -60,6 +60,11 @@ hit-testing, layer/input-context tracking) so the rules are unit-tested without 
   menus one look (background blur, a left-heavy scrim, section label, title and rule) and a content slide on
   activation; the layer stacks (`UGothamScreenStack`) add a 0.15 s fade on push and pop. Both are off under reduced
   motion.
+- **Prompts and toggles.** Hint-bar prompts are `UGothamHintButton`s: not focusable, and clicking one does what its
+  key does. "Accept" restores the item that had focus before the pointer arrived (clicking lets Slate move focus to
+  the screen), then sends Enter. A screen with `ToggleActionName` closes when any key bound to that action is
+  pressed. The keys come from the Enhanced Input key profile, because the gameplay context is inactive while a menu
+  is open. `-GothamMenuInputTest` checks both through Slate's input path.
 - **Menu focus.** `UGothamMenuList` draws a highlight bar behind the current item. It is event-driven:
   `NativeOnFocusChanging` finds which item is on the new focus path, and `SGothamHighlight` eases toward it with
   `FGothamSlideRect` (tested), reading the target's geometry only while the list holds focus. Buttons and option rows

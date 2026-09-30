@@ -61,7 +61,9 @@ Requires UE 5.8 (path assumptions in `Scripts/` point at `D:\UnrealEngine\UE_5.8
 | Menus: change a value / switch settings tab | Left, right / Q, E | D-pad or stick / LB, RB |
 | Debug: damage, heal, combo hit | F1, F2, F3 | n/a |
 
-All of these are rebindable from **Pause > Settings > Controls**.
+All of these are rebindable from **Pause > Settings > Controls**. In menus, every prompt in the hint bar is also a
+button (click "[Esc] Back" to go back), and the key that opens a screen closes it again (J for the case file, Start
+for pause).
 
 ## Tests
 
@@ -80,7 +82,7 @@ screenshots (below), not asserted in tests.
 These make the game reproduce a state, screenshot itself and stay out of the way of the OS. `Scripts/CaptureScreens.ps1`
 uses them to regenerate every image above.
 
-`-GothamCombatDemo`, `-GothamNoThugs`, `-GothamOpenPause`, `-GothamOpenQuit`, `-GothamOpenWheel`, `-GothamDetective`, `-GothamClueLog[=N]`, `-GothamOpenSettings`,
+`-GothamMenuInputTest` (drives the menus through Slate input and logs PASS / FAIL), `-GothamCombatDemo`, `-GothamNoThugs`, `-GothamOpenPause`, `-GothamOpenQuit`, `-GothamOpenWheel`, `-GothamDetective`, `-GothamClueLog[=N]`, `-GothamOpenSettings`,
 `-GothamSettingsTab=<Display|Accessibility|Controls|Language>`, `-GothamOpenControls`, `-GothamRebindDemo`, `-GothamCycleLanguage`, `-GothamShotDelay=<s>`,
 `-GothamLanguage=<culture>`, `-GothamColorMode=0..3`, `-GothamUIScale=0..4`, `-GothamHighContrast`,
 `-GothamReducedMotion`, `-GothamPerf=<label>` (see [Performance](Docs/Performance.md)).

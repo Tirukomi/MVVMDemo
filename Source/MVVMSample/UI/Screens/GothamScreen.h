@@ -8,6 +8,7 @@
 #include "GothamScreen.generated.h"
 
 class UGothamButton;
+class UGothamHintButton;
 class UGothamInputGlyph;
 class UGothamMenuList;
 class UHorizontalBox;
@@ -44,6 +45,20 @@ protected:
 	/** Screens that must be answered (e.g. confirmations that block) can turn back off. */
 	bool bCanDismissWithBack = true;
 
+	/**
+	 * The gameplay action that opens this screen (e.g. "ClueLog"). Pressing any key bound to it closes the screen
+	 * again, so the same button toggles it. Follows rebinding: the keys come from the live Enhanced Input mapping.
+	 */
+	FName ToggleActionName;
+
+	/** What the Back prompt and Esc / B do. Default: close the screen (if it may be dismissed). */
+	virtual void HandleBack();
+	/** What the Select prompt does when clicked: the same as pressing Enter on Target (what had focus before the
+	 *  pointer went to the prompt), or on whatever has focus if Target is gone. */
+	void HandleAccept(TSharedPtr<SWidget> Target);
+	/** True if Key is currently bound to the named gameplay action (either device). */
+	bool IsKeyBoundToAction(const FKey& Key, FName ActionName) const;
+
 	/** Set by subclasses to the widget that should receive focus when the screen opens. */
 	UPROPERTY(Transient)
 	TObjectPtr<UWidget> DefaultFocus;
@@ -70,10 +85,10 @@ protected:
 	UGothamButton* AddButton(UVerticalBox* Parent, const FText& Label) const;
 	/** A big left-aligned menu item in a highlight list. */
 	UGothamButton* AddMenuItem(UGothamMenuList* List, const FText& Label) const;
-	/** "[Enter/A] Select   [Esc/B] Back" prompt row. */
+	/** "[Enter/A] Select   [Esc/B] Back" prompt row. Each prompt is also a button that does what its key does. */
 	UHorizontalBox* MakeHintBar(const FText& AcceptLabel, const FText& BackLabel);
-	/** Adds one more prompt to a hint bar. */
-	void AddHint(UHorizontalBox* Bar, const FKey& Keyboard, const FKey& Pad, const FText& Label);
+	/** Adds one more clickable prompt to a hint bar; bind its OnClicked() to the action. */
+	UGothamHintButton* AddHint(UHorizontalBox* Bar, const FKey& Keyboard, const FKey& Pad, const FText& Label);
 
 private:
 	UPROPERTY(Transient)
