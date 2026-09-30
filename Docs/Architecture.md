@@ -83,6 +83,11 @@ hit-testing, layer/input-context tracking) so the rules are unit-tested without 
   `FGothamAttackDirector`) and publishes a snapshot list per frame. `UGothamViewModelSubsystem` forwards it to
   `UThreatViewModel` (field-notify counts, plain per-frame array), and `UThreatIndicatorLayer` draws prompts and edge
   arrows in one Slate pass. Gameplay never sees the widgets, and the widgets never see the actors.
+- **World overlays.** Clue markers and threat indicators share one shape: `UGothamWorldOverlayLayer` (UMG: owning
+  player, projection into the HUD canvas, on / off from view-model state) over `SGothamWorldOverlay<TItem>` (Slate: a
+  provider fills the frame's items on an active timer, one paint pass draws them). Inactive means no timer and no
+  paint, so an overlay costs nothing until its mode is on. A new overlay supplies the item struct, the provider, the
+  paint and `ShouldBeActive`.
 - **Lists.** The case file is a `UTileView` (evidence board) over `UClueEntryViewModel`s; tiles are pooled and
   rebind or cancel thumbnail streaming when recycled. Selection follows navigation and drives a detail pane.
 
