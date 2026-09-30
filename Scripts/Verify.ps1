@@ -68,31 +68,39 @@ function UI-Cost($Table) {
     foreach ($k in $Table.Keys) { if ($k -ne "no-ui") { $cost[$k] = $Table[$k] - $Table["no-ui"] } }
     return $cost
 }
-# One harness run of a project (this one or the reference worktree) -> UI cost table, or $null.
+# One harness run of a project (one of the two perf worktrees) -> UI cost table, or $null.
 function Run-Perf([string]$Label, [string]$ProjectDir, [string]$Extra = "") {
     Run-Game "-GothamPerf=$Label $Extra" 300 (Join-Path $ProjectDir "MVVMSample.uproject") | Out-Null
     $path = Join-Path $ProjectDir "Saved\Perf\$Label.md"
     if (Test-Path $path) { return UI-Cost (Read-Perf $path) } else { return $null }
 }
 
-# Checks out $Ref into the reference worktree and builds it (only when the commit changed). Returns an error or "".
-function Prepare-PerfRef([string]$Ref, [string]$Dir) {
-    $sha = (git -C $root rev-parse --verify "$Ref^{commit}" 2>$null)
-    if (-not $sha) { return "unknown reference '$Ref'" }
+# Prepares one perf worktree: checks out $Sha, optionally mirrors this checkout's Source and Config over it (so the
+# current side includes uncommitted edits), and builds it the same way for both sides. Returns an error or "".
+function Prepare-PerfTree([string]$Sha, [string]$Dir, [bool]$MirrorWorkingTree, [string]$Name) {
     if (-not (Test-Path (Join-Path $Dir ".git"))) {
-        git -C $root worktree add --detach $Dir $sha *> $null
+        git -C $root worktree add --detach $Dir $Sha *> $null
     } else {
-        git -C $Dir checkout -q --detach $sha *> $null
+        git -C $Dir checkout -q --force --detach $Sha *> $null
     }
-    if ((git -C $Dir rev-parse HEAD) -ne $sha) { return "could not check out $Ref into $Dir" }
-    $marker = Join-Path $Dir "Binaries\gotham-built.txt"
-    if ((Test-Path $marker) -and ((Get-Content $marker) -eq $sha)) { return "" }
-    $log = Join-Path $verifyDir "$stamp-perfref-build.log"
+    if ((git -C $Dir rev-parse HEAD) -ne $Sha) { return "could not check out $Sha into $Dir" }
+    if ($MirrorWorkingTree) {
+        foreach ($sub in @("Source", "Config")) {
+            robocopy (Join-Path $root $sub) (Join-Path $Dir $sub) /MIR /NFL /NDL /NJH /NJS /NP *> $null
+        }
+        # robocopy keeps the source timestamps, which can be older than this worktree's last build: touch every file
+        # that differs from HEAD so the build always sees it as changed.
+        foreach ($line in (git -C $Dir status --porcelain --untracked-files=all)) {
+            $file = Join-Path $Dir ($line.Substring(3).Trim('"'))
+            if (Test-Path $file -PathType Leaf) { (Get-Item $file).LastWriteTime = Get-Date }
+        }
+    }
+    $log = Join-Path $verifyDir "$stamp-perf$Name-build.log"
     & "$engineDir\Build\BatchFiles\Build.bat" MVVMSampleEditor Win64 Development "-Project=$Dir\MVVMSample.uproject" -WaitMutex *> $log
-    if (-not (Get-Content $log | Select-String -SimpleMatch "Result: Succeeded")) { return "reference build failed (see $log)" }
-    Set-Content $marker $sha
+    $text = Get-Content $log
+    if (-not ($text | Select-String -SimpleMatch "Result: Succeeded")) { return "$Name build failed (see $log)" }
     # A freshly built project's first launch does one-off work (asset registry, shader lookups); keep it out of the numbers.
-    Run-Perf "Verify_${stamp}_warmup" $Dir | Out-Null
+    if (-not ($text | Select-String -SimpleMatch "Target is up to date")) { Run-Perf "Verify_${stamp}_${Name}warmup" $Dir | Out-Null }
     return ""
 }
 
@@ -139,12 +147,17 @@ if (Should-Run "G4") {
 
 # G5: perf against a reference build measured in the same session. Comparing against numbers recorded earlier does not
 # work: on this machine one build's UI cost moves by more than the tolerance from one hour to the next. Measured side by
-# side in ABBA order, both builds share the machine's state and it cancels out. Each run is read as UI cost (scenario
+# side in ABBA order, both builds share the machine's state and it cancels out. Both sides run from sibling worktrees
+# (Saved/PerfRef, Saved/PerfCur) built the same way: running the current side from this checkout instead showed a
+# steady +0.05 ms on HUD scenarios whichever code it held, so the location and build had to be identical too. Each run is read as UI cost (scenario
 # game thread minus no-ui in the same run), each round gives current minus reference per scenario, and a scenario
 # fails when the median over rounds is beyond the tolerance.
 if (-not $Quick -and (Should-Run "G5")) {
     $refDir = Join-Path $root "Saved\PerfRef"
-    $problem = Prepare-PerfRef $PerfRef $refDir
+    $curDir = Join-Path $root "Saved\PerfCur"
+    $refSha = (git -C $root rev-parse --verify "$PerfRef^{commit}" 2>$null)
+    $problem = if (-not $refSha) { "unknown reference '$PerfRef'" } else { Prepare-PerfTree $refSha $refDir $false "ref" }
+    if (-not $problem) { $problem = Prepare-PerfTree (git -C $root rev-parse HEAD) $curDir $true "cur" }
     if ($problem) {
         Record "G5" $false $problem
     } else {
@@ -155,7 +168,7 @@ if (-not $Quick -and (Should-Run "G5")) {
             $costs = @{}
             foreach ($which in $order) {
                 if ($which -eq "ref") { $costs.ref = Run-Perf "Verify_${stamp}_ref$r" $refDir }
-                else { $costs.cur = Run-Perf "Verify_${stamp}_cur$r" $root $extra }
+                else { $costs.cur = Run-Perf "Verify_${stamp}_cur$r" $curDir $extra }
             }
             if (-not $costs.ref -or -not $costs.cur) { $missing++; continue }
             foreach ($k in $costs.ref.Keys) {
