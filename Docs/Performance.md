@@ -114,6 +114,25 @@ The frame-time cost is the background blur. The highlight bar's active timer run
 and invalidates paint only when the bar moves. The evidence board keeps 20 tile widgets alive for 205 clues (the
 viewport's worth), logged by `-GothamClueLog=200`.
 
+## V5 combat
+
+1080p, two runs (`Saved/Perf/V5_combat_1080p*.md`). Four thugs are in the world for every row. The attack director is
+off except in `combat`, where two thugs telegraph on a loop (a counter prompt in view and an edge arrow) while
+attacks build the combo past its milestones.
+
+| | Run A | Run B |
+|---|---|---|
+| no-ui game thread (V4: 1.50 to 1.57 ms) | 1.60 ms | 1.68 ms |
+| hud-idle over no-ui | +0.14 ms | +0.14 ms |
+| combat over no-ui (game thread) | +0.12 ms | +0.19 ms |
+| combat over no-ui (frame) | +0.03 ms | +0.00 ms |
+
+- **Thugs:** four animated characters cost about 0.1 ms of game thread; that's gameplay, not UI.
+- **Idle HUD:** it rose from about +0.10 to +0.14 ms, because the threat layer projects each thug every frame while
+  any exist (it has to, to know when to show an arrow).
+- **Combat:** drawing the prompts and arrows is cheap next to that, since everything is one Slate pass with no
+  widgets per enemy.
+
 ## Budgets
 
 | Budget | Target | Status |

@@ -8,6 +8,7 @@
 #include "InputCoreTypes.h"
 #include "GothamInputGlyph.generated.h"
 
+class APlayerController;
 class UInputAction;
 class UTextBlock;
 enum class ECommonInputType : uint8;
@@ -30,6 +31,9 @@ public:
 
 	/** Short label for a key, e.g. "Esc", "A". Static so tests can cover the mapping. */
 	static FText GetKeyLabel(const FKey& Key);
+
+	/** The key currently bound to a gameplay action for the device the player is using (invalid if none yet). */
+	static FKey FindKeyForAction(const APlayerController* Player, FName InActionName);
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;

@@ -71,6 +71,10 @@ hit-testing, layer/input-context tracking) so the rules are unit-tested without 
   delegates. `UGothamSettingsAwareWidget` adds live restyling from accessibility settings.
 - **Custom Slate.** `SGadgetWheel` (custom vertices, angle hit-testing) and `SComboMeter` (segmented, eased) wrapped as
   `UWidget`s (`UGadgetWheel`, `UComboMeter`) so designers can place and bind them.
+- **Threats.** `UGothamThreatSubsystem` (a world subsystem) runs the thugs with pure rules (`FGothamThugBrain`,
+  `FGothamAttackDirector`) and publishes a snapshot list per frame. `UGothamViewModelSubsystem` forwards it to
+  `UThreatViewModel` (field-notify counts, plain per-frame array), and `UThreatIndicatorLayer` draws prompts and edge
+  arrows in one Slate pass. Gameplay never sees the widgets, and the widgets never see the actors.
 - **Lists.** The case file is a `UTileView` (evidence board) over `UClueEntryViewModel`s; tiles are pooled and
   rebind or cancel thumbnail streaming when recycled. Selection follows navigation and drives a detail pane.
 

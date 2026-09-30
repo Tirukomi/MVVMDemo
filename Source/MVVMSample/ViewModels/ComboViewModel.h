@@ -20,6 +20,8 @@ public:
 	float GetDecayAlpha() const { return DecayAlpha; }
 	bool GetIsActive() const { return bIsActive; }
 	FText GetMultiplierText() const { return MultiplierText; }
+	int32 GetMilestoneCount() const { return MilestoneCount; }
+	FText GetMilestoneText() const { return MilestoneText; }
 
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
@@ -38,4 +40,12 @@ protected:
 	/** Pre-formatted "x3" so views never format numbers themselves (localization-safe). */
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
 	FText MultiplierText;
+
+	/** Bumps each time the streak crosses 10, 20, 30...: views show a callout when it changes. */
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	int32 MilestoneCount = 0;
+
+	/** "10-hit combo", set before MilestoneCount changes. */
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	FText MilestoneText;
 };

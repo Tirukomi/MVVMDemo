@@ -16,9 +16,12 @@
 #include "UI/HealthBarWidget.h"
 #include "UI/ObjectiveTrackerWidget.h"
 #include "UI/SubtitleWidget.h"
+#include "UI/ThreatIndicatorLayer.h"
+#include "UI/Style/GothamMotion.h"
 #include "UI/Widgets/GothamHudPrimitives.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 #include "ViewModels/GothamViewModelSubsystem.h"
+#include "ViewModels/ThreatViewModel.h"
 
 namespace
 {
@@ -69,6 +72,9 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 		ClueMarkers = WidgetTree->ConstructWidget<UClueMarkerLayer>();
 		ClueMarkers->SetVisibility(ESlateVisibility::HitTestInvisible);
 		Fill(Canvas, ClueMarkers);
+		ThreatIndicators = WidgetTree->ConstructWidget<UThreatIndicatorLayer>();
+		ThreatIndicators->SetVisibility(ESlateVisibility::HitTestInvisible);
+		Fill(Canvas, ThreatIndicators);
 		Vignette = WidgetTree->ConstructWidget<UDamageVignette>();
 		Vignette->SetVisibility(ESlateVisibility::HitTestInvisible);
 		Fill(Canvas, Vignette);
@@ -115,6 +121,7 @@ void UGothamHudWidget::NativeConstruct()
 	ObjectiveTracker->SetViewModel(ViewModels->GetObjectives());
 	Subtitles->SetViewModel(ViewModels->GetSubtitles());
 	ClueMarkers->SetViewModels(ViewModels->GetClues(), ViewModels->GetDetective());
+	ThreatIndicators->SetViewModel(ViewModels->GetThreats());
 	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
 	{
 		SettingsHandle = Settings->OnSettingsChanged.AddWeakLambda(this, [this](const FGothamSettingsData&) { ApplyMarkerColors(); UpdateVignetteRest(); });
@@ -175,6 +182,9 @@ void UGothamHudWidget::ApplyMarkerColors()
 	{
 		ClueMarkers->SetColors(Settings->GetColor(EGothamColorToken::Unscanned), Settings->GetColor(EGothamColorToken::Scanned),
 			Settings->GetColor(EGothamColorToken::Accent), Settings->GetColor(EGothamColorToken::TextMuted));
+		ThreatIndicators->SetColors(Settings->GetColor(EGothamColorToken::Danger), Settings->GetColor(EGothamColorToken::TextMuted),
+			Settings->GetColor(EGothamColorToken::Panel), Settings->GetColor(EGothamColorToken::TextPrimary));
+		ThreatIndicators->SetReducedMotion(GothamMotion::IsReduced(this));
 	}
 }
 

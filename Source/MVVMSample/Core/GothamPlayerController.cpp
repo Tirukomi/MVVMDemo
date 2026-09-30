@@ -27,6 +27,7 @@
 #include "EngineUtils.h"
 #include "Gameplay/ClueActor.h"
 #include "Gameplay/DetectiveComponent.h"
+#include "Gameplay/ThreatSubsystem.h"
 #include "UI/ClueEntryWidget.h"
 #include "UI/Screens/PauseMenuScreen.h"
 #include "UnrealClient.h"
@@ -166,6 +167,7 @@ void AGothamPlayerController::SetupInputComponent()
 			EIC->BindAction(MoveDirectionActions[i], ETriggerEvent::Triggered, this, &AGothamPlayerController::OnMoveDirection, MoveDirections[i]);
 		}
 		EIC->BindAction(AttackAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnAttack);
+		EIC->BindAction(CounterAction, ETriggerEvent::Started, this, &AGothamPlayerController::OnCounter);
 		for (int32 i = 0; i < GadgetActions.Num(); ++i)
 		{
 			EIC->BindAction(GadgetActions[i], ETriggerEvent::Started, this, &AGothamPlayerController::OnGadget, i);
@@ -188,6 +190,7 @@ void AGothamPlayerController::BuildInputAssets()
 	MoveAction = MakeAction(this, TEXT("IA_Move"), EInputActionValueType::Axis2D);
 	LookAction = MakeAction(this, TEXT("IA_Look"), EInputActionValueType::Axis2D);
 	AttackAction = MakeAction(this, TEXT("IA_Attack"), EInputActionValueType::Boolean);
+	CounterAction = MakeAction(this, TEXT("IA_Counter"), EInputActionValueType::Boolean);
 	DebugDamageAction = MakeAction(this, TEXT("IA_DebugDamage"), EInputActionValueType::Boolean);
 	DebugHealAction = MakeAction(this, TEXT("IA_DebugHeal"), EInputActionValueType::Boolean);
 	PauseAction = MakeAction(this, TEXT("IA_Pause"), EInputActionValueType::Boolean);
@@ -226,6 +229,7 @@ void AGothamPlayerController::BuildInputAssets()
 	};
 
 	MapPair(AttackAction, TEXT("Attack"), EKeys::LeftMouseButton, EKeys::Gamepad_FaceButton_Bottom);
+	MapPair(CounterAction, TEXT("Counter"), EKeys::RightMouseButton, EKeys::Gamepad_RightShoulder);
 
 	const FKey GadgetKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };
 	const FKey GadgetPadKeys[] = { EKeys::Gamepad_FaceButton_Left, EKeys::Gamepad_FaceButton_Top, EKeys::Gamepad_FaceButton_Right };
@@ -303,6 +307,14 @@ void AGothamPlayerController::OnAttack()
 	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
 	{
 		Hero->Attack();
+	}
+}
+
+void AGothamPlayerController::OnCounter()
+{
+	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetPawn()))
+	{
+		Hero->Counter();
 	}
 }
 
@@ -394,6 +406,7 @@ const UInputAction* AGothamPlayerController::FindAction(FName Name) const
 	if (Name == TEXT("Move")) return MoveAction;
 	if (Name == TEXT("Look")) return LookAction;
 	if (Name == TEXT("Attack")) return AttackAction;
+	if (Name == TEXT("Counter")) return CounterAction;
 	if (Name == TEXT("Pause")) return PauseAction;
 	if (Name == TEXT("GadgetWheel")) return GadgetWheelAction;
 	if (Name == TEXT("Detective")) return DetectiveAction;
@@ -429,6 +442,8 @@ void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
  * Dev aids for headless verification, enabled by command-line flags. Each saves a screenshot after 4s.
  *   -GothamOpenPause     opens the pause menu
  *   -GothamOpenQuit      opens the pause menu, then its (destructive) quit confirmation
+ *   -GothamCombatDemo    a thug in view and one behind telegraph at once (prompt + arrow), with a 10-hit combo
+ *   Thugs never start attacks on their own during these runs (except -GothamCombatDemo's forced ones).
  *   -GothamOpenWheel     opens the gadget wheel, hovers a segment and builds a combo
  *   -GothamDetective     enters detective mode and scans the nearest clue
  *   -GothamClueLog[=N]   scans a clue, opens the case file, optionally with N extra fake clues
@@ -440,7 +455,8 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const TCHAR* Cmd = FCommandLine::Get();
 	// Screenshot runs must be deterministic: the first mouse delta after window capture would otherwise swing the camera.
 	if (FParse::Param(Cmd, TEXT("GothamShot")) || FParse::Param(Cmd, TEXT("GothamOpenWheel")) || FParse::Param(Cmd, TEXT("GothamDetective"))
-		|| FParse::Param(Cmd, TEXT("GothamOpenPause")) || FParse::Param(Cmd, TEXT("GothamOpenQuit")) || FParse::Param(Cmd, TEXT("GothamOpenSettings")) || FParse::Param(Cmd, TEXT("GothamClueLog")))
+		|| FParse::Param(Cmd, TEXT("GothamOpenPause")) || FParse::Param(Cmd, TEXT("GothamOpenQuit")) || FParse::Param(Cmd, TEXT("GothamOpenSettings")) || FParse::Param(Cmd, TEXT("GothamClueLog"))
+		|| FParse::Param(Cmd, TEXT("GothamHudDemo")) || FParse::Param(Cmd, TEXT("GothamCombatDemo")))
 	{
 		SetIgnoreLookInput(true);
 	}
@@ -459,7 +475,8 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	const bool bReveal = FParse::Param(Cmd, TEXT("GothamDetectiveReveal"));
 	const bool bAnalyse = FParse::Param(Cmd, TEXT("GothamDetectiveAnalyse"));
 	const bool bHudDemo = FParse::Param(Cmd, TEXT("GothamHudDemo"));
-	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot")) || bHudDemo;
+	const bool bCombatDemo = FParse::Param(Cmd, TEXT("GothamCombatDemo"));
+	const bool bPlainShot = FParse::Param(Cmd, TEXT("GothamShot")) || bHudDemo || bCombatDemo;
 
 	// -GothamPerf=<label> runs the UI performance harness and quits (see Docs/Performance.md).
 	FString PerfLabel;
@@ -471,6 +488,11 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 	if (!(bPause || bWheel || bDetective || bClueLog || bSettings || bControls || bCycleLanguage || bRebindDemo || bPlainShot || StressCount > 0))
 	{
 		return;
+	}
+	// Screenshots must be reproducible: no thug picks a random moment to attack (and flash the vignette) mid-shot.
+	if (UGothamThreatSubsystem* Threats = GetWorld()->GetSubsystem<UGothamThreatSubsystem>())
+	{
+		Threats->SetDirectorEnabled(false);
 	}
 
 	if (bPause)
@@ -608,6 +630,34 @@ void AGothamPlayerController::RunDevAids(UGothamUISubsystem* UI)
 			}
 			return false;
 		}), 7.85f);
+	}
+	if (bCombatDemo)
+	{
+		// Forced telegraphs timed so the screenshot lands mid-warning: one thug in view (counter prompt) and the one
+		// most behind the camera (a red edge arrow). The combo crosses 10 just before, so the callout shows too.
+		float Delay = 4.f;
+		FParse::Value(Cmd, TEXT("GothamShotDelay="), Delay);
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
+		{
+			UWorld* World = WeakThis.IsValid() ? WeakThis->GetWorld() : nullptr;
+			if (UGothamThreatSubsystem* Threats = World ? World->GetSubsystem<UGothamThreatSubsystem>() : nullptr)
+			{
+				Threats->ForceWarningOnVisible();
+				Threats->ForceWarningBehind();
+			}
+			return false;
+		}), Delay - 0.45f);
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
+		{
+			if (AGothamCharacter* Hero = WeakThis.IsValid() ? Cast<AGothamCharacter>(WeakThis->GetPawn()) : nullptr)
+			{
+				for (int32 i = 0; i < 10; ++i)
+				{
+					Hero->GetComboComponent()->RegisterHit();
+				}
+			}
+			return false;
+		}), Delay - 0.6f);
 	}
 	if (bRebindDemo)
 	{

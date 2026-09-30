@@ -9,6 +9,8 @@ New-Item -ItemType Directory -Force $out | Out-Null
 
 $shots = @(
     @{ name = "hud";              flags = "-GothamHudDemo";                                shot = "gotham_hud";       res = "1280 720" },
+    @{ name = "combat";           flags = "-GothamCombatDemo";                             shot = "gotham_hud";       res = "1280 720" },
+    @{ name = "combat-access";    flags = "-GothamCombatDemo -GothamLanguage=de -GothamUIScale=4 -GothamColorMode=2 -GothamHighContrast"; shot = "gotham_hud"; res = "1280 720" },
     @{ name = "hud-wheel";        flags = "-GothamOpenWheel";                              shot = "gotham_wheel";     res = "1280 720" },
     @{ name = "detective";        flags = "-GothamDetective";                              shot = "gotham_detective"; res = "1280 720" },
     @{ name = "detective-reveal"; flags = "-GothamDetective -GothamDetectiveReveal";      shot = "gotham_detective"; res = "1280 720" },

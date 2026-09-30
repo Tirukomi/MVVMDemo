@@ -10,6 +10,8 @@ import sys
 ROOT = r"D:\UEProjects\MVVMSample\Content\Localization\Game"
 
 DE = {
+    # V5 combat
+    "Counter": "Kontern", "{0}-hit combo": "{0}er-Kombo",
     # V4 menus
     "Blackwater Ops": "Blackwater Ops", "Paused": "Pausiert", "Evidence": "Beweise", "Options": "Optionen",
     "Investigation": "Ermittlung", "Change": "Ändern", "Browse": "Durchsuchen", "Caution": "Achtung",
@@ -73,6 +75,8 @@ DE = {
 }
 
 JA = {
+    # V5 combat
+    "Counter": "カウンター", "{0}-hit combo": "{0}ヒットコンボ",
     # V4 menus
     "Blackwater Ops": "Blackwater Ops", "Paused": "ポーズ中", "Evidence": "証拠", "Options": "オプション",
     "Investigation": "捜査", "Change": "変更", "Browse": "閲覧", "Caution": "注意",

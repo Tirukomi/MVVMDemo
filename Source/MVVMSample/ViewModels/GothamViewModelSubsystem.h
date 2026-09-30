@@ -15,6 +15,8 @@ class UDetectiveComponent;
 class UDetectiveViewModel;
 class UObjectivesViewModel;
 class USubtitleViewModel;
+class UThreatViewModel;
+class UGothamThreatSubsystem;
 struct FGothamSettingsData;
 class UClueDataAsset;
 class UGadgetBarViewModel;
@@ -45,6 +47,7 @@ public:
 	UObjectivesViewModel* GetObjectives() const { return Objectives; }
 	UClueListViewModel* GetClues() const { return Clues; }
 	USubtitleViewModel* GetSubtitles() const { return Subtitles; }
+	UThreatViewModel* GetThreats() const { return Threats; }
 
 	/** Dev aid: appends fake undiscovered clues to exercise the virtualised clue log. */
 	void AddDebugClues(int32 Count);
@@ -73,6 +76,12 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UComboViewModel> Combo;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UThreatViewModel> Threats;
+
+	TWeakObjectPtr<UGothamThreatSubsystem> BoundThreats;
+	FDelegateHandle ThreatsHandle;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UDetectiveViewModel> Detective;

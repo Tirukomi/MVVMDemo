@@ -2,16 +2,18 @@
 
 A small third-person combat and detective sandbox built to demonstrate production-style **game UI engineering**:
 MVVM view models in C++, a Common UI layer stack, custom Slate widgets, materials and post-process, accessibility,
-localization and rebinding, with tests and measured performance. Gameplay is intentionally thin (a placeholder hero, a
-grey-box arena, debug damage); the UI layer is the deliverable.
+localization and rebinding, with tests and measured performance. Gameplay is intentionally thin (the engine mannequin, a
+generated night rooftop, training-dummy thugs that telegraph attacks); the UI layer is the deliverable.
 
 > Original branding only: no third-party game assets, fonts, icons or trademarks. Internal C++ names keep a
 > `Gotham` prefix from early development; it never appears on screen.
 
 | | |
 |---|---|
-| ![Gadget wheel and combo meter](Docs/img/hud-wheel.png) | ![Detective Mode](Docs/img/detective.png) |
-| Custom Slate gadget wheel, segmented combo meter, HUD | Detective Mode: post-process, UI material, clues through walls |
+| ![Combat HUD: counter prompt, threat arrow, combo milestone](Docs/img/combat.png) | ![Detective Mode](Docs/img/detective.png) |
+| Combat HUD: counter prompt, off-screen threat arrow, combo milestone | Detective Mode: wireframe post-process, clue markers, hostiles in red |
+| ![Gadget wheel](Docs/img/hud-wheel.png) | ![Accessible combat HUD](Docs/img/combat-access.png) |
+| Custom Slate gadget wheel with slow-mo | The same moment in German, 150% UI scale, deuteranopia, high contrast |
 | ![Case file](Docs/img/case-file.png) | ![Settings in German](Docs/img/settings-de.png) |
 | Evidence board: pooled, virtualised tile view (200+ clues) with a detail pane | Common UI tabs, sliding highlight, chevron selectors; live-switchable localization |
 
@@ -33,7 +35,7 @@ More: [pause](Docs/img/pause.png), [quit confirmation](Docs/img/pause-quit.png),
 | **Accessibility** | Colour-blind presets, high contrast, reduced motion, hold/toggle wheel, subtitles, gamepad-navigable menus, no colour-only information |
 | **Localization** | English, German, Japanese and a pseudo-locale via UE's gather/compile pipeline, live switching. [ADR 0006](Docs/ADR/0006-localization-pipeline.md) |
 | **Performance and memory** | Measured harness, budgets, before/after numbers. [Docs/Performance.md](Docs/Performance.md) |
-| **Engineering standards** | 35 automation tests, ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
+| **Engineering standards** | 41 automation tests, ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
 
 Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). Plan and per-milestone notes:
 [Docs/ProjectPlan.md](Docs/ProjectPlan.md).
@@ -50,6 +52,7 @@ Requires UE 5.8 (path assumptions in `Scripts/` point at `D:\UnrealEngine\UE_5.8
 |---|---|---|
 | Move / look | WASD / mouse | Left / right stick |
 | Attack (builds the combo) | Left mouse | A |
+| Counter (when a thug telegraphs) | Right mouse | RB |
 | Gadgets 1 to 3 | 1, 2, 3 | X, Y, B |
 | Gadget wheel (hold, or toggle in settings) | Q | Left shoulder |
 | Detective Mode / analyse clue (hold; Tap in settings) | V / E | D-pad up / right |
@@ -66,9 +69,10 @@ All of these are rebindable from **Pause > Settings > Controls**.
 python Scripts/run_tests.py          # headless; exit code reflects failures; report in Saved/AutomationReports
 ```
 
-35 automation tests cover view models, component logic, wheel hit-testing, layer/input-context rules, settings
+41 automation tests cover view models, component logic, wheel hit-testing, layer/input-context rules, settings
 persistence and grouping, palette legibility, rebinding conflicts, subtitles, HUD motion and ghost timing, Detective
-pulse and analysis timing, and the menu highlight's slide. Visual behaviour is verified with dev flags and
+pulse and analysis timing, the menu highlight's slide, and the combat rules (thug attack cycle, attack director,
+edge-arrow math, combo milestones, camera trauma). Visual behaviour is verified with dev flags and
 screenshots (below), not asserted in tests.
 
 ## Dev flags (non-shipping builds)
@@ -76,7 +80,7 @@ screenshots (below), not asserted in tests.
 These make the game reproduce a state, screenshot itself and stay out of the way of the OS. `Scripts/CaptureScreens.ps1`
 uses them to regenerate every image above.
 
-`-GothamOpenPause`, `-GothamOpenQuit`, `-GothamOpenWheel`, `-GothamDetective`, `-GothamClueLog[=N]`, `-GothamOpenSettings`,
+`-GothamCombatDemo`, `-GothamNoThugs`, `-GothamOpenPause`, `-GothamOpenQuit`, `-GothamOpenWheel`, `-GothamDetective`, `-GothamClueLog[=N]`, `-GothamOpenSettings`,
 `-GothamSettingsTab=<Display|Accessibility|Controls|Language>`, `-GothamOpenControls`, `-GothamRebindDemo`, `-GothamCycleLanguage`, `-GothamShotDelay=<s>`,
 `-GothamLanguage=<culture>`, `-GothamColorMode=0..3`, `-GothamUIScale=0..4`, `-GothamHighContrast`,
 `-GothamReducedMotion`, `-GothamPerf=<label>` (see [Performance](Docs/Performance.md)).

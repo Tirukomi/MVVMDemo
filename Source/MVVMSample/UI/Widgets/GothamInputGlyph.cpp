@@ -100,12 +100,35 @@ FText UGothamInputGlyph::GetKeyLabel(const FKey& Key)
 		{ EKeys::Escape.GetFName(), TEXT("Esc") },
 		{ EKeys::Enter.GetFName(), TEXT("Enter") },
 		{ EKeys::LeftMouseButton.GetFName(), TEXT("LMB") },
+		{ EKeys::RightMouseButton.GetFName(), TEXT("RMB") },
+		{ EKeys::MiddleMouseButton.GetFName(), TEXT("MMB") },
 	};
 	if (const TCHAR* const* Short = ShortNames.Find(Key.GetFName()))
 	{
 		return FText::FromString(*Short);
 	}
 	return Key.GetDisplayName();
+}
+
+FKey UGothamInputGlyph::FindKeyForAction(const APlayerController* Player, FName InActionName)
+{
+	const AGothamPlayerController* PC = Cast<AGothamPlayerController>(Player);
+	ULocalPlayer* LocalPlayer = PC ? PC->GetLocalPlayer() : nullptr;
+	UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(LocalPlayer);
+	const bool bGamepad = Input && Input->GetCurrentInputType() == ECommonInputType::Gamepad;
+	const UInputAction* Action = PC ? PC->FindAction(InActionName) : nullptr;
+	auto* Enhanced = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+	if (Action && Enhanced)
+	{
+		for (const FKey& Candidate : Enhanced->QueryKeysMappedToAction(Action))
+		{
+			if (Candidate.IsGamepadKey() == bGamepad)
+			{
+				return Candidate;
+			}
+		}
+	}
+	return EKeys::Invalid;
 }
 
 void UGothamInputGlyph::Refresh()
@@ -115,29 +138,9 @@ void UGothamInputGlyph::Refresh()
 		return;
 	}
 
-	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
-	UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(LocalPlayer);
+	UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer());
 	const bool bGamepad = Input && Input->GetCurrentInputType() == ECommonInputType::Gamepad;
-
-	FKey Key = bGamepad ? FixedGamepad : FixedKeyboardMouse;
-	if (!ActionName.IsNone())
-	{
-		Key = EKeys::Invalid;
-		const AGothamPlayerController* PC = Cast<AGothamPlayerController>(GetOwningPlayer());
-		const UInputAction* Action = PC ? PC->FindAction(ActionName) : nullptr;
-		auto* Enhanced = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
-		if (Action && Enhanced)
-		{
-			for (const FKey& Candidate : Enhanced->QueryKeysMappedToAction(Action))
-			{
-				if (Candidate.IsGamepadKey() == bGamepad)
-				{
-					Key = Candidate;
-					break;
-				}
-			}
-		}
-	}
+	const FKey Key = ActionName.IsNone() ? (bGamepad ? FixedGamepad : FixedKeyboardMouse) : FindKeyForAction(GetOwningPlayer(), ActionName);
 	Text->SetText(Key.IsValid() ? GetKeyLabel(Key) : FText::GetEmpty());
 	// Key caps get one cut corner; gamepad face buttons read as round-ish octagons.
 	const bool bFaceButton = Key == EKeys::Gamepad_FaceButton_Bottom || Key == EKeys::Gamepad_FaceButton_Right

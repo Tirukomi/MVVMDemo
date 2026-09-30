@@ -28,6 +28,10 @@ subtitle/gadget bar view model all read from it, so adding an entry adds it ever
 | Menu highlight bar | `UGothamMenuList::ApplyLook` (shape, fill, accent bar, glow); slide speed is `FGothamSlideRect::Rate` |
 | Menu backdrop | `BuildMenuFrame` blur strength per screen; `UGothamScrim` left/right alphas |
 | Screen transitions | `GothamMotion::ScreenSeconds` / `ScreenSlide` (stack fade plus content slide; both off under reduced motion) |
+| Thug placement | `AGothamGameMode::ThugSpots` (three candidate spots per thug; props are skipped) |
+| Thug timing and reach | `FGothamThugBrain` (warning, stun, recover seconds), `FGothamAttackDirector` (gap, engage range), `AGothamThug` (damage, strike range), `UGothamThreatSubsystem::CounterRange` |
+| Threat indicators | `SThreatIndicatorLayer` (prompt and arrow shapes), `UThreatIndicatorLayer::ArrowRange` |
+| Hit-stop and shake | `GothamFeel::HitStopSeconds` / `HitStopDilation`, `FGothamTrauma::DrainPerSecond` |
 | Settings tabs and grouping | `USettingsViewModel::GetTabs` (a test checks every setting is in exactly one tab) |
 | Gadget wheel look | `FGothamGadgetWheelStyle` on the `UGadgetWheel` widget (radii, gap, colours, font) |
 | Combo meter | `UComboMeter` properties (segments, colours, size) |

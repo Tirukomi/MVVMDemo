@@ -19,6 +19,9 @@
 #include "ViewModels/SubtitleViewModel.h"
 #include "ViewModels/GadgetViewModels.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
+#include "ViewModels/ThreatViewModel.h"
+#include "Gameplay/ThreatSubsystem.h"
+#include "Engine/World.h"
 
 void UGothamViewModelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -30,6 +33,7 @@ void UGothamViewModelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Objectives = NewObject<UObjectivesViewModel>(this);
 	Clues = NewObject<UClueListViewModel>(this);
 	Subtitles = NewObject<USubtitleViewModel>(this);
+	Threats = NewObject<UThreatViewModel>(this);
 	Objectives->SetProgress(0, 0);
 
 	// Subtitle size and backing panel follow accessibility settings.
@@ -66,7 +70,7 @@ void UGothamViewModelSubsystem::Deinitialize()
 UObject* UGothamViewModelSubsystem::FindViewModel(const UClass* ViewModelClass) const
 {
 	for (UObject* Candidate : { static_cast<UObject*>(Vitals), static_cast<UObject*>(GadgetBar), static_cast<UObject*>(Combo),
-		static_cast<UObject*>(Detective), static_cast<UObject*>(Objectives), static_cast<UObject*>(Clues) })
+		static_cast<UObject*>(Detective), static_cast<UObject*>(Objectives), static_cast<UObject*>(Clues), static_cast<UObject*>(Threats) })
 	{
 		if (Candidate && Candidate->GetClass()->IsChildOf(ViewModelClass))
 		{
@@ -100,6 +104,11 @@ void UGothamViewModelSubsystem::Unbind()
 		DetectiveComp->OnAnalysisChanged.Remove(AnalysisHandle);
 		DetectiveComp->OnCluesCollected.Remove(CluesHandle);
 	}
+	if (UGothamThreatSubsystem* ThreatSub = BoundThreats.Get())
+	{
+		ThreatSub->OnThreatsUpdated.Remove(ThreatsHandle);
+	}
+	BoundThreats.Reset();
 	BoundCombo.Reset();
 	BoundDetective.Reset();
 }
@@ -131,6 +140,13 @@ void UGothamViewModelSubsystem::BindToCharacter(AGothamCharacter* Character)
 	for (int32 i = 0; i < Defs.Num(); ++i)
 	{
 		GadgetBar->GetSlot(i)->SetDefinition(Defs[i].DisplayName, FText::AsNumber(i + 1), Defs[i].Tint, Defs[i].IconIndex);
+	}
+
+	// Hostiles live in the world, not on the character: the threat subsystem publishes one snapshot list per frame.
+	if (UGothamThreatSubsystem* ThreatSub = Character->GetWorld()->GetSubsystem<UGothamThreatSubsystem>())
+	{
+		BoundThreats = ThreatSub;
+		ThreatsHandle = ThreatSub->OnThreatsUpdated.AddWeakLambda(this, [this](const TArray<FGothamThreatSnapshot>& Snaps) { Threats->SetThreats(Snaps); });
 	}
 
 	CluesHandle = BoundDetective->OnCluesCollected.AddUObject(this, &UGothamViewModelSubsystem::RebuildClues);

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Gameplay/ThreatTypes.h"
 #include "GothamCharacter.generated.h"
 
 class UCameraComponent;
@@ -46,6 +47,14 @@ public:
 
 	// Debug helpers bound to F1-F3.
 	void DebugDamage();
+
+	/** Counters the nearest thug that is telegraphing an attack. Returns true if one was countered. */
+	bool Counter();
+
+	/** Shakes the camera: adds trauma that drains over time (skipped under reduced motion). */
+	void AddCameraTrauma(float Amount);
+
+	virtual void Tick(float DeltaSeconds) override;
 	void DebugHeal();
 
 private:
@@ -73,4 +82,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UDetectiveVisionComponent> DetectiveVision;
+
+	FGothamTrauma Trauma;
+	float ShakeTime = 0.f;
+	bool bShaking = false;
 };

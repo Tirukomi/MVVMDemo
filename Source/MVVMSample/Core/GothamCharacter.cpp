@@ -15,7 +15,11 @@
 #include "Gameplay/DetectiveComponent.h"
 #include "Gameplay/DetectiveVisionComponent.h"
 #include "Gameplay/GadgetComponent.h"
+#include "Gameplay/GothamFeel.h"
+#include "Gameplay/GothamThug.h"
 #include "Gameplay/HealthComponent.h"
+#include "Gameplay/ThreatSubsystem.h"
+#include "UI/Style/GothamMotion.h"
 #include "UObject/ConstructorHelpers.h"
 
 AGothamCharacter::AGothamCharacter()
@@ -118,9 +122,53 @@ void AGothamCharacter::ScanClue()
 	Detective->TryScan();
 }
 
+bool AGothamCharacter::Counter()
+{
+	UGothamThreatSubsystem* Threats = GetWorld()->GetSubsystem<UGothamThreatSubsystem>();
+	if (!Threats || !Threats->TryCounter(this))
+	{
+		return false;
+	}
+	// A counter is a hit: it builds the combo, freezes the moment and jolts the camera a little.
+	Combo->RegisterHit();
+	GothamFeel::HitStop(this, GothamFeel::HitStopSeconds);
+	AddCameraTrauma(0.3f);
+	return true;
+}
+
+void AGothamCharacter::AddCameraTrauma(float Amount)
+{
+	if (GothamMotion::IsReduced(this))
+	{
+		return;
+	}
+	Trauma.Add(Amount);
+	bShaking = true;
+}
+
+void AGothamCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (!bShaking)
+	{
+		return;
+	}
+	// Real time, so a hit-stop does not freeze the shake that sells it.
+	const float RealDelta = FApp::GetDeltaTime();
+	ShakeTime += RealDelta;
+	bShaking = Trauma.Advance(RealDelta);
+	const float Shake = Trauma.GetShake();
+	constexpr float MaxAngle = 2.2f;
+	auto Noise = [this](float Seed) { return FMath::PerlinNoise1D(ShakeTime * 22.f + Seed); };
+	FollowCamera->SetRelativeRotation(bShaking
+		? FRotator(Noise(0.f) * MaxAngle * Shake, Noise(31.7f) * MaxAngle * Shake, Noise(67.3f) * MaxAngle * 0.5f * Shake)
+		: FRotator::ZeroRotator);
+}
+
 void AGothamCharacter::DebugDamage()
 {
 	Health->ApplyDamage(FMath::FRandRange(8.f, 20.f));
+	AddCameraTrauma(0.4f);
 }
 
 void AGothamCharacter::DebugHeal()

@@ -16,10 +16,12 @@ class UHealthBarWidget;
 class UObjectiveTrackerWidget;
 class UPlayerVitalsViewModel;
 class USubtitleWidget;
+class UThreatIndicatorLayer;
 
 /**
  * Combat HUD root. Layout: health and combo top-left, gadget selector top-right with the objective under it,
- * subtitles bottom-centre, Detective overlay and the danger vignette full-screen behind everything.
+ * subtitles bottom-centre; Detective overlay, clue markers, threat indicators and the danger vignette full-screen behind
+ * everything.
  */
 UCLASS()
 class MVVMSAMPLE_API UGothamHudWidget : public UGothamScreen
@@ -52,6 +54,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UClueMarkerLayer> ClueMarkers;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UThreatIndicatorLayer> ThreatIndicators;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHealthBarWidget> HealthBar;

@@ -13,4 +13,16 @@ class MVVMSAMPLE_API AGothamGameMode : public AGameModeBase
 
 public:
 	AGothamGameMode();
+
+	/**
+	 * Where the training thugs stand. Each entry lists fallbacks: the first spot whose floor is the bare roof (not a
+	 * prop the level script happened to put there) is used. Z is found with a trace.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Thugs")
+	TArray<FVector2D> ThugSpots;
+
+	virtual void StartPlay() override;
+
+private:
+	void SpawnThugs();
 };

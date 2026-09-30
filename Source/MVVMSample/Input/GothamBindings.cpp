@@ -14,6 +14,7 @@ namespace GothamBindings
 			{ TEXT("MoveLeft"), LOCTEXT("MoveLeft", "Move left"), false },
 			{ TEXT("MoveRight"), LOCTEXT("MoveRight", "Move right"), false },
 			{ TEXT("Attack"), LOCTEXT("Attack", "Attack"), true },
+			{ TEXT("Counter"), LOCTEXT("Counter", "Counter"), true },
 			{ TEXT("Gadget1"), LOCTEXT("Gadget1", "Gadget 1"), true },
 			{ TEXT("Gadget2"), LOCTEXT("Gadget2", "Gadget 2"), true },
 			{ TEXT("Gadget3"), LOCTEXT("Gadget3", "Gadget 3"), true },

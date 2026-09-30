@@ -51,6 +51,11 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		DecayBar->MeterSize = FVector2D(170.f, 3.f);
 		DecayBar->Gap = 0.f;
 		Column->AddChildToVerticalBox(DecayBar)->SetPadding(FMargin(2.f, 2.f, 0.f, 0.f));
+
+		// Milestone callout ("10-HIT COMBO"): shown on each multiple of ten, then fades.
+		MilestoneText = WidgetTree->ConstructWidget<UTextBlock>();
+		MilestoneText->SetRenderOpacity(0.f);
+		Column->AddChildToVerticalBox(MilestoneText)->SetPadding(FMargin(0.f, 8.f, 0.f, 0.f));
 	}
 	return Super::RebuildWidget();
 }
@@ -70,6 +75,8 @@ void UComboWidget::SetViewModel(UComboViewModel* InViewModel)
 		ViewModel->AddFieldValueChangedDelegate(FVM::DecayAlpha, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::MultiplierText, Delegate);
 		ViewModel->AddFieldValueChangedDelegate(FVM::bIsActive, Delegate);
+		ViewModel->AddFieldValueChangedDelegate(FVM::MilestoneCount,
+			INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateUObject(this, &UComboWidget::OnMilestone));
 		LastHits = ViewModel->GetHitCount();
 		LastMultiplier = ViewModel->GetMultiplier();
 	}
@@ -78,6 +85,7 @@ void UComboWidget::SetViewModel(UComboViewModel* InViewModel)
 
 void UComboWidget::NativeDestruct()
 {
+	FTSTicker::GetCoreTicker().RemoveTicker(MilestoneHandle);
 	SetViewModel(nullptr);
 	Super::NativeDestruct();
 }
@@ -106,6 +114,7 @@ void UComboWidget::ApplyStyle()
 	GothamStyle::ApplyText(CountText, EGothamTextStyle::Display, GetToken(EGothamColorToken::TextPrimary));
 	GothamStyle::ApplyText(HitsLabel, EGothamTextStyle::Label, GetToken(EGothamColorToken::TextMuted));
 	GothamStyle::ApplyText(MultiplierText, EGothamTextStyle::Numeric, GetToken(EGothamColorToken::Panel));
+	GothamStyle::ApplyText(MilestoneText, EGothamTextStyle::Header, Accent);
 	MultiplierTag->SetColors(Accent, FLinearColor::Transparent, 0.f);
 
 	FLinearColor Track = GetToken(EGothamColorToken::PanelEdge);
@@ -137,6 +146,25 @@ void UComboWidget::Refresh()
 	}
 	LastHits = ViewModel->GetHitCount();
 	LastMultiplier = ViewModel->GetMultiplier();
+}
+
+void UComboWidget::OnMilestone(UObject* Source, UE::FieldNotification::FFieldId FieldId)
+{
+	if (!ViewModel || !MilestoneText)
+	{
+		return;
+	}
+	// Text first, then a pop; hold, then fade. Under reduced motion there is no pop and the fade is a cut.
+	MilestoneText->SetText(ViewModel->GetMilestoneText());
+	MilestoneText->SetRenderOpacity(1.f);
+	GothamMotion::Pop(MilestoneText, 1.3f, 0.22f);
+	FTSTicker::GetCoreTicker().RemoveTicker(MilestoneHandle);
+	MilestoneHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
+	{
+		GothamMotion::Fade(MilestoneText, 1.f, 0.f, 0.45f);
+		MilestoneHandle.Reset();
+		return false;
+	}), MilestoneHoldSeconds);
 }
 
 #undef LOCTEXT_NAMESPACE

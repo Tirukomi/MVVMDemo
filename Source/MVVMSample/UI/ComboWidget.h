@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "UI/GothamSettingsAwareWidget.h"
 #include "ComboWidget.generated.h"
 
@@ -33,6 +34,10 @@ private:
 	void ApplyStyle();
 	void Refresh();
 	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
+	void OnMilestone(UObject* Source, UE::FieldNotification::FFieldId FieldId);
+
+	static constexpr float MilestoneHoldSeconds = 1.2f;
+	FTSTicker::FDelegateHandle MilestoneHandle;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UComboViewModel> ViewModel;
@@ -51,6 +56,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UComboMeter> DecayBar;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> MilestoneText;
 
 	int32 LastHits = 0;
 	float LastMultiplier = 1.f;

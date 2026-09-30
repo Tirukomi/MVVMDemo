@@ -15,6 +15,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "RenderTimer.h"
+#include "Gameplay/ThreatSubsystem.h"
 #include "UI/ClueEntryWidget.h"
 #include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/GothamUISettings.h"
@@ -273,6 +274,29 @@ void FGothamPerfHarness::Start(AGothamPlayerController* Controller, const FStrin
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass.LoadSynchronous()); } },
 		nullptr,
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } } });
+
+	// 7. Combat: two thugs telegraphing on a loop (one counter prompt in view, one edge arrow), combo milestones.
+	// Outside this scenario the attack director is off, so the other rows measure the same idle thugs.
+	const TWeakObjectPtr<UGothamThreatSubsystem> WeakThreats(Controller->GetWorld()->GetSubsystem<UGothamThreatSubsystem>());
+	if (WeakThreats.IsValid())
+	{
+		WeakThreats->SetDirectorEnabled(false);
+	}
+	Run->Scenarios.Add({ TEXT("combat"),
+		nullptr,
+		[WeakThreats, Hero](float Seconds)
+		{
+			if (FMath::Fmod(Seconds, 2.f) < 0.02f && WeakThreats.IsValid())
+			{
+				WeakThreats->ForceWarningOnVisible();
+				WeakThreats->ForceWarningBehind();
+			}
+			if (AGothamCharacter* H = Hero())
+			{
+				if (FMath::Fmod(Seconds, 0.25f) < 0.02f) { H->Attack(); }
+			}
+		},
+		nullptr });
 
 	UE_LOG(LogGothamPerf, Log, TEXT("Perf run '%s' starting (%d scenarios)"), *Label, Run->Scenarios.Num());
 	Run->Begin();

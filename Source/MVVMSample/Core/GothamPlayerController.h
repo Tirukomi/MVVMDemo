@@ -39,6 +39,7 @@ private:
 	void OnLook(const FInputActionValue& Value);
 	void OnMoveDirection(FVector2D Direction);
 	void OnAttack();
+	void OnCounter();
 	void OnGadget(int32 SlotIndex);
 	void OnDebugDamage();
 	void OnDebugHeal();
@@ -63,6 +64,9 @@ private:
 	TArray<FVector2D> MoveDirections;
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> AttackAction;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> CounterAction;
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UInputAction>> GadgetActions;
 	UPROPERTY(Transient)

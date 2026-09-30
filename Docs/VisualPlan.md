@@ -248,6 +248,40 @@ This is the biggest visual change for the least work.
 - **Pass on everything:** German and pseudo-locale widths, 150% UI scale, colour-blind presets and high contrast on
   every new element. The new tokens also need high-contrast variants.
 
+**V5 as built:**
+- **Thugs** (`AGothamThug`): four training dummies (the mannequin in dark metal) spawned by `AGothamGameMode` around the
+  start. Each spot has fallbacks, and a trace skips any that landed on a prop. They turn to face the player and are
+  drawn as hostiles in Detective Mode (custom-depth stencil 3). There's no AI controller.
+- **Attack logic** (pure, tested): `FGothamThugBrain` runs Idle -> Warning (1.1 s counter window) -> Strike -> Recover,
+  or Warning -> Counter -> Stunned. `FGothamAttackDirector` allows one telegraph at a time, a 1.6 to 3 s breather,
+  and only thugs within reach. `UGothamThreatSubsystem` (a world subsystem that ticks only while thugs exist) runs
+  them and publishes one snapshot list per frame.
+- **Counter:** a new rebindable action (RMB / RB) that shows up on the Controls screen automatically. It counters the
+  nearest warning thug within reach, knocking it back, stunning it and adding a combo hit. Strikes that land cost 10
+  health, but thugs hold back below 15 so the sandbox never loops into a death screen.
+- **Threat indicators:** `UThreatViewModel` feeds `SThreatIndicatorLayer` / `UThreatIndicatorLayer`, which draw every
+  enemy in one pass (no widget per enemy):
+  - a counter prompt above each warning thug: alert strokes, the current Counter key (it follows rebinding and device
+    switches), and a timer bar that empties as the window closes
+  - an arrow on the screen edge for nearby off-screen thugs, big, red and double-chevroned while warning, small and
+    muted otherwise (`GothamThreat::EdgeArrow`, tested). Dead-behind points down.
+  - The layer's active timer runs only while hostiles exist.
+- **Juice**, all off under reduced motion:
+  - hit-stop (`GothamFeel::HitStop`, 70 ms real time), which never fights the gadget wheel's slow-mo
+  - camera shake from trauma (`FGothamTrauma`, trauma squared, tested) on hits, counters and debug damage
+  - a combo milestone callout ("10-HIT COMBO"), which `UComboViewModel` flags each time the streak crosses 10, 20
+    and so on (`GothamCombo::MilestoneReached`, tested)
+- **Accessibility and localization:**
+  - Colours come from tokens. Under the red-green presets, danger reads as orange or yellow, so the prompt is also
+    told apart by shape (strokes, key cap, bar) and the arrow by its second chevron.
+  - "Counter" and "{0}-hit combo" are translated.
+  - Checked in German at 150% UI scale with deuteranopia and high contrast (`Docs/img/combat-access.png`).
+- **Dev aid:** `-GothamCombatDemo` forces a warning on the thug in view and on the one most behind the camera, and
+  builds a 10-hit combo, timed for the screenshot. Every other dev-flag run turns the attack director off, so no
+  random attack flashes the vignette mid-shot.
+- **Not yet:** thugs have no attack animation (the strike is a lunge), and the whole loop still needs a hand-played
+  pass with real input.
+
 **Total:** about 3 to 4 weeks part-time. V1 and V2 alone change how every screenshot reads.
 
 ## Definition of done
