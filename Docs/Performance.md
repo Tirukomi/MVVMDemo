@@ -214,6 +214,13 @@ What the profile says the UI costs (exclusive game-thread time over the referenc
 S7 takes it on. G5's absolute budgets (`Scripts/PerfBudgets.json`) start from today's numbers so nothing gets worse
 meanwhile; for the case file that is a ceiling, not the target.
 
+**G5's rounds come in pairs (S1).** G5 runs the reference and the current build alternately (ref, cur; cur, ref; ...)
+so drift cancels. With five rounds, three ran the reference first and two the current build first, and whichever ran
+second in a round measured up to 0.2 ms slower. The median of single rounds then followed the order, not the code: S1
+failed twice on a different scenario each time (`case-file-505` and `hud-animating`, then `hud-idle`), each with rounds
+alternating in sign and order-balanced averages within +-0.05 ms. G5 now runs six rounds and judges the median of the
+three pair averages (one round of each order). S0's real shift (`settings`, pairs +0.14 and +0.19 ms) still fails it.
+
 ## Budgets
 
 | Budget | Target | Status |

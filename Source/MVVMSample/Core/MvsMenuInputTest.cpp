@@ -35,6 +35,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "UI/ClueEntryWidget.h"
 #include "UI/Screens/ControlsScreen.h"
+#include "UI/Style/MvsStyle.h"
 #include "UI/Widgets/MvsButton.h"
 #include "ViewModels/ControlsViewModel.h"
 #include "UI/Screens/GadgetWheelScreen.h"
@@ -373,6 +374,13 @@ TSharedPtr<FMvsScript> FMvsMenuInputTest::Build(AMvsPlayerController* Controller
 	TSharedPtr<float> LayoutScaleBefore = MakeShared<float>(0.f);
 	TSharedPtr<FString> CultureBefore = MakeShared<FString>();
 	TSharedPtr<FLinearColor> LabelBefore = MakeShared<FLinearColor>(FLinearColor::Transparent);
+	// The HUD's first gadget hint, as its view model holds it.
+	auto GadgetHint = [WeakPC]()
+	{
+		const UMvsViewModelSubsystem* ViewModels = ViewModelsOf(WeakPC);
+		const UGadgetSlotViewModel* First = ViewModels && ViewModels->GetGadgetBar() ? ViewModels->GetGadgetBar()->GetSlot(0) : nullptr;
+		return First ? First->GetHotkey().ToString() : FString();
+	};
 	auto Settings = [WeakPC]() { const UMvsSettingsSubsystem* S = UMvsSettingsSubsystem::Get(WeakPC.Get()); return S ? S->GetViewModel() : nullptr; };
 	TSharedPtr<TArray<TPair<FName, FKey>>> Undo = MakeShared<TArray<TPair<FName, FKey>>>();
 	auto Scale = [Settings]() { return Settings() ? Settings()->GetCurrent().UIScaleIndex : -1; };
@@ -494,6 +502,9 @@ TSharedPtr<FMvsScript> FMvsMenuInputTest::Build(AMvsPlayerController* Controller
 		.Do([]() { SendKey(EKeys::Gamepad_DPad_Down); })
 		.WaitUntil([]() { return GlyphText(FindHint(ActiveScreen<USettingsScreen>(), EKeys::Enter)) == UMvsInputGlyph::GetKeyLabel(EKeys::Gamepad_FaceButton_Bottom).ToString(); },
 			Quick, TEXT("a gamepad press turns the accept prompt into the gamepad's accept button"))
+		// Second review finding 1: the HUD's gadget hints follow the device too (Gadget 1 is X on a pad by default).
+		.WaitUntil([GadgetHint, WeakPC]() { return GadgetHint() == UMvsInputGlyph::GetKeyLabel(EKeys::Gamepad_FaceButton_Left, WeakPC.IsValid() ? WeakPC->GetLocalPlayer() : nullptr).ToString(); },
+			Quick, TEXT("a gamepad press turns the HUD's gadget hints into gamepad buttons (second review 1)"))
 		.Do([]() { SendKey(EKeys::Gamepad_DPad_Up); })
 		.Do([]()
 		{
@@ -502,7 +513,9 @@ TSharedPtr<FMvsScript> FMvsMenuInputTest::Build(AMvsPlayerController* Controller
 			App.ProcessMouseMoveEvent(FPointerEvent(0, 0, FVector2D(60.0, 60.0), FVector2D(40.0, 40.0), TSet<FKey>(), EKeys::Invalid, 0.f, App.GetModifierKeys()));
 		})
 		.WaitUntil([]() { return GlyphText(FindHint(ActiveScreen<USettingsScreen>(), EKeys::Enter)) == UMvsInputGlyph::GetKeyLabel(EKeys::Enter).ToString(); },
-			Quick, TEXT("moving the mouse turns it back into Enter"));
+			Quick, TEXT("moving the mouse turns it back into Enter"))
+		.WaitUntil([GadgetHint]() { return GadgetHint() == UMvsInputGlyph::GetKeyLabel(EKeys::One).ToString(); },
+			Quick, TEXT("and the gadget hints back into keys (second review 1)"));
 
 	// Review finding 1: opening Key bindings must keep unapplied settings.
 	Script->Do([Settings]() { if (USettingsViewModel* VM = Settings()) { VM->Cycle(EMvsSetting::SubtitleSize, +1); } })
@@ -719,6 +732,12 @@ TSharedPtr<FMvsScript> FMvsMenuInputTest::Build(AMvsPlayerController* Controller
 			const UGadgetWheel* Wheel = FindWheel(ActiveScreen<UGadgetWheelScreen>());
 			const FString Spoken = MvsAccessibility::GetText(Wheel ? Wheel->GetCachedWidget() : nullptr).ToString();
 			Self->Check(Spoken.StartsWith(TEXT("Gadget wheel")), FString::Printf(TEXT("the gadget wheel tells screen readers what it would use (review 31) [%s]"), *Spoken));
+			// Second review finding 2: the wheel's text follows the theme (palette and text size), like every other screen.
+			const FMvsTheme Theme = MvsStyle::Theme(Wheel);
+			Self->Check(Wheel && Wheel->WheelStyle.LabelColor.Equals(Theme.Color(EMvsColorToken::TextPrimary))
+				&& Wheel->WheelStyle.CoolingLabelColor.Equals(Theme.Color(EMvsColorToken::TextMuted))
+				&& Wheel->WheelStyle.LabelFont.Size == Theme.Font(EMvsTextStyle::Header).Size,
+				TEXT("the gadget wheel's labels use the theme's colours and text size (second review 2)"));
 		})
 		.Wait(MvsFeel::HitStopSeconds * 3.f)
 		.Do([Self, WeakPC, Settings]()

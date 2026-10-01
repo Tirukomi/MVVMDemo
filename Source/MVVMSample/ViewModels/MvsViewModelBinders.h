@@ -185,4 +185,6 @@ private:
 
 	FMvsSettingsListener SettingsListener;
 	FTSTicker::FDelegateHandle SubtitleHideHandle;
+	/** The character's world, for whether the game is paused while a subtitle counts down. */
+	TWeakObjectPtr<UWorld> World;
 };

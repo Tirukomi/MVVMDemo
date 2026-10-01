@@ -15,6 +15,11 @@ class MVVMSAMPLE_API USubtitleViewModel : public UMVVMViewModelBase
 public:
 	void SetLine(const FText& InSpeaker, const FText& InText);
 	void Clear();
+
+	/** Shows a line for Seconds of play: Advance counts it down, and a paused game passes no time. */
+	void ShowFor(const FText& InSpeaker, const FText& InText, float Seconds);
+	/** Counts a line from ShowFor down and clears it when its time is up. Returns true while one is still timed. */
+	bool Advance(float DeltaSeconds);
 	void SetPresentation(int32 InFontSize, bool bInBackground);
 
 	const FText& GetSpeaker() const { return Speaker; }
@@ -38,4 +43,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetHasBackground, meta = (AllowPrivateAccess = "true"))
 	bool bHasBackground = true;
+
+private:
+	float RemainingSeconds = 0.f;
 };

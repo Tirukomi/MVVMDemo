@@ -17,9 +17,12 @@ param(
     [string[]]$Only = @(),
     # G5 compares against this commit (normally the last merged pass), built in a worktree under Saved/PerfRef.
     [string]$PerfRef = "master",
-    # Alternating reference / current perf runs (ABBA order, so drift during the gate cancels out).
-    [int]$PerfRounds = 5,
-    # A scenario fails when the median, over rounds, of (current UI cost - reference UI cost) exceeds this.
+    # Alternating reference / current perf runs (ABBA order, so drift during the gate cancels out). Even, so every
+    # round that runs the reference first has a partner that runs the current build first.
+    [int]$PerfRounds = 6,
+    # A scenario fails when the median, over round pairs, of (current UI cost - reference UI cost) exceeds this. Each
+    # pair averages a reference-first and a current-first round: whichever build runs second in a round measured up to
+    # 0.2 ms slower (second review S1), which decided the median of single rounds on its own.
     [double]$PerfToleranceMs = 0.05,
     # Passed to the current build only as -MvsPerfInject=<scenario>:<ms>, to prove G5 catches a known cost.
     [string]$PerfInject = "",
@@ -228,11 +231,14 @@ if (-not $Quick -and (Should-Run "G5")) {
             Record "G5" $false ("{0} scenario runs were not in the state they measure" -f $invalidCurrent.Count) ($invalidCurrent -join "`n")
         } else {
             $refSha = (git -C $refDir rev-parse --short HEAD)
-            $lines = @("reference: $PerfRef ($refSha), $PerfRounds rounds, tolerance +$PerfToleranceMs ms on the median")
+            $lines = @("reference: $PerfRef ($refSha), $PerfRounds rounds, tolerance +$PerfToleranceMs ms on the median of round pairs")
             if ($PerfInject) { $lines += "self-test: current build injects $PerfInject" }
             $bad = 0
             foreach ($k in ($diffs.Keys | Sort-Object)) {
-                $sorted = @($diffs[$k] | Sort-Object)
+                $pairs = @()
+                for ($i = 0; $i + 1 -lt $diffs[$k].Count; $i += 2) { $pairs += , (($diffs[$k][$i] + $diffs[$k][$i + 1]) / 2) }
+                if ($pairs.Count -eq 0) { $pairs = @($diffs[$k]) }
+                $sorted = @($pairs | Sort-Object)
                 $median = $sorted[[int][math]::Floor($sorted.Count / 2)]
                 $flag = if ($median -gt $PerfToleranceMs) { $bad++; "SLOWER" } else { "ok" }
                 $rounds = ($diffs[$k] | ForEach-Object { "{0:+0.000;-0.000}" -f $_ }) -join " "

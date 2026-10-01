@@ -289,7 +289,7 @@ int32 SGadgetWheel::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeo
 	for (int32 i = 0; i < Count; ++i)
 	{
 		const float Radius = (Style.InnerRadius + Style.OuterRadius) * 0.5f + Style.HoverExpand * Alpha(i) * 0.5f;
-		FLinearColor TextColor = Items[i].bReady ? FLinearColor::White : FLinearColor(0.7f, 0.7f, 0.7f);
+		FLinearColor TextColor = Items[i].bReady ? Style.LabelColor : Style.CoolingLabelColor;
 		TextColor.A *= Opacity;
 		DrawCentered(Items[i].Label, Style.LabelFont, PointOnCircle(Center, Radius, MvsWheel::SegmentCenterDeg(i, Count)), TextColor);
 	}
@@ -298,7 +298,9 @@ int32 SGadgetWheel::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeo
 	{
 		FSlateFontInfo HubFont = Style.LabelFont;
 		HubFont.Size = FMath::RoundToInt(HubFont.Size * 1.3f);
-		DrawCentered(Items[HoveredIndex].Label, HubFont, Center, FLinearColor(1.f, 1.f, 1.f, Opacity));
+		FLinearColor HubColor = Style.LabelColor;
+		HubColor.A *= Opacity;
+		DrawCentered(Items[HoveredIndex].Label, HubFont, Center, HubColor);
 	}
 
 	return LayerId + 3;

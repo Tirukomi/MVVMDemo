@@ -53,6 +53,14 @@ struct MVVMSAMPLE_API FMvsGadgetWheelStyle
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FLinearColor OutlineColor = FLinearColor(1.f, 1.f, 1.f, 0.9f);
 
+	/** Segment labels and the hub's name of the hovered gadget. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FLinearColor LabelColor = FLinearColor::White;
+
+	/** Labels of gadgets still cooling down. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FLinearColor CoolingLabelColor = FLinearColor(0.7f, 0.7f, 0.7f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSlateFontInfo LabelFont;
 

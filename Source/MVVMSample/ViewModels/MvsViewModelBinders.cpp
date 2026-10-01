@@ -8,6 +8,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
+#include "CommonInputSubsystem.h"
 #include "EnhancedInputSubsystems.h"
 #include "Gameplay/ClueDataAsset.h"
 #include "Gameplay/ComboComponent.h"
@@ -84,8 +85,10 @@ void UMvsGadgetBinder::Bind(AMvsCharacter& Character)
 	{
 		GadgetBar->GetSlot(i)->SetDefinition(Defs[i].DisplayName, FText::AsNumber(i + 1), Defs[i].Tint, Defs[i].IconIndex);
 	}
-	// Key hints follow the player's bindings, and change when they are rebound.
+	// Key hints follow the player's bindings and the device in use, and change when either does.
 	const ULocalPlayer* LocalPlayer = Player.Get();
+	Subscriptions.Add(UCommonInputSubsystem::Get(LocalPlayer), &UCommonInputSubsystem::OnInputMethodChangedNative, this,
+		[this](ECommonInputType) { RefreshHotkeys(); });
 	if (const auto* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr)
 	{
 		if (UEnhancedInputUserSettings* InputSettings = Input->GetUserSettings())
@@ -112,6 +115,11 @@ void UMvsGadgetBinder::RefreshHotkeys()
 {
 	const UEnhancedInputUserSettings* InputSettings = BoundInputSettings.Get();
 	const UEnhancedPlayerMappableKeyProfile* Profile = InputSettings ? InputSettings->GetActiveKeyProfile() : nullptr;
+	// The device in use decides which of an action's keys the hint shows (the keyboard key, or the gamepad button in
+	// the connected pad's naming), as the menu prompts do.
+	const UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(Player.Get());
+	const bool bGamepad = Input && Input->GetCurrentInputType() == ECommonInputType::Gamepad;
+	const EMvsGamepadStyle PadStyle = Input ? MvsBindings::GamepadStyleFromName(Input->GetCurrentGamepadName()) : EMvsGamepadStyle::Xbox;
 	for (int32 i = 0; i < GadgetBar->GetSlots().Num(); ++i)
 	{
 		FKey Key;
@@ -119,13 +127,15 @@ void UMvsGadgetBinder::RefreshHotkeys()
 		{
 			for (const FPlayerKeyMapping& Mapping : Row->Mappings)
 			{
-				if (Mapping.GetSlot() == EPlayerMappableKeySlot::First)
+				const FKey Current = Mapping.GetCurrentKey();
+				if (Current.IsValid() && Current.IsGamepadKey() == bGamepad)
 				{
-					Key = Mapping.GetCurrentKey();
+					Key = Current;
+					break;
 				}
 			}
 		}
-		GadgetBar->GetSlot(i)->SetHotkey(Key.IsValid() ? MvsBindings::GetKeyLabel(Key) : FText::AsNumber(i + 1));
+		GadgetBar->GetSlot(i)->SetHotkey(Key.IsValid() ? MvsBindings::GetKeyLabel(Key, PadStyle) : FText::AsNumber(i + 1));
 	}
 }
 
@@ -217,6 +227,7 @@ void UMvsClueBinder::Deinitialize()
 
 void UMvsClueBinder::Bind(AMvsCharacter& Character)
 {
+	World = Character.GetWorld();
 	UForensicComponent* ForensicComp = Character.GetForensicComponent();
 	Subscriptions.Add(ForensicComp, &UForensicComponent::OnClueScanned, this, [this](const UClueDataAsset* Clue) { HandleClueScanned(Clue); });
 	const TWeakObjectPtr<AMvsCharacter> WeakCharacter(&Character);
@@ -273,13 +284,15 @@ void UMvsClueBinder::RefreshObjectives()
 
 void UMvsClueBinder::ShowSubtitle(const FText& Speaker, const FText& Line, float Seconds)
 {
-	Subtitles->SetLine(Speaker, Line);
+	// Real time, so a hit-stop does not stretch it, but not while paused: a line that appears just before the player
+	// pauses is still there afterwards (second review 3).
+	Subtitles->ShowFor(Speaker, Line, Seconds);
 	FTSTicker::GetCoreTicker().RemoveTicker(SubtitleHideHandle);
-	SubtitleHideHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
+	SubtitleHideHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float DeltaSeconds)
 	{
-		Subtitles->Clear();
-		return false;
-	}), Seconds);
+		const UWorld* PlayerWorld = World.Get();
+		return Subtitles->Advance(PlayerWorld && PlayerWorld->IsPaused() ? 0.f : DeltaSeconds);
+	}));
 }
 
 void UMvsClueBinder::AddDebugClues(int32 Count)

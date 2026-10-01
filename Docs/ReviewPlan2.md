@@ -35,6 +35,18 @@ left is mostly four things:
   - G5 checks absolute budgets per scenario (`Scripts/PerfBudgets.json`), and G7 checks that every string has a
     current translation (`Scripts/CheckTranslations.py`; it catches the missing and the stale).
   - Numbers and method: `Docs/Performance.md`, "Second review S0".
+- **S1 done** (findings 1 to 3):
+  - The HUD's gadget hints show the key of the device in use (the gamepad button, in the connected pad's naming) and
+    change with it, guarded by two menu-input rules; checked to fail without the fix.
+  - The gadget wheel's labels, hub text and outline take the theme's colours, and its font follows the Text size
+    setting; a menu-input rule compares them with the theme. The `hud-wheel` baseline was refreshed (labels are the
+    palette's primary text colour now, a shade under white).
+  - The "clue found" subtitle counts down only while the game runs: real time, so a hit-stop does not stretch it, but
+    not while paused (`USubtitleViewModel::ShowFor` / `Advance`, tested in `Mvs.ViewModels.Subtitles`).
+  - G5 judged single rounds, and the run order (whichever build ran second was slower) decided the median: S1 failed
+    twice on scenarios it does not touch. G5 now runs six rounds and judges the median of order-balanced pairs
+    (`Docs/Performance.md`). Its self-test still catches an injected 0.1 ms, but it reads as +0.067 ms, so the
+    margin for regressions near the 0.05 ms tolerance is thin: worth more samples per scenario if that matters.
 
 ## Rules
 

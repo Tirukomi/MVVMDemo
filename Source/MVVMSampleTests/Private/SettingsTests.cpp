@@ -293,6 +293,18 @@ bool FMvsSubtitleTest::RunTest(const FString& Parameters)
 	VM->SetPresentation(Data.GetSubtitleFontSize(), false);
 	TestTrue("large subtitles use a bigger font", VM->GetFontSize() > FMvsSettingsData().GetSubtitleFontSize());
 	TestFalse("background can be turned off", VM->GetHasBackground());
+
+	// Second review 3: a timed line counts down only the time it is given; the clue binder gives none while paused.
+	VM->ShowFor(FText::FromString(TEXT("Case file")), FText::FromString(TEXT("Torn ledger page.")), 5.f);
+	TestTrue("a timed line shows", VM->GetIsVisible() && VM->Advance(4.f));
+	for (int32 Frame = 0; Frame < 600; ++Frame)
+	{
+		VM->Advance(0.f); // ten seconds of a paused game at 60 fps
+	}
+	TestTrue("a paused game does not run it out", VM->GetIsVisible());
+	TestFalse("its time runs out once play goes on", VM->Advance(1.5f));
+	TestFalse("and it is cleared", VM->GetIsVisible());
+	TestFalse("nothing is timed afterwards", VM->Advance(1.f));
 	return true;
 }
 

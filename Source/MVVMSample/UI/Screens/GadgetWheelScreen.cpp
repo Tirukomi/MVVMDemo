@@ -38,7 +38,6 @@ TSharedRef<SWidget> UGadgetWheelScreen::RebuildWidget()
 		WidgetTree->RootWidget = Dim;
 
 		Wheel = WidgetTree->ConstructWidget<UGadgetWheel>();
-		Wheel->WheelStyle.LabelFont = MvsStyle::Font(EMvsTextStyle::Header);
 		Wheel->OnItemSelected.AddDynamic(this, &UGadgetWheelScreen::HandleItemSelected);
 		Dim->SetContent(Wheel);
 		DefaultFocus = Wheel;
@@ -132,10 +131,16 @@ void UGadgetWheelScreen::RefreshItems()
 void UGadgetWheelScreen::ApplyTheme()
 {
 	Super::ApplyTheme();
-	// Runs on every settings change, so reduced motion applies to an open wheel too.
+	// Runs on every settings change, so reduced motion, text size, contrast and the colour modes apply to an open
+	// wheel too (second review 2: the labels were fixed white, at the default text size).
 	if (Wheel)
 	{
-		Wheel->bReduceMotion = MvsMotion::IsReduced(this);
+		const FMvsTheme Theme = MvsStyle::Theme(this);
+		Wheel->bReduceMotion = Theme.bReducedMotion;
+		Wheel->WheelStyle.LabelFont = Theme.Font(EMvsTextStyle::Header);
+		Wheel->WheelStyle.LabelColor = Theme.Color(EMvsColorToken::TextPrimary);
+		Wheel->WheelStyle.CoolingLabelColor = Theme.Color(EMvsColorToken::TextMuted);
+		Wheel->WheelStyle.OutlineColor = Theme.Color(EMvsColorToken::TextPrimary, 0.9f);
 		Wheel->SynchronizeProperties();
 	}
 }
