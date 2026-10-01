@@ -48,6 +48,12 @@ left is mostly four things:
     (`Docs/Performance.md`). Its self-test still catches an injected 0.1 ms, but it reads as +0.067 ms, so the
     margin for regressions near the 0.05 ms tolerance is thin: worth more samples per scenario if that matters.
 
+- **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
+  (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
+  test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured
+  noise, G5 stays at three order-balanced pairs (fewer either fails clean code too often or missed the injected
+  0.1 ms), so a full gate is ~30 minutes, ~6 without G5 and ~2 without G4 as well.
+
 ## Rules
 
 - Same as the first plan: each iteration merges on its own through the full gate, and every fix comes with a test or

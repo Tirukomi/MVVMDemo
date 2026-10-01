@@ -2,7 +2,12 @@
 # The refactoring gate (Docs/RefactoringPlan.md). Runs every check, prints one PASS / FAIL line per check, writes a
 # report to Saved/Verify/<timestamp>.md and exits non-zero if anything failed. Close the editor first.
 #
-#   .\Scripts\Verify.ps1                         # the full gate, about 22 minutes (about 7 when G5 skips)
+#   .\Scripts\Verify.ps1                         # the full gate, about 30 minutes: 6 without G5, 2 without G4 either
+#
+# G4 and G5 run only when something that can change their result differs from -PerfRef (normally master): G5 for the
+# game's code, config, content and project file; G4 for those plus the baselines and capture scripts. Test-only code
+# (Source/MVVMSampleTests, the menu-input rules) counts for neither. The gate prints its decision first;
+# -ForceScreens / -ForcePerf run them anyway.
 #   .\Scripts\Verify.ps1 -Quick                  # incremental build, no perf runs (about 6 minutes)
 #   .\Scripts\Verify.ps1 -Only G2,G4             # a subset
 #   .\Scripts\Verify.ps1 -Only G5 -PerfRef HEAD -ForcePerf  # perf noise check: this build against itself must pass
@@ -28,8 +33,10 @@ param(
     [string]$PerfInject = "",
     # Sampled seconds per perf scenario. 5 was tried and measured noisier (an injected 0.1 ms read as +0.054), so 8.
     [int]$PerfSampleSeconds = 8,
-    # Measure perf even when nothing under Source, Config or Content differs from the reference.
-    [switch]$ForcePerf
+    # Measure perf even when nothing the game runs differs from the reference.
+    [switch]$ForcePerf,
+    # Capture screenshots even when nothing that can change a pixel differs from the reference.
+    [switch]$ForceScreens
 )
 
 # Continue, not Stop: native tools (the build, python) write progress to stderr, which must not abort the gate.
@@ -48,6 +55,37 @@ New-Item -ItemType Directory -Force $verifyDir | Out-Null
 $results = [ordered]@{}
 $details = [ordered]@{}
 function Should-Run([string]$Id) { return ($Only.Count -eq 0) -or ($Only -contains $Id) }
+
+# What differs from the reference ($PerfRef, normally master): committed on this branch, uncommitted, or untracked.
+# G4 and G5 are skipped when none of it can change what they measure (second review S1: a gate is ~30 minutes, of
+# which G5 is ~24 and G4 ~4; the build, tests, log scan and translations run every time).
+$referenceSha = (git -C $root rev-parse --verify "$PerfRef^{commit}" 2>$null)
+$changedFiles = @()
+if ($referenceSha) {
+    $changedFiles = @(git -C $root diff --name-only $referenceSha) + @(git -C $root ls-files --others --exclude-standard) |
+        Where-Object { $_ } | Sort-Object -Unique
+}
+# Code that runs only in tests: the test module, and the menu-input rules (in the game module until second review S2).
+$testOnly = '^Source/MVVMSampleTests/|^Source/MVVMSample/Core/MvsMenuInputTest\.'
+# What the game runs: its code, config, content and project file.
+$runtimePattern = '^(Source/|Config/|Content/|MVVMSample\.uproject$)'
+# What a screenshot depends on: the same, plus the baselines and the capture and diff scripts.
+$screensPattern = '^(Source/|Config/|Content/|MVVMSample\.uproject$|Docs/img/|Scripts/(CaptureScreens|DiffScreens)\.ps1$|Scripts/ScreenNoise\.json$)'
+function Get-Relevant([string]$Pattern) {
+    return @($changedFiles | Where-Object { $_ -match $Pattern -and $_ -notmatch $testOnly })
+}
+function Skip-Note([string[]]$Relevant, [string]$What) {
+    if (-not $referenceSha) { return "" }
+    if ($Relevant.Count -gt 0) { return "" }
+    return "skipped: nothing $What differs from $PerfRef ($($changedFiles.Count) changed files, none relevant)"
+}
+# Said up front, so a skipped check is never a surprise.
+foreach ($check in @(@("G4", $screensPattern, [bool]$ForceScreens), @("G5", $runtimePattern, ($ForcePerf -or [bool]$PerfInject)))) {
+    $relevant = Get-Relevant $check[1]
+    $decision = if (-not $referenceSha -or $check[2] -or $relevant.Count -gt 0) { "runs" } else { "skipped" }
+    $examples = if ($relevant.Count) { " (" + (($relevant | Select-Object -First 3) -join ", ") + $(if ($relevant.Count -gt 3) { ", ..." }) + ")" } else { "" }
+    Write-Host ("{0} {1}: {2} of {3} changed files are relevant{4}" -f $check[0], $decision, $relevant.Count, $changedFiles.Count, $examples)
+}
 function Record([string]$Id, [bool]$Ok, [string]$Summary, [string]$Detail = "") {
     $results[$Id] = @{ Ok = $Ok; Summary = $Summary }
     if ($Detail) { $details[$Id] = $Detail }
@@ -163,7 +201,10 @@ if (Should-Run "G2") {
 }
 
 # G4: screenshots against the committed set.
-if (Should-Run "G4") {
+$screensNote = if ($ForceScreens) { "" } else { Skip-Note (Get-Relevant $screensPattern) "that can change a pixel" }
+if ((Should-Run "G4") -and $screensNote) {
+    Record "G4" $true "$screensNote (-ForceScreens captures anyway)"
+} elseif (Should-Run "G4") {
     $screens = Join-Path $verifyDir "Screens"
     Remove-Item $screens -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Force $screens | Out-Null
@@ -184,12 +225,10 @@ if (Should-Run "G4") {
 if (-not $Quick -and (Should-Run "G5")) {
     $refDir = Join-Path $root "Saved\PerfRef"
     $curDir = Join-Path $root "Saved\PerfCur"
-    $refSha = (git -C $root rev-parse --verify "$PerfRef^{commit}" 2>$null)
-    # Only Source, Config and Content can change what the game does at run time (committed or not).
-    $runtime = @("Source", "Config", "Content")
-    $changed = $refSha -and ((git -C $root diff --name-only $refSha -- $runtime) -or (git -C $root status --porcelain --untracked-files=all -- $runtime))
-    if ($refSha -and -not $changed -and -not $ForcePerf -and -not $PerfInject) {
-        Record "G5" $true "skipped: nothing under Source, Config or Content differs from $PerfRef (-ForcePerf measures anyway)"
+    $refSha = $referenceSha
+    $perfNote = if ($ForcePerf -or $PerfInject) { "" } else { Skip-Note (Get-Relevant $runtimePattern) "the game runs" }
+    if ($perfNote) {
+        Record "G5" $true "$perfNote (-ForcePerf measures anyway)"
     } else {
     $problem = if (-not $refSha) { "unknown reference '$PerfRef'" } else { Prepare-PerfTree $refSha $refDir $false "ref" }
     if (-not $problem) { $problem = Prepare-PerfTree (git -C $root rev-parse HEAD) $curDir $true "cur" }
