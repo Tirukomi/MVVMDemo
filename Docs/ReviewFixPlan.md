@@ -37,6 +37,15 @@ the end.
     gone, and the test uses a store in memory.
   - The glyph and screens ask `IGothamActionSource` for actions instead of casting to the player controller.
   - Manual view subscriptions are kept on purpose until screens move to UMG (ADR 0008).
+- **R4 done**, findings 21 to 23:
+  - UI scale is an `SDPIScaler` in the primary layout; `UUserInterfaceSettings`' class default object is never written.
+    World overlays project through their own geometry, so they stay aligned at any scale.
+  - The culture the game started with is restored when the settings subsystem shuts down; revert and closing settings
+    already restored a previewed language, now guarded by a rule.
+  - Screen classes and the case file's entry class load asynchronously with the layout; a late load logs a warning
+    (which G6 fails on).
+  - `DisableTick`: no public engine API (`TickFrequency` is private, the `DisableNativeTick` flag is Blueprint-only), so
+    it is the second of three documented reflection exceptions in `Docs/CodingStandard.md`.
 
 ## Rules for every iteration
 

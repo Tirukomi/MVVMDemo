@@ -30,7 +30,7 @@ protected:
 	/** Re-evaluates ShouldBeActive; call from the view-model handlers that feed it. */
 	void UpdateActive();
 
-	/** World position to layer position: viewport-relative and DPI-adjusted, the space of the full-screen HUD canvas. */
+	/** World position to layer position (this layer's local space, which fills the HUD canvas). False if behind the camera. */
 	bool ProjectToLayer(const FVector& World, FVector2D& OutPosition) const;
 
 	/** The Slate layer, as the type MakeOverlay created (null before RebuildWidget or after release). */

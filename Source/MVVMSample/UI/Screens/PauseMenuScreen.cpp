@@ -151,7 +151,7 @@ void UPauseMenuScreen::OnCaseFile()
 {
 	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
 	{
-		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ClueLogClass.LoadSynchronous());
+		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ClueLogClass);
 	}
 }
 
@@ -159,7 +159,7 @@ void UPauseMenuScreen::OnSettings()
 {
 	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
 	{
-		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass.LoadSynchronous());
+		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass);
 	}
 }
 

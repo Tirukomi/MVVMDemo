@@ -305,7 +305,7 @@ void FGothamPerfHarness::Start(AGothamPlayerController* Controller, const FStrin
 
 	// 6. Settings screen open (rows, scroll box, buttons).
 	Run->Scenarios.Add({ TEXT("settings"),
-		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass.LoadSynchronous()); } },
+		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass); } },
 		nullptr,
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } } });
 

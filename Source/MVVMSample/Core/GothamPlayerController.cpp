@@ -85,6 +85,7 @@ void AGothamPlayerController::BeginPlay()
 		{
 			UI->EnsureLayout(this);
 
+			// The HUD is needed right now, at level start, so it is the one class loaded synchronously.
 			if (const TSubclassOf<UCommonActivatableWidget> HudClass = GetDefault<UGothamUISettings>()->HudScreenClass.LoadSynchronous())
 			{
 				UI->PushScreen(EGothamUILayer::Game, HudClass);

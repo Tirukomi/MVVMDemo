@@ -4,6 +4,8 @@
 
 #include "Blueprint/UserWidget.h"
 #include "CommonActivatableWidget.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamPrimaryLayout.h"
@@ -11,6 +13,11 @@
 
 void UGothamUISubsystem::Deinitialize()
 {
+	if (ScreenClasses.IsValid())
+	{
+		ScreenClasses->ReleaseHandle();
+		ScreenClasses.Reset();
+	}
 	Layout = nullptr;
 	Super::Deinitialize();
 }
@@ -24,6 +31,12 @@ void UGothamUISubsystem::EnsureLayout(APlayerController* Owner)
 
 	Layout = CreateWidget<UGothamPrimaryLayout>(Owner, UGothamPrimaryLayout::StaticClass());
 	Layout->AddToPlayerScreen();
+
+	const TArray<FSoftObjectPath> Paths = GetDefault<UGothamUISettings>()->GetPreloadPaths();
+	if (!Paths.IsEmpty())
+	{
+		ScreenClasses = UAssetManager::GetStreamableManager().RequestAsyncLoad(Paths, FStreamableDelegate(), FStreamableManager::AsyncLoadHighPriority);
+	}
 
 	for (int32 i = 0; i < static_cast<int32>(EGothamUILayer::Count); ++i)
 	{
@@ -44,6 +57,16 @@ UCommonActivatableWidget* UGothamUISubsystem::PushScreen(EGothamUILayer Layer, T
 		return nullptr;
 	}
 	return Layout->GetLayer(Layer)->AddWidget<UCommonActivatableWidget>(ScreenClass);
+}
+
+UCommonActivatableWidget* UGothamUISubsystem::PushScreen(EGothamUILayer Layer, const TSoftClassPtr<UCommonActivatableWidget>& ScreenClass)
+{
+	return PushScreen(Layer, UGothamUISettings::Resolve(ScreenClass));
+}
+
+bool UGothamUISubsystem::AreScreensLoaded() const
+{
+	return !ScreenClasses.IsValid() || ScreenClasses->HasLoadCompleted();
 }
 
 bool UGothamUISubsystem::PopTopScreen()
@@ -83,7 +106,7 @@ void UGothamUISubsystem::TogglePauseMenu()
 {
 	if (!PopTopScreen())
 	{
-		PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->PauseMenuClass.LoadSynchronous());
+		PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->PauseMenuClass);
 	}
 }
 
@@ -101,7 +124,7 @@ void UGothamUISubsystem::ToggleClueLog()
 	{
 		return;
 	}
-	const TSubclassOf<UCommonActivatableWidget> ClueLogClass = GetDefault<UGothamUISettings>()->ClueLogClass.LoadSynchronous();
+	const TSubclassOf<UCommonActivatableWidget> ClueLogClass = UGothamUISettings::Resolve(GetDefault<UGothamUISettings>()->ClueLogClass);
 	if (UCommonActivatableWidget* Wheel = Tracker.IsLayerOccupied(EGothamUILayer::GameMenu) ? Layout->GetLayer(EGothamUILayer::GameMenu)->GetActiveWidget() : nullptr)
 	{
 		Wheel->DeactivateWidget();
@@ -119,7 +142,7 @@ void UGothamUISubsystem::OpenGadgetWheel()
 {
 	if (!Tracker.IsMenuOpen() && !Tracker.IsLayerOccupied(EGothamUILayer::GameMenu))
 	{
-		PushScreen(EGothamUILayer::GameMenu, GetDefault<UGothamUISettings>()->GadgetWheelClass.LoadSynchronous());
+		PushScreen(EGothamUILayer::GameMenu, GetDefault<UGothamUISettings>()->GadgetWheelClass);
 	}
 }
 

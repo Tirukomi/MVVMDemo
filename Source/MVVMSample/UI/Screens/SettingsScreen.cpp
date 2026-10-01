@@ -253,7 +253,7 @@ void USettingsScreen::OpenControls()
 {
 	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
 	{
-		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
+		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass);
 	}
 }
 

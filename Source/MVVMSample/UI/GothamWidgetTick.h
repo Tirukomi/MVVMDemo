@@ -11,7 +11,9 @@ namespace GothamUI
 	/**
 	 * Stops a widget ticking. C++-only widgets have no Blueprint class, so UUserWidget's default "Auto" frequency
 	 * treats them as needing a native tick every frame, even though ours are entirely event-driven (view-model
-	 * delegates). The property is private, so it is set through reflection, then the tick state is recomputed.
+	 * delegates). The property is private with no setter (checked in 5.8; the "DisableNativeTick" class flag is only read
+	 * for Blueprint classes), so it is set through reflection, then the tick state is recomputed. One of the documented
+	 * reflection exceptions in Docs/CodingStandard.md.
 	 *
 	 * Only use this on widgets with no widget animations and no latent actions: Never also stops those.
 	 */

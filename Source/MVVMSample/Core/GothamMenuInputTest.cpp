@@ -9,6 +9,9 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/TextBlock.h"
 #include "Slate/SObjectWidget.h"
+#include "Engine/UserInterfaceSettings.h"
+#include "Internationalization/Culture.h"
+#include "Internationalization/Internationalization.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Screens/ClueLogScreen.h"
@@ -353,13 +356,15 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	FGothamScript* Self = &Script.Get();
 	Script->SetReporter(MoveTemp(Reporter));
 	TSharedPtr<int32> ScaleBefore = MakeShared<int32>(0);
+	TSharedPtr<float> LayoutScaleBefore = MakeShared<float>(0.f);
+	TSharedPtr<FString> CultureBefore = MakeShared<FString>();
 	TSharedPtr<FLinearColor> LabelBefore = MakeShared<FLinearColor>(FLinearColor::Transparent);
 	auto Settings = [WeakPC]() { const UGothamSettingsSubsystem* S = UGothamSettingsSubsystem::Get(WeakPC.Get()); return S ? S->GetViewModel() : nullptr; };
 	TSharedPtr<TArray<TPair<FName, FKey>>> Undo = MakeShared<TArray<TPair<FName, FKey>>>();
 	auto Scale = [Settings]() { return Settings() ? Settings()->GetCurrent().UIScaleIndex : -1; };
 	auto Push = [WeakUI](TSoftClassPtr<UCommonActivatableWidget> UGothamUISettings::* Class)
 	{
-		return [WeakUI, Class]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EGothamUILayer::Menu, (GetMutableDefault<UGothamUISettings>()->*Class).LoadSynchronous()); } };
+		return [WeakUI, Class]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->*Class); } };
 	};
 	// A screen is ready for input once it is active, no layer is mid-transition (Common UI blocks input meanwhile),
 	// and focus has landed inside it.
@@ -367,6 +372,13 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	auto Closed = [WeakUI](auto* Screen) { return !Screen && WeakUI.IsValid() && !WeakUI->IsTransitioning(); };
 	constexpr float Open = 3.f;
 	constexpr float Quick = 1.5f;
+
+	// Review finding 23: screens load when the layout is created, before any key opens one.
+	Script->Do([Self, WeakUI]()
+	{
+		Self->Check(WeakUI.IsValid() && WeakUI->AreScreensLoaded() && GetDefault<UGothamUISettings>()->ClueEntryClass.Get() != nullptr,
+			TEXT("the screen classes are loaded before the first key press (review 23)"));
+	});
 
 	// 1. The case file's own key (J) closes it.
 	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->ToggleClueLog(); } })
@@ -384,8 +396,21 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	Script->Do(Push(&UGothamUISettings::SettingsScreenClass))
 		.WaitUntil([Settled]() { return Settled(ActiveScreen<USettingsScreen>()); }, Open, TEXT("settings open (precondition)"))
 		// Keys straight to the focused row first: separates "the key never reaches the row" from "the click fails".
-		.Do([Scale, ScaleBefore]() { *ScaleBefore = Scale(); SendKey(EKeys::Right); })
+		.Do([Scale, ScaleBefore, LayoutScaleBefore]()
+		{
+			*ScaleBefore = Scale();
+			const USettingsScreen* Screen = ActiveScreen<USettingsScreen>();
+			*LayoutScaleBefore = Screen ? Screen->GetCachedGeometry().Scale : 0.f;
+			SendKey(EKeys::Right);
+		})
 		.WaitUntil([Scale, ScaleBefore]() { return Scale() != *ScaleBefore; }, Quick, TEXT("Right on a focused option row steps it"))
+		// Review finding 21: the preview scales the layout itself; the engine's UI settings are never written.
+		.WaitUntil([LayoutScaleBefore]()
+		{
+			const USettingsScreen* Screen = ActiveScreen<USettingsScreen>();
+			return Screen && !FMath::IsNearlyEqual(Screen->GetCachedGeometry().Scale, *LayoutScaleBefore)
+				&& GetDefault<UUserInterfaceSettings>()->ApplicationScale == 1.f;
+		}, Quick, TEXT("a UI scale preview scales the layout, not the engine's UI settings (review 21)"))
 		.Do([Scale, ScaleBefore]() { *ScaleBefore = Scale(); SendKey(EKeys::Enter); })
 		.WaitUntil([Scale, ScaleBefore]() { return Scale() != *ScaleBefore; }, Quick, TEXT("Enter on a focused option row steps it"))
 		// The selector's left half steps back. The selector (260 wide, inset 14) sits at the row's right edge; click a
@@ -448,6 +473,20 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		.WaitUntil(Stable([]() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape); }), Quick, TEXT("the [Esc] prompt settles (precondition)"));
 	AddClick(*Script, []() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape); }, TEXT("the [Esc] prompt is clickable"));
 	Script->WaitUntil([Closed]() { return Closed(ActiveScreen<USettingsScreen>()); }, Quick, TEXT("clicking [Esc] Back closes settings"));
+
+	// Review finding 21: a language preview is live, and leaving settings without applying puts the culture back.
+	Script->Do(Push(&UGothamUISettings::SettingsScreenClass))
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<USettingsScreen>()); }, Open, TEXT("settings open for the language preview (precondition)"))
+		.Do([Settings, CultureBefore]()
+		{
+			*CultureBefore = FInternationalization::Get().GetCurrentCulture()->GetName();
+			if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::Language, +1); }
+		})
+		.WaitUntil([CultureBefore]() { return FInternationalization::Get().GetCurrentCulture()->GetName() != *CultureBefore; }, Quick,
+			TEXT("a language preview switches the language live"))
+		.Do([]() { if (USettingsScreen* Screen = ActiveScreen<USettingsScreen>()) { Screen->DeactivateWidget(); } })
+		.WaitUntil([Closed, CultureBefore]() { return Closed(ActiveScreen<USettingsScreen>()) && FInternationalization::Get().GetCurrentCulture()->GetName() == *CultureBefore; },
+			Open, TEXT("closing settings without applying restores the language (review 21)"));
 
 	// Review findings 2 and 7: screens opened from pause keep the game paused, and the case file's key opens the case
 	// file over pause instead of closing pause.

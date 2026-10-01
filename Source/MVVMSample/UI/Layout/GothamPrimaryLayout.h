@@ -22,7 +22,10 @@ public:
 	UGothamScreenStack(const FObjectInitializer& ObjectInitializer);
 };
 
-/** Root of all UI for a local player: one activatable-widget stack per EGothamUILayer, stacked in z-order. */
+/**
+ * Root of all UI for a local player: one activatable-widget stack per EGothamUILayer, stacked in z-order, inside a DPI
+ * scaler that applies the player's UI scale setting to HUD and menus together.
+ */
 UCLASS()
 class MVVMSAMPLE_API UGothamPrimaryLayout : public UCommonUserWidget
 {
@@ -37,8 +40,11 @@ protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:
-	/** Reduced motion turns the transition off (duration 0). */
-	void ApplyMotionSetting();
+	/** Reduced motion turns the transition off (duration 0); UI scale sets the DPI scale. */
+	void ApplySettings(const FGothamSettingsData& Data);
+
+	/** The player's UI scale, read by the DPI scaler every layout pass. */
+	float UIScale = 1.f;
 	FGothamSettingsListener SettingsListener;
 
 	UPROPERTY(Transient)

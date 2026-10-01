@@ -37,6 +37,14 @@ Follows Epic's Unreal coding standard, plus these project rules.
   `ETextTransformPolicy::ToUpper`: Slate's transform cannot change a string's length, so German "ß" ("SS") ensures and
   stays in mixed case.
 - Anything with a rule worth testing is UObject-free or exposes an `Advance(DeltaTime)`-style entry point.
-- Reflection to reach a protected engine property is allowed only in one documented helper (see ADR 0005).
+- Reflection to write a non-public engine property is allowed only for properties the engine exposes to the editor
+  (a designer would set them in a widget or asset), when there is no setter and the object is built in code, and only
+  in these three documented places:
+  - `MakeActionMappable` (`Core/GothamPlayerController.cpp`): an input action's player-mappable key settings (ADR 0005).
+  - `GothamUI::DisableTick` (`UI/GothamWidgetTick.h`): a widget's `TickFrequency` (class defaults, "Performance").
+    Native widget classes have no Blueprint class, so the engine ticks them every frame unless it is `Never`, and the
+    `DisableNativeTick` class flag is read only for Blueprint classes. Checked in 5.8: no setter.
+  - `UGothamActionBar`'s constructor: the bound action bar's `ActionButtonClass` (ADR 0007).
+  Each names its property, says why there is no alternative, and is re-checked when the engine is upgraded.
 - Dev-only code sits under `#if !UE_BUILD_SHIPPING` and is enabled by a `-Gotham...` flag, never by default.
 - Measure before optimising; record before/after in `Docs/Performance.md`, including changes that turned out not to help.

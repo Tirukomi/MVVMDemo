@@ -6,7 +6,9 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Slate/SCommonAnimatedSwitcher.h"
+#include "Widgets/Layout/SDPIScaler.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Style/GothamMotion.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -36,15 +38,23 @@ TSharedRef<SWidget> UGothamPrimaryLayout::RebuildWidget()
 			Layers.Add(Stack);
 		}
 	}
-	return Super::RebuildWidget();
+	// The scale is the layout's, not a global: it ends with this widget (no engine setting outlives a PIE session).
+	return SNew(SDPIScaler)
+		.DPIScale(TAttribute<float>::CreateWeakLambda(this, [this]() { return UIScale; }))
+		[
+			Super::RebuildWidget()
+		];
 }
 
 void UGothamPrimaryLayout::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyMotionSetting(); });
-	ApplyMotionSetting();
+	SettingsListener.Bind(this, [this](const FGothamSettingsData& Data) { ApplySettings(Data); });
+	if (const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	{
+		ApplySettings(Settings->GetSettings());
+	}
 }
 
 void UGothamPrimaryLayout::NativeDestruct()
@@ -53,8 +63,9 @@ void UGothamPrimaryLayout::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UGothamPrimaryLayout::ApplyMotionSetting()
+void UGothamPrimaryLayout::ApplySettings(const FGothamSettingsData& Data)
 {
+	UIScale = Data.GetUIScale();
 	const float Seconds = GothamMotion::IsReduced(this) ? 0.f : GothamMotion::ScreenSeconds;
 	for (UCommonActivatableWidgetStack* Stack : Layers)
 	{

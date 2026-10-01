@@ -9,6 +9,7 @@
 
 class UCommonActivatableWidget;
 class UGothamPrimaryLayout;
+struct FStreamableHandle;
 
 /**
  * Owns the primary layout and is the one place screens are pushed and popped.
@@ -22,10 +23,18 @@ class MVVMSAMPLE_API UGothamUISubsystem : public ULocalPlayerSubsystem
 public:
 	virtual void Deinitialize() override;
 
-	/** Creates the layout on first call (idempotent). */
+	/**
+	 * Creates the layout on first call (idempotent), and starts loading every screen class asynchronously
+	 * (UGothamUISettings::GetPreloadPaths), so opening a screen later never loads on a key press.
+	 */
 	void EnsureLayout(APlayerController* Owner);
 
 	UCommonActivatableWidget* PushScreen(EGothamUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
+	/** Pushes a screen class from the UI settings (preloaded; see UGothamUISettings::Resolve). */
+	UCommonActivatableWidget* PushScreen(EGothamUILayer Layer, const TSoftClassPtr<UCommonActivatableWidget>& ScreenClass);
+
+	/** True once the preloaded screen classes are in memory. */
+	bool AreScreensLoaded() const;
 
 	/** Pushes a screen and lets the caller configure the instance before it activates. */
 	template<typename TScreen>
@@ -69,6 +78,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UGothamPrimaryLayout> Layout;
+
+	/** Keeps the preloaded screen classes in memory for the session. */
+	TSharedPtr<FStreamableHandle> ScreenClasses;
 
 	FGothamUIModeTracker Tracker;
 	/** One bit per EGothamUILayer that is mid-transition. */

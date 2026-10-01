@@ -113,6 +113,12 @@ switches are reflected without extra code.
 
 - `FGothamSettingsData` (plain struct, persisted in GameUserSettings.ini) is edited via `USettingsViewModel` with live
   preview and Apply / Revert / Defaults. `UGothamSettingsSubsystem` applies side effects and broadcasts.
+  No setting writes engine-global state from UI code: UI scale is a DPI scaler inside the primary layout, and the
+  language (process-wide culture) is restored when a preview is reverted, when settings close without applying, and
+  when the game instance shuts down (so a play-in-editor session never leaves the editor in another language).
+- Screen classes load asynchronously when the layout is created (`UGothamUISettings::GetPreloadPaths`) and stay
+  loaded; `UGothamUISettings::Resolve` warns if one is ever loaded on demand. Only the HUD loads synchronously, at
+  level start.
 - Colours are semantic tokens (`GothamPalette`), resolved per colour-vision preset and high contrast; nothing in UI code
   uses a literal colour for meaning. The Detective post-process takes its clue colours as material parameters.
 - Text is `FText` (LOCTEXT / string table). `Scripts/Localize.bat` runs UE's gather -> `.po` import / export -> compile (translations live in one `.po` per culture); English,

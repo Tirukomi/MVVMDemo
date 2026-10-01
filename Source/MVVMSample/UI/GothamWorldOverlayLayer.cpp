@@ -2,7 +2,8 @@
 
 #include "UI/GothamWorldOverlayLayer.h"
 
-#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
+#include "GameFramework/PlayerController.h"
 
 namespace GothamWorldOverlayPrivate
 {
@@ -51,6 +52,14 @@ void UGothamWorldOverlayLayer::UpdateActive()
 
 bool UGothamWorldOverlayLayer::ProjectToLayer(const FVector& World, FVector2D& OutPosition) const
 {
+	// Screen pixels, then into this layer's own space: correct however the UI above it is scaled (the primary layout
+	// applies the player's UI scale itself, which the viewport's DPI scale does not include).
 	APlayerController* PC = GetOwningPlayer();
-	return PC && UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PC, World, OutPosition, true);
+	FVector2D ScreenPosition;
+	if (!PC || !PC->ProjectWorldLocationToScreen(World, ScreenPosition, true))
+	{
+		return false;
+	}
+	USlateBlueprintLibrary::ScreenToWidgetLocal(this, GetCachedGeometry(), ScreenPosition, OutPosition);
+	return true;
 }

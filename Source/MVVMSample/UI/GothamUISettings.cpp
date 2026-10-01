@@ -9,6 +9,8 @@
 #include "UI/Screens/PauseMenuScreen.h"
 #include "UI/Screens/SettingsScreen.h"
 
+DEFINE_LOG_CATEGORY(LogGothamUILoading);
+
 UGothamUISettings::UGothamUISettings()
 {
 	CategoryName = TEXT("Game");
@@ -21,4 +23,21 @@ UGothamUISettings::UGothamUISettings()
 	ClueEntryClass = FSoftClassPath(TEXT("/Game/UI/WBP_ClueEntry.WBP_ClueEntry_C"));
 	DetectiveVisionMaterial = FSoftObjectPath(TEXT("/Game/Materials/M_DetectiveVision.M_DetectiveVision"));
 	DetectiveOverlayMaterial = FSoftObjectPath(TEXT("/Game/Materials/M_DetectiveOverlay_UI.M_DetectiveOverlay_UI"));
+}
+
+TArray<FSoftObjectPath> UGothamUISettings::GetPreloadPaths() const
+{
+	TArray<FSoftObjectPath> Paths;
+	for (const TSoftClassPtr<UCommonActivatableWidget>* Screen : { &PauseMenuClass, &SettingsScreenClass, &GadgetWheelClass, &ClueLogClass, &ControlsScreenClass })
+	{
+		if (!Screen->IsNull())
+		{
+			Paths.Add(Screen->ToSoftObjectPath());
+		}
+	}
+	if (!ClueEntryClass.IsNull())
+	{
+		Paths.Add(ClueEntryClass.ToSoftObjectPath());
+	}
+	return Paths;
 }

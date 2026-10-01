@@ -6,6 +6,8 @@
 #include "Engine/DeveloperSettings.h"
 #include "GothamUISettings.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogGothamUILoading, Log, All);
+
 class UCommonActivatableWidget;
 class UMaterialInterface;
 class UUserWidget;
@@ -51,4 +53,22 @@ public:
 	/** Full-screen UI material for the Detective Mode overlay (domain: User Interface). */
 	UPROPERTY(Config, EditAnywhere, Category = "Detective")
 	TSoftObjectPtr<UMaterialInterface> DetectiveOverlayMaterial;
+
+	/** Every class a screen or a key press may need: the screens opened on input, and the case file's entry class. */
+	TArray<FSoftObjectPath> GetPreloadPaths() const;
+
+	/**
+	 * The loaded class. Screen classes are preloaded when the UI layout is created (UGothamUISubsystem), so this
+	 * normally only reads; a class that is not loaded yet is loaded on the spot, with a warning, since that is a hitch.
+	 */
+	template<typename TClass>
+	static TSubclassOf<TClass> Resolve(const TSoftClassPtr<TClass>& Class)
+	{
+		if (Class.IsNull() || Class.Get())
+		{
+			return Class.Get();
+		}
+		UE_LOG(LogGothamUILoading, Warning, TEXT("%s was not preloaded; loading it synchronously."), *Class.ToString());
+		return Class.LoadSynchronous();
+	}
 };

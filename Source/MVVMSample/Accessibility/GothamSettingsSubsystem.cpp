@@ -3,7 +3,7 @@
 #include "Accessibility/GothamSettingsSubsystem.h"
 
 #include "Engine/GameInstance.h"
-#include "Engine/UserInterfaceSettings.h"
+#include "Internationalization/Culture.h"
 #include "Internationalization/Internationalization.h"
 #include "Misc/ConfigCacheIni.h"
 #include "ViewModels/SettingsViewModel.h"
@@ -50,6 +50,7 @@ void UGothamSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Live.bReducedMotion |= FParse::Param(FCommandLine::Get(), TEXT("GothamReducedMotion"));
 #endif
 
+	CultureBeforeGame = FInternationalization::Get().GetCurrentCulture()->GetName();
 	ViewModel = NewObject<USettingsViewModel>(this);
 	ViewModel->Initialize(Live);
 	ViewModel->OnPreview.AddUObject(this, &UGothamSettingsSubsystem::HandlePreview);
@@ -64,6 +65,10 @@ void UGothamSettingsSubsystem::Deinitialize()
 	{
 		ViewModel->OnPreview.RemoveAll(this);
 		ViewModel->OnCommitted.RemoveAll(this);
+	}
+	if (!CultureBeforeGame.IsEmpty() && FInternationalization::Get().GetCurrentCulture()->GetName() != CultureBeforeGame)
+	{
+		FInternationalization::Get().SetCurrentCulture(CultureBeforeGame);
 	}
 	Super::Deinitialize();
 }
@@ -95,8 +100,7 @@ void UGothamSettingsSubsystem::ApplyEffects(const FGothamSettingsData& Data, boo
 			ViewModel->RefreshTexts();
 		}
 	}
-	// The game viewport takes its DPI scale from the UI settings; ApplicationScale multiplies it, and the viewport
-	// re-reads it every frame, so this scales HUD and menus together without touching any layout.
-	GetMutableDefault<UUserInterfaceSettings>()->ApplicationScale = Data.GetUIScale();
+	// UI scale is applied by the primary layout (a DPI scaler around every layer), from this broadcast. It used to be
+	// written to UUserInterfaceSettings' class default object, which outlived a play-in-editor session.
 	OnSettingsChanged.Broadcast(Live);
 }

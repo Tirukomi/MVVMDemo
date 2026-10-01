@@ -48,7 +48,7 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 		Split->AddChildToHorizontalBox(BoardWidth);
 
 		TileView = WidgetTree->ConstructWidget<UGothamClueTileView>();
-		TSubclassOf<UUserWidget> EntryClass = GetDefault<UGothamUISettings>()->ClueEntryClass.LoadSynchronous();
+		TSubclassOf<UUserWidget> EntryClass = UGothamUISettings::Resolve(GetDefault<UGothamUISettings>()->ClueEntryClass);
 		TileView->SetEntryClass(EntryClass ? EntryClass : TSubclassOf<UUserWidget>(UClueEntryWidget::StaticClass()));
 		TileView->SetEntryWidth(UClueEntryWidget::TileWidth);
 		TileView->SetEntryHeight(UClueEntryWidget::TileHeight);

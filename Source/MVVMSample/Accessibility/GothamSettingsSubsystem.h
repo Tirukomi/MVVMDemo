@@ -43,6 +43,12 @@ private:
 
 	FGothamSettingsData Live;
 
+	/**
+	 * The culture before the game applied the player's language. The culture is process-wide (in the editor it is the
+	 * editor's too), so it is put back when the game instance shuts down, e.g. at the end of a play-in-editor session.
+	 */
+	FString CultureBeforeGame;
+
 	UPROPERTY(Transient)
 	TObjectPtr<USettingsViewModel> ViewModel;
 };

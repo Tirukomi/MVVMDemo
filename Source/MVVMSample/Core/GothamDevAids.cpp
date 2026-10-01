@@ -204,11 +204,11 @@ namespace GothamDevAidsPrivate
 		}
 		if (F.bSettings)
 		{
-			UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass.LoadSynchronous());
+			UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->SettingsScreenClass);
 		}
 		if (F.bControls)
 		{
-			UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
+			UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass);
 		}
 	}
 
@@ -383,7 +383,7 @@ namespace GothamDevAidsPrivate
 				UserSettings->SaveSettings();
 				UE_LOG(LogGothamDevAids, Log, TEXT("Rebind demo: Scan -> R (failure tags: %d)"), Failure.Num());
 			}
-			WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
+			WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass);
 		});
 	}
 
