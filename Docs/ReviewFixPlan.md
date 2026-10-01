@@ -46,6 +46,14 @@ the end.
     (which G6 fails on).
   - `DisableTick`: no public engine API (`TickFrequency` is private, the `DisableNativeTick` flag is Blueprint-only), so
     it is the second of three documented reflection exceptions in `Docs/CodingStandard.md`.
+- **R5 done**, findings 24 to 27, numbers in `Docs/Performance.md` (R5 section):
+  - The Detective overlay's fade sets only opacity and material progress; styling happens on settings changes.
+  - Marker text is re-formatted only when it changes; icon strokes are a static table; panel outlines and arcs build
+    in place. One allocation per drawn line remains, owned by Slate's draw element.
+  - One background blur on screen: a menu under a blurring modal turns its blur off. (Settings over Pause never
+    stacked two: a layer shows only its top screen.) New `pause-quit` perf scenario and menu-input rules.
+  - Tweens run as active timers on the animated widget, tracked in Slate metadata, not on the core ticker.
+  - Measured: every change is inside run-to-run noise on this machine except the second blur (about 0.035 ms GPU).
 
 ## Rules for every iteration
 

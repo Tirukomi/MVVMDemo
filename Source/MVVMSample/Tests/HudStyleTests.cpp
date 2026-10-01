@@ -137,7 +137,7 @@ bool FGothamIconStrokesTest::RunTest(const FString& Parameters)
 {
 	for (int32 i = 0; i < static_cast<int32>(EGothamGadgetIcon::Count); ++i)
 	{
-		const TArray<TArray<FVector2f>> Strokes = GothamGadgetIconStrokes(static_cast<EGothamGadgetIcon>(i));
+		const TArray<TArray<FVector2f>>& Strokes = GothamGadgetIconStrokes(static_cast<EGothamGadgetIcon>(i));
 		TestTrue(*FString::Printf(TEXT("icon %d has strokes"), i), Strokes.Num() > 0);
 		for (const TArray<FVector2f>& Line : Strokes)
 		{

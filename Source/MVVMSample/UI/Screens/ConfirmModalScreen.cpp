@@ -31,7 +31,7 @@ TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 
 		// A lighter blur and dim than full menus: the screen underneath stays recognisable.
 		UBackgroundBlur* Blur = WidgetTree->ConstructWidget<UBackgroundBlur>();
-		Blur->SetBlurStrength(6.f);
+		SetBackdrop(Blur, 6.f);
 		UOverlaySlot* BlurSlot = Root->AddChildToOverlay(Blur);
 		BlurSlot->SetHorizontalAlignment(HAlign_Fill);
 		BlurSlot->SetVerticalAlignment(VAlign_Fill);

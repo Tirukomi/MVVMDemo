@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamPrimaryLayout.h"
+#include "UI/Screens/GothamScreen.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 void UGothamUISubsystem::Deinitialize()
@@ -149,4 +150,21 @@ void UGothamUISubsystem::OpenGadgetWheel()
 void UGothamUISubsystem::HandleLayerChanged(EGothamUILayer Layer)
 {
 	Tracker.SetLayerOccupied(Layer, Layout->GetLayer(Layer)->GetActiveWidget() != nullptr);
+	UpdateBackdrops();
+}
+
+void UGothamUISubsystem::UpdateBackdrops()
+{
+	bool bBlurAbove = false;
+	for (int32 i = static_cast<int32>(EGothamUILayer::Count) - 1; i >= 0; --i)
+	{
+		if (UGothamScreen* Screen = Cast<UGothamScreen>(Layout->GetLayer(static_cast<EGothamUILayer>(i))->GetActiveWidget()))
+		{
+			if (Screen->HasBackdropBlur())
+			{
+				Screen->SetBackdropBlurEnabled(!bBlurAbove);
+				bBlurAbove = true;
+			}
+		}
+	}
 }

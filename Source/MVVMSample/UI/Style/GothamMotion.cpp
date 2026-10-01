@@ -4,47 +4,65 @@
 
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Components/Widget.h"
-#include "Containers/Ticker.h"
+#include "Types/ISlateMetaData.h"
+#include "Widgets/SWidget.h"
 
 namespace
 {
-	enum class EChannel : uint8 { Scale, Opacity, Translation };
+	enum class EChannel : uint8 { Scale, Opacity, Translation, Count };
 
-	/** Active animations per widget and channel, so a new animation replaces the old one instead of stacking. */
-	TMap<TPair<TWeakObjectPtr<UWidget>, EChannel>, FTSTicker::FDelegateHandle>& Active()
+	/**
+	 * The animations running on one Slate widget, one per channel, kept on the widget itself so a new animation can
+	 * replace the old one instead of stacking. Gone with the widget: nothing global outlives it.
+	 */
+	class FGothamMotionMetaData : public ISlateMetaData
 	{
-		static TMap<TPair<TWeakObjectPtr<UWidget>, EChannel>, FTSTicker::FDelegateHandle> Map;
-		return Map;
-	}
+	public:
+		SLATE_METADATA_TYPE(FGothamMotionMetaData, ISlateMetaData)
 
+		TWeakPtr<FActiveTimerHandle> Channels[static_cast<int32>(EChannel::Count)];
+	};
+
+	/**
+	 * Runs Apply(Widget, T) with T from 0 to 1 over Seconds, as an active timer on the widget's Slate widget: it ticks
+	 * with Slate in real time (so the wheel's slow motion does not slow it) and only while the animation runs.
+	 */
 	void Run(UWidget* Widget, EChannel Channel, float Seconds, TFunction<void(UWidget*, float)> Apply)
 	{
-		const TPair<TWeakObjectPtr<UWidget>, EChannel> Key(Widget, Channel);
-		if (FTSTicker::FDelegateHandle* Existing = Active().Find(Key))
+		const TSharedPtr<SWidget> Slate = Widget->GetCachedWidget();
+		if (!Slate.IsValid())
 		{
-			FTSTicker::GetCoreTicker().RemoveTicker(*Existing);
+			Apply(Widget, 1.f); // not on screen yet: nothing to animate, so land on the end state
+			return;
 		}
-		const TWeakObjectPtr<UWidget> Weak(Widget);
-		TSharedRef<float> Elapsed = MakeShared<float>(0.f);
-		Apply(Widget, 0.f);
-		Active().Add(Key, FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Weak, Elapsed, Seconds, Apply, Key](float Dt)
+		TSharedPtr<FGothamMotionMetaData> Motion = Slate->GetMetaData<FGothamMotionMetaData>();
+		if (!Motion.IsValid())
 		{
-			UWidget* W = Weak.Get();
-			if (!W)
+			Motion = MakeShared<FGothamMotionMetaData>();
+			Slate->AddMetadata(Motion.ToSharedRef());
+		}
+		TWeakPtr<FActiveTimerHandle>& Running = Motion->Channels[static_cast<int32>(Channel)];
+		if (const TSharedPtr<FActiveTimerHandle> Previous = Running.Pin())
+		{
+			Slate->UnRegisterActiveTimer(Previous.ToSharedRef());
+		}
+
+		Apply(Widget, 0.f);
+		const TWeakObjectPtr<UWidget> Weak(Widget);
+		const TSharedRef<float> Elapsed = MakeShared<float>(0.f);
+		Running = Slate->RegisterActiveTimer(0.f, FWidgetActiveTimerDelegate::CreateLambda(
+			[Weak, Elapsed, Seconds, Apply = MoveTemp(Apply)](double, float DeltaTime)
 			{
-				Active().Remove(Key);
-				return false;
-			}
-			*Elapsed += Dt;
-			const float T = FMath::Clamp(*Elapsed / FMath::Max(Seconds, KINDA_SMALL_NUMBER), 0.f, 1.f);
-			Apply(W, T);
-			if (T >= 1.f)
-			{
-				Active().Remove(Key);
-				return false;
-			}
-			return true;
-		})));
+				UWidget* W = Weak.Get();
+				if (!W)
+				{
+					return EActiveTimerReturnType::Stop;
+				}
+				*Elapsed += DeltaTime;
+				const float T = FMath::Clamp(*Elapsed / FMath::Max(Seconds, KINDA_SMALL_NUMBER), 0.f, 1.f);
+				Apply(W, T);
+				return T >= 1.f ? EActiveTimerReturnType::Stop : EActiveTimerReturnType::Continue;
+			}));
 	}
 }
 

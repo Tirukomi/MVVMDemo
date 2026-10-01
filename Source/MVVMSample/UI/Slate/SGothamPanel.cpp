@@ -6,19 +6,45 @@
 #include "Styling/CoreStyle.h"
 #include "Widgets/Layout/SBox.h"
 
+namespace
+{
+	/** At most 8 corners; inline storage, so building an outline allocates nothing. */
+	using FOutline = TArray<FVector2f, TInlineAllocator<8>>;
+
+	template<typename TAllocator>
+	void BuildChamferedRect(const FVector2f& Size, float Corner, uint8 Mask, TArray<FVector2f, TAllocator>& P)
+	{
+		const float C = FMath::Clamp(Corner, 0.f, 0.5f * FMath::Min(Size.X, Size.Y));
+		const float W = Size.X;
+		const float H = Size.Y;
+		P.Reset();
+		auto Cut = [Mask, C](uint8 Bit) { return (Mask & Bit) && C > 0.f; };
+
+		if (Cut(EGothamChamfer::TopLeft))     { P.Add({ 0.f, C }); P.Add({ C, 0.f }); }     else { P.Add({ 0.f, 0.f }); }
+		if (Cut(EGothamChamfer::TopRight))    { P.Add({ W - C, 0.f }); P.Add({ W, C }); }   else { P.Add({ W, 0.f }); }
+		if (Cut(EGothamChamfer::BottomRight)) { P.Add({ W, H - C }); P.Add({ W - C, H }); } else { P.Add({ W, H }); }
+		if (Cut(EGothamChamfer::BottomLeft))  { P.Add({ C, H }); P.Add({ 0.f, H - C }); }   else { P.Add({ 0.f, H }); }
+	}
+
+	/** The outline as a closed line, offset: the one array per line that Slate's draw element keeps. */
+	TArray<FVector2f> ClosedLine(const FOutline& Outline, const FVector2f& Shift)
+	{
+		TArray<FVector2f> Points;
+		Points.Reserve(Outline.Num() + 1);
+		for (const FVector2f& P : Outline)
+		{
+			Points.Add(P + Shift);
+		}
+		Points.Add(Outline[0] + Shift);
+		return Points;
+	}
+}
+
 TArray<FVector2f> GothamChamferedRect(const FVector2f& Size, float Corner, uint8 Mask)
 {
-	const float C = FMath::Clamp(Corner, 0.f, 0.5f * FMath::Min(Size.X, Size.Y));
-	const float W = Size.X;
-	const float H = Size.Y;
 	TArray<FVector2f> P;
 	P.Reserve(8);
-	auto Cut = [Mask, C](uint8 Bit) { return (Mask & Bit) && C > 0.f; };
-
-	if (Cut(EGothamChamfer::TopLeft))     { P.Add({ 0.f, C }); P.Add({ C, 0.f }); }     else { P.Add({ 0.f, 0.f }); }
-	if (Cut(EGothamChamfer::TopRight))    { P.Add({ W - C, 0.f }); P.Add({ W, C }); }   else { P.Add({ W, 0.f }); }
-	if (Cut(EGothamChamfer::BottomRight)) { P.Add({ W, H - C }); P.Add({ W - C, H }); } else { P.Add({ W, H }); }
-	if (Cut(EGothamChamfer::BottomLeft))  { P.Add({ C, H }); P.Add({ 0.f, H - C }); }   else { P.Add({ 0.f, H }); }
+	BuildChamferedRect(Size, Corner, Mask, P);
 	return P;
 }
 
@@ -30,14 +56,8 @@ void GothamPaintPanel(FSlateWindowElementList& OutDrawElements, int32 LayerId, c
 		return;
 	}
 	const FSlateBrush* White = FCoreStyle::Get().GetBrush("GenericWhiteBox");
-	const TArray<FVector2f> Outline = GothamChamferedRect(Size, Look.Corner, Look.ChamferMask);
-	auto Closed = [&Offset](TArray<FVector2f> Points, const FVector2f& Shift)
-	{
-		for (FVector2f& P : Points) { P += Offset + Shift; }
-		const FVector2f First = Points[0]; // copy: Add() may reallocate under a reference into the array
-		Points.Add(First);
-		return Points;
-	};
+	FOutline Outline;
+	BuildChamferedRect(Size, Look.Corner, Look.ChamferMask, Outline);
 	auto Faded = [Opacity](FLinearColor Color, float Scale = 1.f) { Color.A *= Opacity * Scale; return Color; };
 
 	// Glow: a few outlines stepping outward, each fainter. Cheap, and it scales with the shape.
@@ -47,8 +67,9 @@ void GothamPaintPanel(FSlateWindowElementList& OutDrawElements, int32 LayerId, c
 		for (int32 i = 1; i <= Rings; ++i)
 		{
 			const float E = Look.GlowSize * i / Rings;
-			const TArray<FVector2f> Ring = GothamChamferedRect(Size + FVector2f(2.f * E), Look.Corner + E * 0.4f, Look.ChamferMask);
-			FSlateDrawElement::MakeLines(OutDrawElements, LayerId, Geometry.ToPaintGeometry(), Closed(Ring, FVector2f(-E)),
+			FOutline Ring;
+			BuildChamferedRect(Size + FVector2f(2.f * E), Look.Corner + E * 0.4f, Look.ChamferMask, Ring);
+			FSlateDrawElement::MakeLines(OutDrawElements, LayerId, Geometry.ToPaintGeometry(), ClosedLine(Ring, Offset - FVector2f(E)),
 				ESlateDrawEffect::None, Faded(Look.Glow, 1.f - (i - 1.f) / Rings), true, Look.GlowSize / Rings + 0.5f);
 		}
 	}
@@ -61,8 +82,11 @@ void GothamPaintPanel(FSlateWindowElementList& OutDrawElements, int32 LayerId, c
 		for (const FVector2f& P : Outline) { Centre += P; }
 		Centre /= Outline.Num();
 
-		TArray<FSlateVertex> Verts;
-		TArray<SlateIndex> Indices;
+		// Scratch kept between paints (Slate paints on the game thread); the draw element copies what it needs.
+		static TArray<FSlateVertex> Verts;
+		static TArray<SlateIndex> Indices;
+		Verts.Reset();
+		Indices.Reset();
 		Verts.AddZeroed(Outline.Num() + 1);
 		Verts[0].Position = FVector2f(Geometry.LocalToAbsolute(FVector2D(Centre + Offset)));
 		Verts[0].Color = Vertex;
@@ -87,7 +111,7 @@ void GothamPaintPanel(FSlateWindowElementList& OutDrawElements, int32 LayerId, c
 
 	if (Look.EdgeThickness > 0.f && Look.Edge.A > 0.f && Outline.Num() >= 2)
 	{
-		FSlateDrawElement::MakeLines(OutDrawElements, LayerId + 1, Geometry.ToPaintGeometry(), Closed(Outline, FVector2f::ZeroVector),
+		FSlateDrawElement::MakeLines(OutDrawElements, LayerId + 1, Geometry.ToPaintGeometry(), ClosedLine(Outline, Offset),
 			ESlateDrawEffect::None, Faded(Look.Edge), true, Look.EdgeThickness);
 	}
 }

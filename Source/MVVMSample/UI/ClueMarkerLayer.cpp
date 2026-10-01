@@ -4,6 +4,7 @@
 
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Internationalization/TextLocalizationManager.h"
 #include "UI/Slate/SClueMarkerLayer.h"
 #include "ViewModels/ClueViewModels.h"
 #include "ViewModels/DetectiveViewModel.h"
@@ -55,6 +56,13 @@ void UClueMarkerLayer::BuildMarkers(TArray<FGothamClueMarker>& Out) const
 		return;
 	}
 	const float FadeIn = Detective->GetAlpha();
+	// Cached texts are in the language they were made in.
+	const uint16 Revision = FTextLocalizationManager::Get().GetTextRevision();
+	if (Revision != TextCacheRevision)
+	{
+		TextCache.Reset();
+		TextCacheRevision = Revision;
+	}
 	for (const UClueEntryViewModel* Entry : Clues->GetEntries())
 	{
 		FVector World;
@@ -80,10 +88,22 @@ void UClueMarkerLayer::BuildMarkers(TArray<FGothamClueMarker>& Out) const
 		M.State = bAnalysing ? FGothamClueMarker::EState::Analysing
 			: Entry->GetIsDiscovered() ? FGothamClueMarker::EState::Known : FGothamClueMarker::EState::Unknown;
 		M.Progress = bAnalysing ? Detective->GetAnalysisProgress() : 0.f;
-		M.Label = bAnalysing ? LOCTEXT("Analysing", "Analysing")
-			: Entry->GetIsDiscovered() ? Entry->GetDisplayTitle() : LOCTEXT("Unknown", "Unknown evidence");
-		M.Label = M.Label.ToUpper();
-		M.Distance = FText::Format(LOCTEXT("DistanceFmt", "{0} m"), FText::AsNumber(FMath::RoundToInt(Distance / 100.f)));
+
+		FMarkerText& Text = TextCache.FindOrAdd(Entry->GetClueId());
+		if (Text.State != static_cast<uint8>(M.State))
+		{
+			Text.State = static_cast<uint8>(M.State);
+			Text.Label = (bAnalysing ? LOCTEXT("Analysing", "Analysing")
+				: Entry->GetIsDiscovered() ? Entry->GetDisplayTitle() : LOCTEXT("Unknown", "Unknown evidence")).ToUpper();
+		}
+		const int32 Meters = FMath::RoundToInt(Distance / 100.f);
+		if (Text.Meters != Meters)
+		{
+			Text.Meters = Meters;
+			Text.Distance = FText::Format(LOCTEXT("DistanceFmt", "{0} m"), FText::AsNumber(Meters));
+		}
+		M.Label = Text.Label;
+		M.Distance = Text.Distance;
 	}
 }
 

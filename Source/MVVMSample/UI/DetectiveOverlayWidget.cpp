@@ -76,7 +76,8 @@ void UDetectiveOverlayWidget::SetViewModel(UDetectiveViewModel* InViewModel)
 	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
 	GothamMVVM::Bind(ViewModel, this, &UDetectiveOverlayWidget::OnFieldChanged, { FVM::Alpha, FVM::bIsVisible });
-	Refresh();
+	ApplyStyle();
+	ApplyFade();
 }
 
 void UDetectiveOverlayWidget::NativeDestruct()
@@ -85,7 +86,17 @@ void UDetectiveOverlayWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UDetectiveOverlayWidget::Refresh()
+void UDetectiveOverlayWidget::OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId)
+{
+	// Alpha changes every frame of the fade; the style only needs refreshing when the overlay appears.
+	if (FieldId == UDetectiveViewModel::FFieldNotificationClassDescriptor::bIsVisible && ViewModel && ViewModel->GetIsVisible())
+	{
+		ApplyStyle();
+	}
+	ApplyFade();
+}
+
+void UDetectiveOverlayWidget::ApplyFade()
 {
 	if (!ViewModel || !Scanlines)
 	{
@@ -98,6 +109,14 @@ void UDetectiveOverlayWidget::Refresh()
 		Material->SetScalarParameterValue(TEXT("Progress"), ViewModel->GetAlpha());
 	}
 	Prompt->SetRenderOpacity(ViewModel->GetAlpha());
+}
+
+void UDetectiveOverlayWidget::ApplyStyle()
+{
+	if (!Scanlines)
+	{
+		return;
+	}
 	ModeLabel->SetColorAndOpacity(FSlateColor(GetToken(EGothamColorToken::Info)));
 	// The prompt names the input the player actually has to perform.
 	GothamStyle::ApplyText(ScanLabel, EGothamTextStyle::Label, GetToken(EGothamColorToken::TextPrimary));
@@ -106,8 +125,7 @@ void UDetectiveOverlayWidget::Refresh()
 	{
 		// The scanline scroll and wipe sweep freeze in reduced-motion mode; the tint and vignette stay.
 		Material->SetScalarParameterValue(TEXT("MotionScale"), GetGothamSettings().bReducedMotion ? 0.f : 1.f);
-		const FLinearColor Tint = GetToken(EGothamColorToken::Info);
-		Material->SetVectorParameterValue(TEXT("Tint"), Tint);
+		Material->SetVectorParameterValue(TEXT("Tint"), GetToken(EGothamColorToken::Info));
 	}
 }
 

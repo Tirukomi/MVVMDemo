@@ -91,8 +91,9 @@ int32 SClueMarkerLayer::OnPaint(const FPaintArgs& Args, const FGeometry& Allotte
 		{
 			// Progress arc just outside the brackets, clockwise from the top.
 			const float R = H * 1.55f;
-			TArray<FVector2f> Arc;
 			const int32 Steps = FMath::Max(3, FMath::CeilToInt(40 * M.Progress));
+			TArray<FVector2f> Arc;
+			Arc.Reserve(Steps + 1);
 			for (int32 i = 0; i <= Steps; ++i)
 			{
 				const float A = FMath::DegreesToRadians(360.f * M.Progress * i / Steps);

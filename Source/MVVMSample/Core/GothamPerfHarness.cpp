@@ -18,7 +18,9 @@
 #include "RenderTimer.h"
 #include "Gameplay/ThreatSubsystem.h"
 #include "UI/ClueEntryWidget.h"
+#include "UI/Screens/ConfirmModalScreen.h"
 #include "UI/Screens/GadgetWheelScreen.h"
+#include "UI/Screens/PauseMenuScreen.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "ViewModels/ClueViewModels.h"
@@ -309,7 +311,41 @@ void FGothamPerfHarness::Start(AGothamPlayerController* Controller, const FStrin
 		nullptr,
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } } });
 
-	// 7. Combat: two thugs telegraphing on a loop (one counter prompt in view, one edge arrow), combo milestones.
+	// 7. The quit confirmation over pause: a modal over a menu, the one case where two background blurs are on screen.
+	Run->Scenarios.Add({ TEXT("pause-quit"),
+		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->TogglePauseMenu(); } },
+		[](float)
+		{
+			// Once pause is up, ask to quit the way the menu does (only once: the modal then stays open).
+			for (TObjectIterator<UConfirmModalScreen> It; It; ++It)
+			{
+				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsActivated())
+				{
+					return;
+				}
+			}
+			for (TObjectIterator<UPauseMenuScreen> It; It; ++It)
+			{
+				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsActivated())
+				{
+					It->RequestQuit();
+				}
+			}
+		},
+		[]()
+		{
+			// The modal answers "No" as it closes; then pause closes and unpauses.
+			for (TObjectIterator<UConfirmModalScreen> It; It; ++It)
+			{
+				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsActivated()) { It->DeactivateWidget(); }
+			}
+			for (TObjectIterator<UPauseMenuScreen> It; It; ++It)
+			{
+				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsActivated()) { It->DeactivateWidget(); }
+			}
+		} });
+
+	// 8. Combat: two thugs telegraphing on a loop (one counter prompt in view, one edge arrow), combo milestones.
 	// Outside this scenario the attack director is off, so the other rows measure the same idle thugs.
 	const TWeakObjectPtr<UGothamThreatSubsystem> WeakThreats(Controller->GetWorld()->GetSubsystem<UGothamThreatSubsystem>());
 	if (WeakThreats.IsValid())

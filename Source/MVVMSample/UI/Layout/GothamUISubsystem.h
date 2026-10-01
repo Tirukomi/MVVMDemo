@@ -75,6 +75,11 @@ public:
 
 private:
 	void HandleLayerChanged(EGothamUILayer Layer);
+	/**
+	 * One background blur on screen: the topmost screen that blurs keeps its blur, the ones under it (a menu under a
+	 * modal) turn theirs off, since the top blur already covers the world they would blur.
+	 */
+	void UpdateBackdrops();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UGothamPrimaryLayout> Layout;

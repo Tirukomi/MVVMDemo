@@ -22,7 +22,8 @@ A/B switches in the same binary keep the comparison fair:
 
 Scenarios: `no-ui` (the whole UI layer hidden, the reference), `hud-idle`, `hud-animating` (combo meter and gadget
 cooldowns updating every frame), `detective` (post-process, overlay material, tracker), `gadget-wheel` (stick sweeping
-around), `case-file-505` (505 clues, scrolled continuously), `settings`.
+around), `case-file-505` (505 clues, scrolled continuously), `settings`, `pause-quit` (the quit confirmation over
+pause: a modal over a menu), `combat`.
 
 The metric that isolates UI cost is **game-thread time** (`GGameThreadTime`): Slate ticks and paints on the game
 thread. Read each scenario **minus `no-ui` from the same run**. Total frame time is dominated by rendering the 3D scene
@@ -133,6 +134,55 @@ attacks build the combo past its milestones.
 - **Combat:** drawing the prompts and arrows is cheap next to that, since everything is one Slate pass with no
   widgets per enemy.
 
+## R5 review fixes (2026-10-01)
+
+Measured at 1920x1080 (the gate's resolution, not the 1280x720 of the sections above), three runs before and three
+after on the same machine, median per scenario. Game thread and GPU in ms; "UI" is the scenario minus `no-ui` from the
+same set of runs. GPU is `RHIGetGPUFrameCycles` (whole frame), the baseline R0 added.
+
+| Scenario | Game before | Game after | UI before | UI after | GPU before | GPU after |
+|---|---|---|---|---|---|---|
+| no-ui (reference) | 1.644 | 1.633 | | | 5.569 | 5.588 |
+| hud-idle | 1.846 | 1.818 | +0.202 | +0.185 | 5.577 | 5.609 |
+| hud-animating | 1.879 | 1.865 | +0.235 | +0.232 | 5.582 | 5.615 |
+| detective | 1.876 | 1.834 | +0.232 | +0.201 | 6.084 | 6.084 |
+| gadget-wheel | 1.824 | 1.799 | +0.180 | +0.166 | 5.740 | 5.742 |
+| case-file-505 | 2.289 | 2.264 | +0.645 | +0.631 | 5.714 | 5.718 |
+| settings | 1.692 | 1.655 | +0.048 | +0.022 | 5.703 | 5.707 |
+| pause-quit (new) | 1.803 | 1.809 | +0.159 | +0.176 | 5.616 | 5.600 |
+| combat | 1.880 | 1.860 | +0.236 | +0.227 | 5.615 | 5.611 |
+
+What changed, and what it did:
+
+1. **Detective overlay fade [24].** The fade now sets only visibility, opacity and the material's progress; fonts,
+   colours, the prompt text and the material's tint are applied on settings changes and when the overlay appears.
+   UI cost in `detective` went from +0.232 to +0.201 ms: in the right direction, inside run-to-run noise (~0.05 ms).
+2. **Paint allocations [25].** Clue-marker text is formatted only when the rounded distance, the marker state or the
+   language changes (it was formatted and upper-cased per marker per frame); gadget icon strokes are a table built
+   once (they were rebuilt every paint); panel outlines are built once per paint in inline storage, the fill uses
+   scratch vertex arrays, and arcs reserve their points. Slate's draw elements own their point arrays
+   (`MakeLines` takes them by value), so one allocation per drawn line remains: that one is the engine's. No change
+   beyond noise on this machine.
+3. **One background blur on screen [26].** The premise in the review plan was off: Settings opened from Pause does not
+   stack two blurs, because a layer stack shows only its top screen. The case that does is a modal over a menu (the
+   quit confirmation over Pause), now measured as `pause-quit`. `UGothamUISubsystem` keeps the blur only on the
+   topmost blurring screen. GPU over `no-ui`: +0.047 before, +0.012 ms after, so the second blur cost about 0.035 ms
+   at 1080p here: real, and small. The confirmation's own blur now covers the world on its own (the world behind is
+   less blurred than with both).
+4. **Tweens [27].** Pop, fade and slide run as an active timer on the animated widget's Slate widget, with the
+   per-channel handle kept as Slate metadata on that widget, instead of on the core ticker with a static map. Same
+   real-time behaviour, nothing global, and an animation ends with its widget. (Not Slate curve sequences as the plan
+   said: `FCurveSequence::Play` also only registers an active timer, and the values still need applying each frame.)
+   Not a performance change, and none measured.
+
+The gate's A/B check (G5: five alternating rounds against the previous master, median of paired UI-cost
+differences) agrees and is slightly more favourable: combat -0.070 ms, detective -0.048 ms, the rest within
++-0.03 ms (hud-idle +0.006). Combat and Detective Mode are where markers and panels paint every frame.
+
+Summary: R5 is mostly hygiene that a reviewer would expect, not a big speed-up. On this machine the UI's game-thread cost was
+already small and dominated by the 505-clue list and the HUD; none of these changes moves it outside noise, and the
+GPU frame is the scene's.
+
 ## Budgets
 
 | Budget | Target | Status |
@@ -146,8 +196,9 @@ attacks build the combo past its milestones.
 
 Be sceptical of anything not in the table above:
 
-- **GPU cost of the UI and post-process** (`stat gpu`, RenderDoc). Detective Mode's post-process pass adds roughly
-  0.1 ms to total frame time here, but this is not a proper GPU profile.
+- **Per-pass GPU cost** (`stat gpu`, RenderDoc). Since R0 the harness records whole-frame GPU time
+  (`RHIGetGPUFrameCycles`): Detective Mode adds about 0.5 ms to the GPU frame at 1080p, a second background blur about
+  0.035 ms. Which pass costs what inside a frame is still not measured.
 - **Slate Insights / Unreal Insights captures.** The harness gives before/after totals; it does not attribute cost
   to individual widgets. That is the next step for anything that regresses.
 - **`memreport` and texture streaming.** Memory is reported as process working set and UObject count only.

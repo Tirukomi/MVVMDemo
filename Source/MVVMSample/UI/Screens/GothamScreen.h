@@ -36,6 +36,12 @@ public:
 
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
+	/** Whether this screen blurs the world behind it (a full-screen pass, so the UI keeps at most one on screen). */
+	bool HasBackdropBlur() const { return Backdrop != nullptr; }
+	bool IsBackdropBlurEnabled() const;
+	/** Turns the blur pass on or off, keeping the dim. UGothamUISubsystem leaves it on only for the topmost screen. */
+	void SetBackdropBlurEnabled(bool bEnabled);
+
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
@@ -82,6 +88,8 @@ protected:
 	 * the footer). Section is the small accent label above the title.
 	 */
 	UVerticalBox* BuildMenuFrame(const FText& Section, const FText& Title, float BlurStrength = 12.f);
+	/** Registers the screen's background blur (BuildMenuFrame does this; screens with their own frame call it). */
+	void SetBackdrop(class UBackgroundBlur* Blur, float Strength);
 	/** Puts Footer (usually the hint bar) at the bottom right of a frame built by BuildMenuFrame. */
 	void AddFooter(UWidget* Footer);
 
@@ -109,6 +117,10 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UVerticalBox> FrameBox;
+
+	UPROPERTY(Transient)
+	TObjectPtr<class UBackgroundBlur> Backdrop;
+	float BackdropStrength = 0.f;
 
 	/** Text blocks made by MakeText, with the token each one uses. */
 	UPROPERTY(Transient)

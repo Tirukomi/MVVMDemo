@@ -187,7 +187,7 @@ UVerticalBox* UGothamScreen::BuildMenuFrame(const FText& Section, const FText& T
 
 	// The world behind menus: blurred, then darkened more on the left where the column sits.
 	UBackgroundBlur* Blur = WidgetTree->ConstructWidget<UBackgroundBlur>();
-	Blur->SetBlurStrength(BlurStrength);
+	SetBackdrop(Blur, BlurStrength);
 	Blur->SetApplyAlphaToBlur(true);
 	Blur->SetPadding(FMargin(0.f));
 	Blur->SetHorizontalAlignment(HAlign_Fill);
@@ -234,6 +234,31 @@ UVerticalBox* UGothamScreen::BuildMenuFrame(const FText& Section, const FText& T
 	UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
 	FrameBox->AddChildToVerticalBox(Column)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	return Column;
+}
+
+void UGothamScreen::SetBackdrop(UBackgroundBlur* Blur, float Strength)
+{
+	Backdrop = Blur;
+	BackdropStrength = Strength;
+	if (Backdrop)
+	{
+		Backdrop->SetBlurStrength(Strength);
+	}
+}
+
+bool UGothamScreen::IsBackdropBlurEnabled() const
+{
+	return Backdrop && Backdrop->GetBlurStrength() > 0.f;
+}
+
+void UGothamScreen::SetBackdropBlurEnabled(bool bEnabled)
+{
+	// Strength 0 skips the blur pass entirely; the dim (the blur's content) stays.
+	const float Strength = bEnabled ? BackdropStrength : 0.f;
+	if (Backdrop && Backdrop->GetBlurStrength() != Strength)
+	{
+		Backdrop->SetBlurStrength(Strength);
+	}
 }
 
 void UGothamScreen::AddFooter(UWidget* Footer)

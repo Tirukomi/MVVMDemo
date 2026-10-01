@@ -15,6 +15,7 @@
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Screens/ClueLogScreen.h"
+#include "UI/Screens/ConfirmModalScreen.h"
 #include "UI/Screens/PauseMenuScreen.h"
 #include "UI/Screens/SettingsScreen.h"
 #include "UI/Widgets/GothamActionBar.h"
@@ -512,6 +513,30 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 			}
 			return !WeakUI->PopTopScreen();
 		}, Open, TEXT("menus close (cleanup)"));
+
+	// Review finding 26: one background blur on screen. The quit confirmation over pause blurs; pause stops blurring
+	// under it and blurs again once it closes.
+	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->TogglePauseMenu(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("pause opens for the quit confirmation (precondition)"))
+		.Do([]() { if (UPauseMenuScreen* Pause = ActiveScreen<UPauseMenuScreen>()) { Pause->RequestQuit(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UConfirmModalScreen>()); }, Open, TEXT("the quit confirmation opens (precondition)"))
+		.Do([Self]()
+		{
+			const UPauseMenuScreen* Pause = ActiveScreen<UPauseMenuScreen>();
+			const UConfirmModalScreen* Modal = ActiveScreen<UConfirmModalScreen>();
+			Self->Check(Pause && Modal && Modal->IsBackdropBlurEnabled() && !Pause->IsBackdropBlurEnabled(),
+				TEXT("under the quit confirmation only the confirmation blurs (review 26)"));
+		})
+		.Do([]() { SendKey(EKeys::Escape); })
+		.WaitUntil([Settled]() { return !ActiveScreen<UConfirmModalScreen>() && Settled(ActiveScreen<UPauseMenuScreen>()); }, Open,
+			TEXT("Esc answers the confirmation (precondition)"))
+		.Do([Self]()
+		{
+			const UPauseMenuScreen* Pause = ActiveScreen<UPauseMenuScreen>();
+			Self->Check(Pause && Pause->IsBackdropBlurEnabled(), TEXT("pause blurs again once the confirmation closes (review 26)"));
+		})
+		.Do([]() { if (UPauseMenuScreen* Pause = ActiveScreen<UPauseMenuScreen>()) { Pause->DeactivateWidget(); } })
+		.WaitUntil([Closed]() { return Closed(ActiveScreen<UPauseMenuScreen>()); }, Quick, TEXT("pause closes (cleanup)"));
 
 	// Review finding 9: the case file follows a changed list of the same length.
 	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->ToggleClueLog(); } })

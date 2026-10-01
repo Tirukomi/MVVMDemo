@@ -9,6 +9,7 @@ namespace
 	TArray<FVector2f> Arc(const FVector2f& Centre, float Radius, float FromDeg, float ToDeg, int32 Steps)
 	{
 		TArray<FVector2f> Points;
+		Points.Reserve(Steps + 1);
 		for (int32 i = 0; i <= Steps; ++i)
 		{
 			const float A = FMath::DegreesToRadians(FMath::Lerp(FromDeg, ToDeg, static_cast<float>(i) / Steps));
@@ -18,37 +19,56 @@ namespace
 	}
 }
 
-TArray<TArray<FVector2f>> GothamGadgetIconStrokes(EGothamGadgetIcon Icon)
+namespace
 {
-	TArray<TArray<FVector2f>> S;
-	switch (Icon)
+	TArray<TArray<FVector2f>> BuildIconStrokes(EGothamGadgetIcon Icon)
 	{
-	case EGothamGadgetIcon::WingBlade:
-		// A plain chevron throwing blade with a centre rivet. Deliberately generic: no wings or scallops, so it
-		// never reads as anyone's emblem.
-		S.Add({ { -0.85f, 0.45f }, { 0.f, -0.55f }, { 0.85f, 0.45f }, { 0.5f, 0.5f }, { 0.f, -0.02f }, { -0.5f, 0.5f }, { -0.85f, 0.45f } });
-		S.Add({ { 0.f, 0.16f }, { 0.1f, 0.26f }, { 0.f, 0.36f }, { -0.1f, 0.26f }, { 0.f, 0.16f } });
-		break;
-	case EGothamGadgetIcon::Grapple:
-		// A launcher body with a line running to a three-pronged hook.
-		S.Add({ { -0.8f, 0.75f }, { -0.45f, 0.4f }, { -0.3f, 0.55f }, { -0.65f, 0.9f }, { -0.8f, 0.75f } });
-		S.Add({ { -0.38f, 0.48f }, { 0.35f, -0.25f } });
-		S.Add({ { 0.35f, -0.25f }, { 0.75f, -0.65f } });
-		S.Add({ { 0.35f, -0.25f }, { 0.3f, -0.75f }, { 0.45f, -0.85f } });
-		S.Add({ { 0.35f, -0.25f }, { 0.85f, -0.3f }, { 0.95f, -0.15f } });
-		break;
-	case EGothamGadgetIcon::Smoke:
-		// A canister with a cloud rising from it.
-		S.Add({ { -0.25f, 0.85f }, { -0.25f, 0.25f }, { 0.25f, 0.25f }, { 0.25f, 0.85f }, { -0.25f, 0.85f } });
-		S.Add({ { -0.3f, 0.25f }, { 0.3f, 0.25f } });
-		S.Add(Arc({ -0.35f, -0.15f }, 0.3f, 200.f, 380.f, 10));
-		S.Add(Arc({ 0.05f, -0.45f }, 0.35f, 250.f, 470.f, 12));
-		S.Add(Arc({ 0.42f, -0.12f }, 0.28f, 330.f, 520.f, 10));
-		break;
-	default:
-		break;
+		TArray<TArray<FVector2f>> S;
+		switch (Icon)
+		{
+		case EGothamGadgetIcon::WingBlade:
+			// A plain chevron throwing blade with a centre rivet. Deliberately generic: no wings or scallops, so it
+			// never reads as anyone's emblem.
+			S.Add({ { -0.85f, 0.45f }, { 0.f, -0.55f }, { 0.85f, 0.45f }, { 0.5f, 0.5f }, { 0.f, -0.02f }, { -0.5f, 0.5f }, { -0.85f, 0.45f } });
+			S.Add({ { 0.f, 0.16f }, { 0.1f, 0.26f }, { 0.f, 0.36f }, { -0.1f, 0.26f }, { 0.f, 0.16f } });
+			break;
+		case EGothamGadgetIcon::Grapple:
+			// A launcher body with a line running to a three-pronged hook.
+			S.Add({ { -0.8f, 0.75f }, { -0.45f, 0.4f }, { -0.3f, 0.55f }, { -0.65f, 0.9f }, { -0.8f, 0.75f } });
+			S.Add({ { -0.38f, 0.48f }, { 0.35f, -0.25f } });
+			S.Add({ { 0.35f, -0.25f }, { 0.75f, -0.65f } });
+			S.Add({ { 0.35f, -0.25f }, { 0.3f, -0.75f }, { 0.45f, -0.85f } });
+			S.Add({ { 0.35f, -0.25f }, { 0.85f, -0.3f }, { 0.95f, -0.15f } });
+			break;
+		case EGothamGadgetIcon::Smoke:
+			// A canister with a cloud rising from it.
+			S.Add({ { -0.25f, 0.85f }, { -0.25f, 0.25f }, { 0.25f, 0.25f }, { 0.25f, 0.85f }, { -0.25f, 0.85f } });
+			S.Add({ { -0.3f, 0.25f }, { 0.3f, 0.25f } });
+			S.Add(Arc({ -0.35f, -0.15f }, 0.3f, 200.f, 380.f, 10));
+			S.Add(Arc({ 0.05f, -0.45f }, 0.35f, 250.f, 470.f, 12));
+			S.Add(Arc({ 0.42f, -0.12f }, 0.28f, 330.f, 520.f, 10));
+			break;
+		default:
+			break;
+		}
+		return S;
 	}
-	return S;
+}
+
+const TArray<TArray<FVector2f>>& GothamGadgetIconStrokes(EGothamGadgetIcon Icon)
+{
+	// Built once: the strokes are fixed shapes in unit space, scaled when painted.
+	static const TArray<TArray<TArray<FVector2f>>> Table = []()
+	{
+		TArray<TArray<TArray<FVector2f>>> All;
+		for (int32 i = 0; i < static_cast<int32>(EGothamGadgetIcon::Count); ++i)
+		{
+			All.Add(BuildIconStrokes(static_cast<EGothamGadgetIcon>(i)));
+		}
+		return All;
+	}();
+	static const TArray<TArray<FVector2f>> None;
+	return Table.IsValidIndex(static_cast<int32>(Icon)) ? Table[static_cast<int32>(Icon)] : None;
 }
 
 void SGadgetIcon::Construct(const FArguments& InArgs)

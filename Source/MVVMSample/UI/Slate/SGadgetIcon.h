@@ -14,8 +14,8 @@ enum class EGothamGadgetIcon : uint8
 	Count
 };
 
-/** Icon strokes for a unit box ([-1,1] in both axes, +Y down). Each inner array is one open polyline. Pure, for tests. */
-MVVMSAMPLE_API TArray<TArray<FVector2f>> GothamGadgetIconStrokes(EGothamGadgetIcon Icon);
+/** Icon strokes for a unit box ([-1,1] in both axes, +Y down). Each inner array is one open polyline. Built once. */
+MVVMSAMPLE_API const TArray<TArray<FVector2f>>& GothamGadgetIconStrokes(EGothamGadgetIcon Icon);
 
 /**
  * A gadget icon inside a cooldown ring. The ring is dim while recharging and fills clockwise from the top as the

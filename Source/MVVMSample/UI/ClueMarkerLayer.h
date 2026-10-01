@@ -35,6 +35,20 @@ private:
 	void OnDetectiveChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
 	void BuildMarkers(TArray<struct FGothamClueMarker>& Out) const;
 
+	/**
+	 * A marker's text, kept between frames: formatting the distance and upper-casing the label allocate, so they are
+	 * redone only when what they show changes (another metre, another state, another language).
+	 */
+	struct FMarkerText
+	{
+		int32 Meters = INDEX_NONE;
+		uint8 State = 0xFF;
+		FText Distance;
+		FText Label;
+	};
+	mutable TMap<FName, FMarkerText> TextCache;
+	mutable uint16 TextCacheRevision = 0;
+
 	UPROPERTY(Transient)
 	TObjectPtr<UClueListViewModel> Clues;
 
