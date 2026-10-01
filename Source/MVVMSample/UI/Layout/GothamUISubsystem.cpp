@@ -42,9 +42,14 @@ void UGothamUISubsystem::EnsureLayout(APlayerController* Owner)
 	for (int32 i = 0; i < static_cast<int32>(EGothamUILayer::Count); ++i)
 	{
 		const EGothamUILayer LayerId = static_cast<EGothamUILayer>(i);
-		Layout->GetLayer(LayerId)->OnDisplayedWidgetChanged().AddWeakLambda(this,
+		UCommonActivatableWidgetStack* Stack = Layout->GetLayer(LayerId);
+		if (!ensureMsgf(Stack, TEXT("The primary layout has no stack for UI layer %d"), i))
+		{
+			continue;
+		}
+		Stack->OnDisplayedWidgetChanged().AddWeakLambda(this,
 			[this, LayerId](UCommonActivatableWidget*) { HandleLayerChanged(LayerId); });
-		Layout->GetLayer(LayerId)->OnTransitioningChanged.AddWeakLambda(this, [this, i](UCommonActivatableWidgetContainerBase*, bool bTransitioning)
+		Stack->OnTransitioningChanged.AddWeakLambda(this, [this, i](UCommonActivatableWidgetContainerBase*, bool bTransitioning)
 		{
 			TransitioningLayers = bTransitioning ? (TransitioningLayers | (1u << i)) : (TransitioningLayers & ~(1u << i));
 		});
@@ -53,16 +58,19 @@ void UGothamUISubsystem::EnsureLayout(APlayerController* Owner)
 
 UCommonActivatableWidget* UGothamUISubsystem::PushScreen(EGothamUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass)
 {
-	if (!Layout || !ScreenClass)
-	{
-		return nullptr;
-	}
-	return Layout->GetLayer(Layer)->AddWidget<UCommonActivatableWidget>(ScreenClass);
+	UCommonActivatableWidgetStack* Stack = Layout && ScreenClass ? Layout->GetLayer(Layer) : nullptr;
+	return Stack ? Stack->AddWidget<UCommonActivatableWidget>(ScreenClass) : nullptr;
 }
 
 UCommonActivatableWidget* UGothamUISubsystem::PushScreen(EGothamUILayer Layer, const TSoftClassPtr<UCommonActivatableWidget>& ScreenClass)
 {
 	return PushScreen(Layer, UGothamUISettings::Resolve(ScreenClass));
+}
+
+UCommonActivatableWidget* UGothamUISubsystem::GetActiveScreen(EGothamUILayer Layer) const
+{
+	const UCommonActivatableWidgetStack* Stack = Layout ? Layout->GetLayer(Layer) : nullptr;
+	return Stack ? Stack->GetActiveWidget() : nullptr;
 }
 
 bool UGothamUISubsystem::AreScreensLoaded() const
@@ -73,11 +81,7 @@ bool UGothamUISubsystem::AreScreensLoaded() const
 bool UGothamUISubsystem::PopTopScreen()
 {
 	const EGothamUILayer Layer = Tracker.GetTopDismissableLayer();
-	if (Layer == EGothamUILayer::Count || !Layout)
-	{
-		return false;
-	}
-	if (UCommonActivatableWidget* Top = Layout->GetLayer(Layer)->GetActiveWidget())
+	if (UCommonActivatableWidget* Top = GetActiveScreen(Layer))
 	{
 		Top->DeactivateWidget();
 		return true;
@@ -126,11 +130,11 @@ void UGothamUISubsystem::ToggleClueLog()
 		return;
 	}
 	const TSubclassOf<UCommonActivatableWidget> ClueLogClass = UGothamUISettings::Resolve(GetDefault<UGothamUISettings>()->ClueLogClass);
-	if (UCommonActivatableWidget* Wheel = Tracker.IsLayerOccupied(EGothamUILayer::GameMenu) ? Layout->GetLayer(EGothamUILayer::GameMenu)->GetActiveWidget() : nullptr)
+	if (UCommonActivatableWidget* Wheel = GetActiveScreen(EGothamUILayer::GameMenu))
 	{
 		Wheel->DeactivateWidget();
 	}
-	UCommonActivatableWidget* Top = Layout->GetLayer(EGothamUILayer::Menu)->GetActiveWidget();
+	UCommonActivatableWidget* Top = GetActiveScreen(EGothamUILayer::Menu);
 	if (Top && ClueLogClass && Top->IsA(ClueLogClass))
 	{
 		Top->DeactivateWidget();
@@ -149,8 +153,14 @@ void UGothamUISubsystem::OpenGadgetWheel()
 
 void UGothamUISubsystem::HandleLayerChanged(EGothamUILayer Layer)
 {
-	Tracker.SetLayerOccupied(Layer, Layout->GetLayer(Layer)->GetActiveWidget() != nullptr);
+	Tracker.SetLayerOccupied(Layer, GetActiveScreen(Layer) != nullptr);
 	UpdateBackdrops();
+	// A confirmation must be answered first: the screens behind it stay visible but cannot be clicked or navigated to.
+	const bool bModalOpen = Tracker.IsLayerOccupied(EGothamUILayer::Modal);
+	for (int32 i = 0; i < static_cast<int32>(EGothamUILayer::Modal); ++i)
+	{
+		Layout->SetLayerInteractive(static_cast<EGothamUILayer>(i), !bModalOpen);
+	}
 }
 
 void UGothamUISubsystem::UpdateBackdrops()
@@ -158,7 +168,7 @@ void UGothamUISubsystem::UpdateBackdrops()
 	bool bBlurAbove = false;
 	for (int32 i = static_cast<int32>(EGothamUILayer::Count) - 1; i >= 0; --i)
 	{
-		if (UGothamScreen* Screen = Cast<UGothamScreen>(Layout->GetLayer(static_cast<EGothamUILayer>(i))->GetActiveWidget()))
+		if (UGothamScreen* Screen = Cast<UGothamScreen>(GetActiveScreen(static_cast<EGothamUILayer>(i))))
 		{
 			if (Screen->HasBackdropBlur())
 			{

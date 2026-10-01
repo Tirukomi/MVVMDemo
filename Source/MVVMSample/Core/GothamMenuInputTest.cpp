@@ -35,6 +35,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "UI/ClueEntryWidget.h"
 #include "UI/Screens/ControlsScreen.h"
+#include "UI/Widgets/GothamButton.h"
+#include "ViewModels/ControlsViewModel.h"
 #include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/Widgets/GadgetWheel.h"
 #include "UI/Widgets/GothamInputGlyph.h"
@@ -198,6 +200,12 @@ namespace GothamMenuInputTestPrivate
 	}
 
 	/** True if the user's keyboard focus is Screen's widget or inside it. */
+	/** What a screen reader would say for the focused widget. */
+	FString FocusedText()
+	{
+		return GothamAccessibility::GetText(FSlateApplication::Get().GetUserFocusedWidget(0)).ToString();
+	}
+
 	bool HasFocusWithin(const UUserWidget* Screen)
 	{
 		const TSharedPtr<SWidget> ScreenSlate = Screen ? Screen->GetCachedWidget() : nullptr;
@@ -500,7 +508,49 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	Script->Do([Settings]() { if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::SubtitleSize, +1); } })
 		.Do(Push(&UGothamUISettings::ControlsScreenClass))
 		.WaitUntil([Settled]() { return Settled(ActiveScreen<UControlsScreen>()); }, Open, TEXT("key bindings open over settings (precondition)"))
-		.Do([Self, Settings]() { Self->Check(Settings() && Settings()->GetIsDirty(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); })
+		.Do([Self, Settings]() { Self->Check(Settings() && Settings()->GetIsDirty(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); });
+
+	// Review finding 39: "Reset to defaults" asks first; No keeps the bindings, Yes resets them. (Confirming resets this
+	// machine's saved bindings for the sample.)
+	const FString WasReset = NSLOCTEXT("Gotham.ControlsScreen", "WasReset", "Controls reset to defaults.").ToString();
+	auto ResetShown = [WasReset]()
+	{
+		const UControlsScreen* Controls = ActiveScreen<UControlsScreen>();
+		return Controls && Controls->GetViewModel() && Controls->GetViewModel()->GetStatusText().ToString() == WasReset;
+	};
+	Script->Do([]() { if (UControlsScreen* Controls = ActiveScreen<UControlsScreen>()) { Controls->RequestResetAll(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UConfirmModalScreen>()); }, Open, TEXT("Reset to defaults asks for confirmation (review 39)"))
+		.Do([Self, ResetShown]() { Self->Check(!ResetShown(), TEXT("asking does not reset the controls yet (review 39)")); })
+		.Do([]() { SendKey(EKeys::Escape); })
+		.WaitUntil([Settled]() { return !ActiveScreen<UConfirmModalScreen>() && Settled(ActiveScreen<UControlsScreen>()); }, Open,
+			TEXT("Esc answers the reset confirmation (precondition)"))
+		.Do([Self, ResetShown]() { Self->Check(!ResetShown(), TEXT("answering No keeps the controls (review 39)")); })
+		.Do([]() { if (UControlsScreen* Controls = ActiveScreen<UControlsScreen>()) { Controls->RequestResetAll(); } })
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<UConfirmModalScreen>()); }, Open, TEXT("the reset confirmation opens again (precondition)"))
+		.WaitUntil([]() { return FocusedText() == NSLOCTEXT("Gotham.ConfirmModal", "No", "No").ToString(); }, Quick,
+			TEXT("the reset confirmation focuses No (precondition)"))
+		// Found with this rule: the arrows moved focus out of the confirmation, onto the key-binding slots behind it.
+		.Do([]() { SendKey(EKeys::Left); SendKey(EKeys::Up); SendKey(EKeys::Down); SendKey(EKeys::Right); })
+		.Do([Self]() { Self->Check(HasFocusWithin(ActiveScreen<UConfirmModalScreen>()), TEXT("the arrows never move focus out of a confirmation (review 39)")); });
+	auto FindYes = []() -> UGothamButton*
+	{
+		const FString Yes = NSLOCTEXT("Gotham.ConfirmModal", "Yes", "Yes").ToString();
+		const UConfirmModalScreen* Modal = ActiveScreen<UConfirmModalScreen>();
+		for (TObjectIterator<UGothamButton> Button; Button && Modal; ++Button)
+		{
+			if (Button->IsIn(Modal) && GothamAccessibility::GetText(GothamAccessibility::FindButton(**Button)).ToString() == Yes)
+			{
+				return *Button;
+			}
+		}
+		return nullptr;
+	};
+	Script->WaitUntil(Stable(FindYes), Quick, TEXT("the reset confirmation's Yes settles (precondition)"));
+	AddClick(*Script, FindYes, TEXT("the reset confirmation's Yes is clickable"));
+	Script->WaitUntil([Settled]() { return !ActiveScreen<UConfirmModalScreen>() && Settled(ActiveScreen<UControlsScreen>()); }, Open,
+			TEXT("Yes answers the reset confirmation (precondition)"))
+		// Found with this rule: the stack reuses a closed confirmation, which kept its first answer and ignored the second.
+		.WaitUntil(ResetShown, Quick, TEXT("answering Yes resets the controls, also on a reused confirmation (review 39)"))
 		.Do([]() { SendKey(EKeys::Escape); })
 		.WaitUntil([Settled]() { return !ActiveScreen<UControlsScreen>() && Settled(ActiveScreen<USettingsScreen>()); }, Open,
 			TEXT("Esc closes key bindings and only key bindings (review 11)"))

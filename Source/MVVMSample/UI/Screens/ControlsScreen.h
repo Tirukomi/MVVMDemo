@@ -21,6 +21,11 @@ class MVVMSAMPLE_API UControlsScreen : public UGothamScreen
 {
 	GENERATED_BODY()
 
+public:
+	/** What the "Reset to defaults" button does: asks for confirmation first (review 39). */
+	void RequestResetAll() { ResetAll(); }
+	const UControlsViewModel* GetViewModel() const { return ViewModel; }
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
@@ -40,6 +45,7 @@ private:
 	void EndCapture();
 	bool HandleCapturedKey(const FKey& Key);
 	void ResetAll();
+	void OnResetConfirmed(bool bConfirmed);
 	void RefreshLabels();
 	void OnViewModelChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { RefreshLabels(); }
 

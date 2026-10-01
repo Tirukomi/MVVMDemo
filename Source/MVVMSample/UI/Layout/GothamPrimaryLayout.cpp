@@ -29,10 +29,18 @@ TSharedRef<SWidget> UGothamPrimaryLayout::RebuildWidget()
 		WidgetTree->RootWidget = Root;
 
 		Layers.Reset();
+		LayerBoxes.Reset();
 		for (int32 i = 0; i < static_cast<int32>(EGothamUILayer::Count); ++i)
 		{
+			UOverlay* Box = WidgetTree->ConstructWidget<UOverlay>();
+			Box->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+			UOverlaySlot* BoxSlot = Root->AddChildToOverlay(Box);
+			BoxSlot->SetHorizontalAlignment(HAlign_Fill);
+			BoxSlot->SetVerticalAlignment(VAlign_Fill);
+			LayerBoxes.Add(Box);
+
 			UCommonActivatableWidgetStack* Stack = WidgetTree->ConstructWidget<UGothamScreenStack>();
-			UOverlaySlot* StackSlot = Root->AddChildToOverlay(Stack);
+			UOverlaySlot* StackSlot = Box->AddChildToOverlay(Stack);
 			StackSlot->SetHorizontalAlignment(HAlign_Fill);
 			StackSlot->SetVerticalAlignment(VAlign_Fill);
 			Layers.Add(Stack);
@@ -79,4 +87,22 @@ void UGothamPrimaryLayout::ApplySettings(const FGothamSettingsData& Data)
 UCommonActivatableWidgetStack* UGothamPrimaryLayout::GetLayer(EGothamUILayer Layer) const
 {
 	return Layers.IsValidIndex(static_cast<int32>(Layer)) ? Layers[static_cast<int32>(Layer)].Get() : nullptr;
+}
+
+void UGothamPrimaryLayout::SetLayerInteractive(EGothamUILayer Layer, bool bInteractive)
+{
+	if (UOverlay* Box = LayerBoxes.IsValidIndex(static_cast<int32>(Layer)) ? LayerBoxes[static_cast<int32>(Layer)].Get() : nullptr)
+	{
+		const ESlateVisibility Wanted = bInteractive ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::HitTestInvisible;
+		if (Box->GetVisibility() != Wanted)
+		{
+			Box->SetVisibility(Wanted);
+		}
+	}
+}
+
+bool UGothamPrimaryLayout::IsLayerInteractive(EGothamUILayer Layer) const
+{
+	const UOverlay* Box = LayerBoxes.IsValidIndex(static_cast<int32>(Layer)) ? LayerBoxes[static_cast<int32>(Layer)].Get() : nullptr;
+	return Box && Box->GetVisibility() != ESlateVisibility::HitTestInvisible;
 }

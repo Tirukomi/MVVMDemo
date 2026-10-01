@@ -48,7 +48,7 @@ public:
 	float GetCooldownRemaining(int32 SlotIndex) const;
 	void BroadcastAll() const;
 
-	/** Replaces the loadout (used by tests and, later, data-driven setup). */
+	/** Replaces the loadout (used by tests). */
 	void SetGadgets(const TArray<FGothamGadgetDefinition>& NewGadgets);
 
 	/** Steps cooldown timers. Split from TickComponent so it can run on unregistered components in tests. */

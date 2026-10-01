@@ -89,7 +89,9 @@ TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 
 void UConfirmModalScreen::Setup(const FText& InTitle, const FText& InBody, FOnConfirmResult InCallback, bool bInDestructive)
 {
+	// The layer stack pools its screens, so a confirmation opened before may come back here already answered.
 	Callback = MoveTemp(InCallback);
+	bAnswered = false;
 	bDestructive = bInDestructive;
 	if (TitleText)
 	{

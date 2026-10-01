@@ -11,7 +11,7 @@ enum class EGothamUILayer : uint8
 {
 	Game,      // HUD
 	GameMenu,  // in-world overlays over gameplay (the gadget wheel)
-	Menu,      // pause, settings, inventory
+	Menu,      // pause, settings, key bindings, the case file
 	Modal,     // confirmations
 	Count UMETA(Hidden)
 };

@@ -33,6 +33,9 @@ public:
 	/** Pushes a screen class from the UI settings (preloaded; see UGothamUISettings::Resolve). */
 	UCommonActivatableWidget* PushScreen(EGothamUILayer Layer, const TSoftClassPtr<UCommonActivatableWidget>& ScreenClass);
 
+	/** The screen showing in a layer, or null (no layout yet, an empty layer, or EGothamUILayer::Count). */
+	UCommonActivatableWidget* GetActiveScreen(EGothamUILayer Layer) const;
+
 	/** True once the preloaded screen classes are in memory. */
 	bool AreScreensLoaded() const;
 

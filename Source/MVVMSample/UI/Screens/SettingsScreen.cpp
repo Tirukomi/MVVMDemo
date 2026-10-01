@@ -75,7 +75,8 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 			Switcher->AddChild(Scroll);
 			Tabs->AddTab(Tab.Id, Tab.Label, Scroll);
 		}
-		DefaultFocus = Pages[0]->GetItems()[0];
+		// Every tab lists at least one item (the first tab, Gameplay, has three); fall back to the tab bar if not.
+		DefaultFocus = Pages.IsEmpty() || Pages[0]->GetItems().IsEmpty() ? static_cast<UWidget*>(Tabs) : Pages[0]->GetItems()[0].Get();
 		Switcher->OnActiveWidgetIndexChanged.AddUObject(this, &USettingsScreen::OnPageShown);
 
 		Split->AddChildToHorizontalBox(WidgetTree->ConstructWidget<USpacer>())->SetSize(FSlateChildSize(ESlateSizeRule::Fill));

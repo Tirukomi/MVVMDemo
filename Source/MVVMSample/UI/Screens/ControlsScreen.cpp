@@ -15,6 +15,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "Input/GothamBindingStore.h"
 #include "Input/GothamUIInput.h"
+#include "UI/Layout/GothamUISubsystem.h"
+#include "UI/Screens/ConfirmModalScreen.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamInputGlyph.h"
 #include "UI/Widgets/GothamMenuList.h"
@@ -134,7 +136,22 @@ void UControlsScreen::NativeDestruct()
 void UControlsScreen::ResetAll()
 {
 	EndCapture();
-	ViewModel->ResetToDefaults();
+	// Resetting throws away every rebind at once, so it asks first.
+	auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>();
+	TSubclassOf<UConfirmModalScreen> ModalClass = UConfirmModalScreen::StaticClass();
+	if (UConfirmModalScreen* Modal = UI ? UI->PushScreen<UConfirmModalScreen>(EGothamUILayer::Modal, ModalClass) : nullptr)
+	{
+		Modal->Setup(LOCTEXT("ResetTitle", "Reset all controls?"), LOCTEXT("ResetBody", "Every key and button goes back to its default."),
+			FOnConfirmResult::CreateUObject(this, &UControlsScreen::OnResetConfirmed), /*bDestructive*/ true);
+	}
+}
+
+void UControlsScreen::OnResetConfirmed(bool bConfirmed)
+{
+	if (bConfirmed)
+	{
+		ViewModel->ResetToDefaults();
+	}
 }
 
 void UControlsScreen::BeginCapture(FName Name, int32 SlotIndex)
