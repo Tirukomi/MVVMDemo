@@ -60,7 +60,7 @@ protected:
 	 */
 	FName ToggleActionName;
 
-	/** A gameplay action by name (AGothamPlayerController::FindAction), for screens that bind gameplay keys. */
+	/** A gameplay action by name (from the owning player controller, IGothamActionSource), for screens that bind gameplay keys. */
 	const UInputAction* FindGameplayAction(FName ActionName) const;
 
 	/** Registers a key binding on this screen (not shown in the action bar). Call from NativeConstruct, once. */

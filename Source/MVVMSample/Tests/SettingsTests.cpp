@@ -4,6 +4,7 @@
 
 #include "Accessibility/GothamSettingsTypes.h"
 #include "Input/GothamBindings.h"
+#include "Input/GothamBindingStore.h"
 #include "ViewModels/ControlsViewModel.h"
 #include "ViewModels/SettingsViewModel.h"
 #include "ViewModels/SubtitleViewModel.h"
@@ -203,16 +204,42 @@ bool FGothamRebindTest::RunTest(const FString& Parameters)
 	TArray<FGothamBindingChange> Pad = PlanRebind(Current, TEXT("Scan"), GamepadSlot, EKeys::Gamepad_FaceButton_Bottom);
 	TestEqual("gamepad conflict swaps within the gamepad slots", Pad.Num(), 2);
 
-	// The view model validates, reports, and hands the plan to its owner.
+	// The view model validates and applies through its store; here a store in memory.
+	struct FMemoryStore final : IGothamBindingStore
+	{
+		TArray<FGothamBindingSlot> Bindings;
+		TArray<FGothamBindingSlot> Defaults;
+		int32 Applies = 0;
+		virtual TArray<FGothamBindingSlot> GetBindings() const override { return Bindings; }
+		virtual void Apply(const TArray<FGothamBindingChange>& Changes) override
+		{
+			++Applies;
+			for (const FGothamBindingChange& Change : Changes)
+			{
+				for (FGothamBindingSlot& Binding : Bindings)
+				{
+					Binding.Key = Binding.Name == Change.Name && Binding.Slot == Change.Slot ? Change.NewKey : Binding.Key;
+				}
+			}
+		}
+		virtual void ResetToDefaults() override { Bindings = Defaults; }
+	};
+	const TSharedRef<FMemoryStore> Store = MakeShared<FMemoryStore>();
+	Store->Bindings = Current;
+	Store->Defaults = Current;
 	UControlsViewModel* VM = NewObject<UControlsViewModel>(GetTransientPackage());
-	VM->SetSnapshot(Current);
-	TArray<FGothamBindingChange> Applied;
-	VM->OnChangesPlanned.AddLambda([&Applied](const TArray<FGothamBindingChange>& Changes) { Applied = Changes; });
+	VM->SetStore(Store);
+	TestEqual("view model reads the store", VM->GetKey(TEXT("Scan"), KeyboardSlot), EKeys::E);
 
 	TestFalse("view model rejects a keyboard key for a gamepad slot", VM->RequestRebind(TEXT("Scan"), GamepadSlot, EKeys::R));
 	TestFalse("and explains why", VM->GetStatusText().IsEmpty());
+	TestEqual("and applies nothing", Store->Applies, 0);
 	TestTrue("view model accepts a valid rebind", VM->RequestRebind(TEXT("Scan"), KeyboardSlot, EKeys::V));
-	TestEqual("and reports the swap", Applied.Num(), 2);
+	TestEqual("applies it once", Store->Applies, 1);
+	TestTrue("and shows the swap", VM->GetKey(TEXT("Scan"), KeyboardSlot) == EKeys::V && VM->GetKey(TEXT("Detective"), KeyboardSlot) == EKeys::E);
+	VM->ResetToDefaults();
+	TestEqual("reset restores the defaults", VM->GetKey(TEXT("Scan"), KeyboardSlot), EKeys::E);
+	TestFalse("and says so", VM->GetStatusText().IsEmpty());
 	return true;
 }
 

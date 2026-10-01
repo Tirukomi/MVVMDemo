@@ -2,7 +2,9 @@
 
 #include "Misc/AutomationTest.h"
 
+#include "ViewModels/GadgetViewModels.h"
 #include "ViewModels/GothamMVVM.h"
+#include "ViewModels/GothamSubscriptions.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 #include "ViewModels/SubtitleViewModel.h"
 
@@ -47,6 +49,44 @@ bool FGothamMVVMBindTest::RunTest(const FString& Parameters)
 	Seen.Reset();
 	VM->SetVitals(90.f, 100.f);
 	TestTrue("no calls after Unbind", Seen.IsEmpty() && Extra == 1);
+	return true;
+}
+
+// The gadget bar's "use" command, and FGothamSubscriptions on it: listener-scoped, removed by Reset, safe after the
+// source is gone. The binders rely on all three.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamSubscriptionsTest, "Gotham.ViewModels.Subscriptions",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+bool FGothamSubscriptionsTest::RunTest(const FString& Parameters)
+{
+	UGadgetBarViewModel* Bar = NewObject<UGadgetBarViewModel>(GetTransientPackage());
+	Bar->SetSlotCount(3);
+	UObject* Listener = NewObject<USubtitleViewModel>(GetTransientPackage());
+	TArray<int32> Used;
+	{
+		FGothamSubscriptions Subscriptions;
+		Subscriptions.Add(Bar, &UGadgetBarViewModel::OnUseRequested, Listener, [&Used](int32 Slot) { Used.Add(Slot); });
+		Subscriptions.Add(static_cast<UGadgetBarViewModel*>(nullptr), &UGadgetBarViewModel::OnUseRequested, Listener, [](int32) {});
+		TestEqual("a null source is ignored", Subscriptions.Num(), 1);
+
+		Bar->RequestUse(1);
+		Bar->RequestUse(7);
+		TestTrue("the command reaches the subscriber, for valid slots only", Used.Num() == 1 && Used[0] == 1);
+
+		Subscriptions.Reset();
+		Bar->RequestUse(2);
+		TestEqual("Reset unsubscribes", Used.Num(), 1);
+		TestFalse("and leaves nothing on the delegate", Bar->OnUseRequested.IsBound());
+
+		Subscriptions.Add(Bar, &UGadgetBarViewModel::OnUseRequested, Listener, [&Used](int32 Slot) { Used.Add(Slot); });
+	}
+	TestFalse("going out of scope unsubscribes", Bar->OnUseRequested.IsBound());
+
+	FGothamSubscriptions Late;
+	Late.Add(Bar, &UGadgetBarViewModel::OnUseRequested, Listener, [](int32) {});
+	Bar->MarkAsGarbage();
+	CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
+	Late.Reset();
+	TestEqual("Reset after the source is gone is safe", Late.Num(), 0);
 	return true;
 }
 

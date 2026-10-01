@@ -12,15 +12,13 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
+#include "Input/GothamBindingStore.h"
 #include "Input/GothamUIInput.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamInputGlyph.h"
 #include "UI/Widgets/GothamMenuList.h"
-#include "UserSettings/EnhancedInputUserSettings.h"
 #include "ViewModels/ControlsViewModel.h"
 #include "ViewModels/GothamMVVM.h"
-
-DEFINE_LOG_CATEGORY_STATIC(LogGothamControls, Log, All);
 
 #define LOCTEXT_NAMESPACE "Gotham.ControlsScreen"
 
@@ -116,13 +114,6 @@ TSharedRef<SWidget> UControlsScreen::RebuildWidget()
 	return Super::RebuildWidget();
 }
 
-UEnhancedInputUserSettings* UControlsScreen::GetUserSettings() const
-{
-	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
-	auto* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
-	return Input ? Input->GetUserSettings() : nullptr;
-}
-
 void UControlsScreen::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -130,77 +121,19 @@ void UControlsScreen::NativeConstruct()
 	ViewModel = NewObject<UControlsViewModel>(this);
 	using FVM = UControlsViewModel::FFieldNotificationClassDescriptor;
 	GothamMVVM::Bind(ViewModel, this, &UControlsScreen::OnViewModelChanged, { FVM::Revision, FVM::StatusText });
-	ViewModel->OnChangesPlanned.AddUObject(this, &UControlsScreen::ApplyChanges);
-
-	PullSnapshot();
+	ViewModel->SetStore(GothamBindings::MakeEnhancedInputStore(GetOwningLocalPlayer()));
 }
 
 void UControlsScreen::NativeDestruct()
 {
-	if (ViewModel)
-	{
-		GothamMVVM::Unbind(ViewModel, this);
-		ViewModel->OnChangesPlanned.RemoveAll(this);
-	}
+	GothamMVVM::Unbind(ViewModel, this);
 	Super::NativeDestruct();
-}
-
-void UControlsScreen::PullSnapshot()
-{
-	TArray<FGothamBindingSlot> Snapshot;
-	UEnhancedInputUserSettings* UserSettings = GetUserSettings();
-	UE_LOG(LogGothamControls, Log, TEXT("User settings: %s"), UserSettings ? TEXT("available") : TEXT("MISSING (is bEnableUserSettings on?)"));
-	if (UserSettings)
-	{
-		UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
-		UE_LOG(LogGothamControls, Log, TEXT("Active profile: %s, rows: %d"), Profile ? *Profile->GetProfileIdString() : TEXT("none"), Profile ? Profile->GetPlayerMappingRows().Num() : 0);
-		if (Profile)
-		{
-			for (const TPair<FName, FKeyMappingRow>& Pair : Profile->GetPlayerMappingRows())
-			{
-				for (const FPlayerKeyMapping& Mapping : Pair.Value.Mappings)
-				{
-					Snapshot.Add({ Mapping.GetMappingName(), static_cast<int32>(Mapping.GetSlot()), Mapping.GetCurrentKey() });
-				}
-			}
-		}
-	}
-	ViewModel->SetSnapshot(Snapshot);
-}
-
-void UControlsScreen::ApplyChanges(const TArray<FGothamBindingChange>& Changes)
-{
-	if (UEnhancedInputUserSettings* UserSettings = GetUserSettings())
-	{
-		for (const FGothamBindingChange& Change : Changes)
-		{
-			FMapPlayerKeyArgs Args;
-			Args.MappingName = Change.Name;
-			Args.Slot = static_cast<EPlayerMappableKeySlot>(Change.Slot);
-			Args.NewKey = Change.NewKey;
-			FGameplayTagContainer Failure;
-			UserSettings->MapPlayerKey(Args, Failure);
-		}
-		UserSettings->ApplySettings();
-		UserSettings->SaveSettings();
-	}
-	PullSnapshot();
 }
 
 void UControlsScreen::ResetAll()
 {
-	if (UEnhancedInputUserSettings* UserSettings = GetUserSettings())
-	{
-		if (UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile())
-		{
-			Profile->ResetToDefault();
-		}
-		UserSettings->ApplySettings();
-		UserSettings->SaveSettings();
-	}
 	EndCapture();
-	ViewModel->SetStatus(LOCTEXT("WasReset", "Controls reset to defaults."));
-	PullSnapshot();
+	ViewModel->ResetToDefaults();
 }
 
 void UControlsScreen::BeginCapture(FName Name, int32 SlotIndex)

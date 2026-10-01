@@ -14,7 +14,7 @@ flowchart LR
         D[UDetectiveComponent]
     end
     subgraph Glue["UGothamViewModelSubsystem (per local player)"]
-        S[wires delegates -> view models]
+        S[one binder per feature: delegates -> view models]
     end
     subgraph VM["View models (UMVVMViewModelBase, field-notify, no world/widget refs)"]
         V1[PlayerVitals]
@@ -31,7 +31,8 @@ flowchart LR
     end
     H & G & C & D -- native delegates --> S --> V1 & V2 & V3 & V4 & V5 & V6
     V1 & V2 & V3 & V4 & V5 & V6 -- field-notify delegates --> W1 & W2 & W3
-    W2 -- "commands (Cycle, Apply, RequestRebind)" --> VM
+    W2 -- "commands (Cycle, Apply, RequestRebind, RequestUse)" --> VM
+    VM -- "RequestUse (gadget binder)" --> G
 ```
 
 Data flows one way (gameplay -> view model -> view). User intent goes back through input actions and view-model
@@ -45,7 +46,7 @@ commands, never by a widget reaching into a component.
 | View models | `ViewModels/` | Gameplay *types* only where a component is the source | Widgets, the world |
 | Pure logic | `Accessibility/`, `Input/GothamBindings.*`, `UI/Layout/GothamUITypes.h`, `UI/Slate/GothamWheelTypes.h` | Core | Everything else |
 | Views | `UI/` | View models, Slate, UMG, Common UI | Gameplay components |
-| Glue | `ViewModels/GothamViewModelSubsystem`, `Core/GothamPlayerController` | Both sides | n/a |
+| Glue | `ViewModels/GothamViewModelSubsystem` and its binders (`GothamViewModelBinders`), `Core/GothamPlayerController` | Both sides | n/a |
 
 "Pure logic" is deliberately UObject-free where possible (settings data, palette, binding conflict resolution, wheel
 hit-testing, layer tracking) so the rules are unit-tested without a world.
@@ -137,3 +138,16 @@ Everything that drives the running game on its own is a script for one runner, `
 menu input test. A script is a list of steps (`At`, `Wait`, `Do`, `Expect`, `Sample`, `Screenshot`, `Quit`) run in
 real time on the core ticker, so paused and slowed screens do not stop it; its timing rules are unit-tested with a
 fake clock. A new demo or check is a short step list, not a new ticker.
+
+## Wiring gameplay to view models
+
+`UGothamViewModelSubsystem` holds one binder per feature (`ViewModels/GothamViewModelBinders.h`: vitals, gadgets,
+combo, detective, threats, clues). A binder creates its feature's view models, subscribes to the character's
+components when the controller binds a pawn, and pushes their current state. Subscriptions go into
+`FGothamSubscriptions`, which removes them on `Reset` and holds sources weakly, so no binder tracks delegate handles.
+The subsystem finds view models by class for widgets and for `UGothamViewModelResolver`.
+
+Commands go back through view models, not around them: the wheel calls `UGadgetBarViewModel::RequestUse`, which the
+gadget binder hands to the character; the controls view model applies rebinds itself through `IGothamBindingStore`
+(Enhanced Input's user settings in the game, memory in tests). Views subscribe to view models in code (ADR 0008).
+UI asks for gameplay actions through `IGothamActionSource`, not the concrete player controller.

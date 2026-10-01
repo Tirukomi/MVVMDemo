@@ -28,6 +28,15 @@ the end.
   - The HUD is a plain activatable widget.
   - New rules: Esc closes only the top screen, gamepad Back closes the case file, the prompts switch to gamepad keys and
     back with the device. Under a modal, the screen behind no longer shows its prompts (`pause-quit` baseline refreshed).
+- **R3 done** (ADR 0008), findings 17 to 20:
+  - The view-model subsystem holds one binder per feature (vitals, gadgets, combo, detective, threats, clues). Each owns
+    its view models and subscribes through `FGothamSubscriptions`, which cleans up after itself; the 11 delegate
+    handles are gone.
+  - The wheel uses gadgets through `UGadgetBarViewModel::RequestUse`; the gadget binder hands it to the character.
+  - The controls view model applies rebinds and resets itself through `IGothamBindingStore`; `OnChangesPlanned` is
+    gone, and the test uses a store in memory.
+  - The glyph and screens ask `IGothamActionSource` for actions instead of casting to the player controller.
+  - Manual view subscriptions are kept on purpose until screens move to UMG (ADR 0008).
 
 ## Rules for every iteration
 

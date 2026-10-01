@@ -8,13 +8,13 @@
 #include "ControlsScreen.generated.h"
 
 class UControlsViewModel;
-class UEnhancedInputUserSettings;
 class UGothamButton;
 class UTextBlock;
 
 /**
- * Rebinding screen built on Enhanced Input user settings. Pick a slot, press the new key; conflicts swap keys and
- * changes persist immediately. Keyboard/mouse and gamepad each have their own slot per action.
+ * Rebinding screen. Pick a slot, press the new key; conflicts swap keys and changes persist immediately. Keyboard/mouse
+ * and gamepad each have their own slot per action. The screen captures the key and shows the result; the controls
+ * view model validates and applies it (to Enhanced Input's user settings, through a binding store).
  */
 UCLASS()
 class MVVMSAMPLE_API UControlsScreen : public UGothamScreen
@@ -36,9 +36,6 @@ private:
 		TObjectPtr<UGothamButton> Button;
 	};
 
-	UEnhancedInputUserSettings* GetUserSettings() const;
-	void PullSnapshot();
-	void ApplyChanges(const TArray<FGothamBindingChange>& Changes);
 	void BeginCapture(FName Name, int32 Slot);
 	void EndCapture();
 	bool HandleCapturedKey(const FKey& Key);

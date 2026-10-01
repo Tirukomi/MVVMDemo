@@ -28,7 +28,7 @@ class MVVMSAMPLE_API UGothamInputGlyph : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	/** Follow a gameplay action by name (see AGothamPlayerController::FindAction). */
+	/** Follow a gameplay action by name (asked of the owning player controller, IGothamActionSource). */
 	void SetAction(FName InActionName);
 
 	/** Follow any action, e.g. one of the menu actions in UGothamUIInputData. */

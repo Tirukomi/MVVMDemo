@@ -11,7 +11,8 @@
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "Components/TextBlock.h"
-#include "Core/GothamPlayerController.h"
+#include "GameFramework/PlayerController.h"
+#include "Input/GothamActionSource.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Widgets/GothamText.h"
 #include "Engine/LocalPlayer.h"
@@ -101,8 +102,7 @@ FKey UGothamInputGlyph::FindKey(const ULocalPlayer* Player, const UInputAction* 
 
 FKey UGothamInputGlyph::FindKeyForAction(const APlayerController* Player, FName InActionName)
 {
-	const AGothamPlayerController* PC = Cast<AGothamPlayerController>(Player);
-	return PC ? FindKey(PC->GetLocalPlayer(), PC->FindAction(InActionName)) : FKey();
+	return Player ? FindKey(Player->GetLocalPlayer(), IGothamActionSource::Find(Player, InActionName)) : FKey();
 }
 
 void UGothamInputGlyph::Refresh()
@@ -113,8 +113,7 @@ void UGothamInputGlyph::Refresh()
 	}
 	if (!Action && !ActionName.IsNone())
 	{
-		const AGothamPlayerController* PC = Cast<AGothamPlayerController>(GetOwningPlayer());
-		Action = PC ? PC->FindAction(ActionName) : nullptr;
+		Action = IGothamActionSource::Find(GetOwningPlayer(), ActionName);
 	}
 
 	const FKey Key = FindKey(GetOwningLocalPlayer(), Action);

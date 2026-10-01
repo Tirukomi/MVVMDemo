@@ -8,7 +8,6 @@
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
-#include "Core/GothamCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/Style/GothamStyle.h"
@@ -154,9 +153,9 @@ void UGadgetWheelScreen::HandleOpenKey(EInputEvent Event)
 
 void UGadgetWheelScreen::HandleItemSelected(int32 ItemIndex)
 {
-	if (AGothamCharacter* Hero = Cast<AGothamCharacter>(GetOwningPlayerPawn()))
+	if (GadgetBar)
 	{
-		Hero->UseGadget(ItemIndex);
+		GadgetBar->RequestUse(ItemIndex);
 	}
 	DeactivateWidget();
 }

@@ -53,3 +53,11 @@ UGadgetSlotViewModel* UGadgetBarViewModel::GetSlot(int32 Index) const
 {
 	return Slots.IsValidIndex(Index) ? Slots[Index].Get() : nullptr;
 }
+
+void UGadgetBarViewModel::RequestUse(int32 SlotIndex)
+{
+	if (Slots.IsValidIndex(SlotIndex))
+	{
+		OnUseRequested.Broadcast(SlotIndex);
+	}
+}

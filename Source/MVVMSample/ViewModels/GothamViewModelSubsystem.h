@@ -3,32 +3,26 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Accessibility/GothamSettingsListener.h"
-#include "Containers/Ticker.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GothamViewModelSubsystem.generated.h"
 
 class AGothamCharacter;
-class UEnhancedInputUserSettings;
-class UComboComponent;
 class UClueListViewModel;
 class UComboViewModel;
-class UDetectiveComponent;
 class UDetectiveViewModel;
+class UGadgetBarViewModel;
+class UGothamClueBinder;
+class UGothamViewModelBinder;
 class UObjectivesViewModel;
+class UPlayerVitalsViewModel;
 class USubtitleViewModel;
 class UThreatViewModel;
-class UGothamThreatSubsystem;
-struct FGothamSettingsData;
-class UClueDataAsset;
-class UGadgetBarViewModel;
-class UGadgetComponent;
-class UHealthComponent;
-class UPlayerVitalsViewModel;
 
 /**
- * Owns the HUD view models for one local player and wires gameplay components into them.
- * This is the only place that knows about both sides; components and widgets never see each other.
+ * The HUD view models of one local player, and the one place gameplay is wired into them. Each feature has its own
+ * binder (ViewModels/GothamViewModelBinders.h) that owns the feature's view models and its subscriptions; this
+ * subsystem holds the binders, binds them to the possessed character, and hands view models out by class.
+ * Components and widgets never see each other.
  */
 UCLASS()
 class MVVMSAMPLE_API UGothamViewModelSubsystem : public ULocalPlayerSubsystem
@@ -39,86 +33,34 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	/** Subscribes to the character's components (or unsubscribes when null) and pushes initial state. */
+	/** Binds every feature to the character (or only unbinds when null) and pushes its current state. */
 	void BindToCharacter(AGothamCharacter* Character);
 
-	UPlayerVitalsViewModel* GetVitals() const { return Vitals; }
-	UGadgetBarViewModel* GetGadgetBar() const { return GadgetBar; }
-	UComboViewModel* GetCombo() const { return Combo; }
-	UDetectiveViewModel* GetDetective() const { return Detective; }
-	UObjectivesViewModel* GetObjectives() const { return Objectives; }
-	UClueListViewModel* GetClues() const { return Clues; }
-	USubtitleViewModel* GetSubtitles() const { return Subtitles; }
-	UThreatViewModel* GetThreats() const { return Threats; }
+	/** The view model of a class (or a subclass), for the view-model resolver and for widgets. */
+	UObject* FindViewModel(const UClass* ViewModelClass) const;
+	template<typename TViewModel>
+	TViewModel* Get() const { return Cast<TViewModel>(FindViewModel(TViewModel::StaticClass())); }
+
+	UPlayerVitalsViewModel* GetVitals() const;
+	UGadgetBarViewModel* GetGadgetBar() const;
+	UComboViewModel* GetCombo() const;
+	UDetectiveViewModel* GetDetective() const;
+	UObjectivesViewModel* GetObjectives() const;
+	UClueListViewModel* GetClues() const;
+	USubtitleViewModel* GetSubtitles() const;
+	UThreatViewModel* GetThreats() const;
 
 	/** Dev aid: appends fake undiscovered clues (flagged IsDebug) to exercise the virtualised clue log. They never count
 	 *  toward the objective, which tracks the level's real clues. Remove them by filtering the clue list on IsDebug. */
 	void AddDebugClues(int32 Count);
 
-	/** Used by the view-model resolver to hand a view model to a widget by class. */
-	UObject* FindViewModel(const UClass* ViewModelClass) const;
-
 private:
-	void Unbind();
-
-	void HandleHealth(float Health, float MaxHealth);
-	void HandleGadgetCooldown(int32 Slot, float Remaining, float Total);
-	void HandleCombo(int32 Hits, float Multiplier, float DecayAlpha);
-	void HandleDetective(bool bActive, float Alpha);
-	void HandleClueScanned(const UClueDataAsset* Clue);
-	void RefreshObjectives();
-	void OnCluesChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
-	void RebuildClues();
-	void HandleSettings(const FGothamSettingsData& Data);
-	void ShowSubtitle(const FText& Speaker, const FText& Line, float Seconds);
-	/** Gadget key hints from the player's current bindings (rebinding included). */
-	void RefreshGadgetHotkeys();
-	UFUNCTION()
-	void HandleInputSettingsChanged(UEnhancedInputUserSettings* InputSettings);
-
-	TWeakObjectPtr<UEnhancedInputUserSettings> BoundInputSettings;
+	template<typename TBinder>
+	TBinder* AddBinder();
 
 	UPROPERTY(Transient)
-	TObjectPtr<UPlayerVitalsViewModel> Vitals;
+	TArray<TObjectPtr<UGothamViewModelBinder>> Binders;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGadgetBarViewModel> GadgetBar;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UComboViewModel> Combo;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UThreatViewModel> Threats;
-
-	TWeakObjectPtr<UGothamThreatSubsystem> BoundThreats;
-
-	FDelegateHandle ThreatsHandle;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UDetectiveViewModel> Detective;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UObjectivesViewModel> Objectives;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UClueListViewModel> Clues;
-
-	UPROPERTY(Transient)
-	TObjectPtr<USubtitleViewModel> Subtitles;
-
-	TWeakObjectPtr<UHealthComponent> BoundHealth;
-	TWeakObjectPtr<UGadgetComponent> BoundGadgets;
-	TWeakObjectPtr<UComboComponent> BoundCombo;
-	TWeakObjectPtr<UDetectiveComponent> BoundDetective;
-
-	FDelegateHandle HealthHandle;
-	FDelegateHandle GadgetHandle;
-	FDelegateHandle GadgetUsedHandle;
-	FDelegateHandle ComboHandle;
-	FDelegateHandle DetectiveHandle;
-	FDelegateHandle ScanHandle;
-	FDelegateHandle AnalysisHandle;
-	FDelegateHandle CluesHandle;
-	FGothamSettingsListener SettingsListener;
-	FTSTicker::FDelegateHandle SubtitleHideHandle;
+	TObjectPtr<UGothamClueBinder> ClueBinder;
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Input/GothamActionSource.h"
 #include "GothamPlayerController.generated.h"
 
 class UInputAction;
@@ -15,13 +16,13 @@ struct FInputActionValue;
  * and creates the HUD. It routes intent to the pawn; it never touches view models directly.
  */
 UCLASS()
-class MVVMSAMPLE_API AGothamPlayerController : public APlayerController
+class MVVMSAMPLE_API AGothamPlayerController : public APlayerController, public IGothamActionSource
 {
 	GENERATED_BODY()
 
 public:
-	/** Looks up a gameplay action by name ("Attack", "Gadget1", "Pause"...) for glyphs and rebinding UIs. */
-	const UInputAction* FindAction(FName Name) const;
+	/** IGothamActionSource: a gameplay action by name ("Attack", "Gadget1", "Pause"...) for glyphs and screen keys. */
+	virtual const UInputAction* FindAction(FName Name) const override;
 
 protected:
 	virtual void BeginPlay() override;

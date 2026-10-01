@@ -2,11 +2,24 @@
 
 #include "ViewModels/ControlsViewModel.h"
 
+#include "Input/GothamBindingStore.h"
+
 #define LOCTEXT_NAMESPACE "Gotham.Controls"
 
-void UControlsViewModel::SetSnapshot(const TArray<FGothamBindingSlot>& InSnapshot)
+void UControlsViewModel::SetStore(TSharedPtr<IGothamBindingStore> InStore)
 {
-	Snapshot = InSnapshot;
+	Store = MoveTemp(InStore);
+	Refresh();
+}
+
+void UControlsViewModel::Refresh()
+{
+	SetSnapshot(Store ? Store->GetBindings() : TArray<FGothamBindingSlot>());
+}
+
+void UControlsViewModel::SetSnapshot(TArray<FGothamBindingSlot> InSnapshot)
+{
+	Snapshot = MoveTemp(InSnapshot);
 	UE_MVVM_SET_PROPERTY_VALUE(Revision, Revision + 1);
 }
 
@@ -39,8 +52,23 @@ bool UControlsViewModel::RequestRebind(FName Name, int32 Slot, const FKey& NewKe
 	}
 
 	SetStatus(Changes.Num() > 1 ? LOCTEXT("Swapped", "That key was already in use; the two actions swapped keys.") : FText::GetEmpty());
-	OnChangesPlanned.Broadcast(Changes);
+	if (Store)
+	{
+		Store->Apply(Changes);
+	}
+	Refresh();
 	return true;
+}
+
+void UControlsViewModel::ResetToDefaults()
+{
+	if (Store)
+	{
+		Store->ResetToDefaults();
+	}
+	// Same key as when the screen set it, so existing translations keep working.
+	SetStatus(NSLOCTEXT("Gotham.ControlsScreen", "WasReset", "Controls reset to defaults."));
+	Refresh();
 }
 
 #undef LOCTEXT_NAMESPACE

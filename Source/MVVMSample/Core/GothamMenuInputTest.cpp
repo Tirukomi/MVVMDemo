@@ -503,6 +503,19 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		Self->Check(ViewModels && ViewModels->FindViewModel(USubtitleViewModel::StaticClass()) != nullptr, TEXT("the resolver finds the subtitles view model (review 8)"));
 	});
 
+	// Review finding 18: views use gadgets through the gadget bar's command, which the gadget binder hands to gameplay.
+	Script->Do([Self, WeakPC]()
+		{
+			UGadgetBarViewModel* Bar = ViewModelsOf(WeakPC) ? ViewModelsOf(WeakPC)->GetGadgetBar() : nullptr;
+			Self->Check(Bar && Bar->GetSlot(0) && Bar->GetSlot(0)->GetIsReady(), TEXT("the first gadget is ready (precondition)"));
+			if (Bar) { Bar->RequestUse(0); }
+		})
+		.WaitUntil([WeakPC]()
+		{
+			const UGadgetBarViewModel* Bar = ViewModelsOf(WeakPC) ? ViewModelsOf(WeakPC)->GetGadgetBar() : nullptr;
+			return Bar && Bar->GetSlot(0) && !Bar->GetSlot(0)->GetIsReady();
+		}, Quick, TEXT("the gadget bar's use command reaches gameplay (review 18)"));
+
 	// Review findings 3, 4, 6 and 10: the gadget wheel and gadget keys follow rebinding, the wheel's slow motion survives
 	// a hit-stop, and the wheel follows reduced motion live. Rebinds are in memory only (never saved) and undone.
 	Script->Do([WeakPC, Undo]()

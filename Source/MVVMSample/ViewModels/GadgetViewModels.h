@@ -52,7 +52,12 @@ protected:
 	bool bIsReady = true;
 };
 
-/** Owns the slot view models so the HUD can build one entry per slot. */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGadgetUseRequested, int32 /*SlotIndex*/);
+
+/**
+ * Owns the slot view models so the HUD can build one entry per slot, and carries the bar's one command: using a gadget.
+ * Views ask the bar (RequestUse); whoever binds gameplay to the bar answers, so no view ever sees the character.
+ */
 UCLASS(BlueprintType)
 class MVVMSAMPLE_API UGadgetBarViewModel : public UMVVMViewModelBase
 {
@@ -68,6 +73,10 @@ public:
 	/** The gadget shown large in the HUD selector: the last one used. Out-of-range values are ignored. */
 	void SetSelectedIndex(int32 InIndex);
 	int32 GetSelectedIndex() const { return SelectedIndex; }
+
+	/** Command: use the gadget in SlotIndex (the gadget wheel's pick). Out-of-range values are ignored. */
+	void RequestUse(int32 SlotIndex);
+	FOnGadgetUseRequested OnUseRequested;
 
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))

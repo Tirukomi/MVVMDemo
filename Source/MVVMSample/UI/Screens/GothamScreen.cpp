@@ -23,7 +23,7 @@
 #include "UI/Widgets/GothamAcceptable.h"
 #include "UI/Widgets/GothamActionBar.h"
 #include "UI/Widgets/GothamButton.h"
-#include "Core/GothamPlayerController.h"
+#include "Input/GothamActionSource.h"
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
 #include "UI/Widgets/GothamMenuList.h"
@@ -124,8 +124,7 @@ UWidget* UGothamScreen::NativeGetDesiredFocusTarget() const
 
 const UInputAction* UGothamScreen::FindGameplayAction(FName ActionName) const
 {
-	const AGothamPlayerController* PC = GetOwningPlayer<AGothamPlayerController>();
-	return PC ? PC->FindAction(ActionName) : nullptr;
+	return IGothamActionSource::Find(GetOwningPlayer(), ActionName);
 }
 
 FUIActionBindingHandle UGothamScreen::BindAction(const UInputAction* Action, EInputEvent Event, FSimpleDelegate Handler)
