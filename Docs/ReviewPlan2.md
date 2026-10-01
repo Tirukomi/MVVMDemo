@@ -20,6 +20,22 @@ left is mostly four things:
 4. **The gate guards change, not level**: G5 allows +0.05 ms per iteration against the last one, with no absolute
    budget [19], and the idle HUD's 0.19 ms has never been broken down [23].
 
+## Status
+
+- **S0 done** (findings 19, 20, 23; found 27 to 29):
+  - `Scripts/ProfileUI.ps1` profiles every perf scenario with Unreal Insights (one timing region per scenario) and
+    `Scripts/profile_diff.py` lists what each adds over its reference, timer by timer.
+  - The profile showed the harness itself was off [27]: `case-file-505` never opened the case file until R4, and
+    `pause-quit` never opened pause; and a scenario that pauses the world was compared with a running one. Each
+    scenario now checks its own state (`Valid` column; G5 fails on `no`), and paused scenarios have their own
+    reference (`no-ui-paused`).
+  - The idle HUD's ~0.15 ms is mostly world work; Slate adds about 0.04 ms, the biggest piece the threat layer's
+    every-frame timer [29]. The real outlier is the scrolling case file, +0.55 to +0.65 ms, over the 0.3 ms target:
+    S7 starts there.
+  - G5 checks absolute budgets per scenario (`Scripts/PerfBudgets.json`), and G7 checks that every string has a
+    current translation (`Scripts/CheckTranslations.py`; it catches the missing and the stale).
+  - Numbers and method: `Docs/Performance.md`, "Second review S0".
+
 ## Rules
 
 - Same as the first plan: each iteration merges on its own through the full gate, and every fix comes with a test or
@@ -95,9 +111,13 @@ left is mostly four things:
 - Write down in ADR 0008 what the plugin's bindings cost and save compared with `MvsMVVM::Bind`, from this one screen.
 - This is designer work in the editor: I can prepare the C++ side and the steps, but someone has to author the asset.
 
-## S7: Performance, from the S0 profile (one day) [23 to 26]
+## S7: Performance, from the S0 profile (one day) [23 to 26, 29]
 
-- Fix what S0's capture shows paints or invalidates the idle HUD every frame.
+- **The case file first:** +0.55 to +0.65 ms while scrolling 505 clues, over the 0.3 ms target. The profile points at
+  the tile view rebuilding rows every frame of the scroll, the tiles' own paint, and their ticking. Try fewer, cheaper
+  tiles (a retainer or cached panel per tile, no per-tile tick), and check how far the scenario's scroll speed is from
+  real use.
+- **The threat layer [29]:** repaint only when an indicator changed, not every frame while a thug exists.
 - Small items, done only if they show in the capture:
   - the threat subsystem allocates three arrays a frame and copies the snapshot list into the view model [24]
   - the wheel's `OnPaint` allocates vertex arrays per sector while open [25]
@@ -192,3 +212,15 @@ About 7 to 9 days. S0, S1 and S2 are cheap and independent, so they go first.
 25. `SGadgetWheel::OnPaint` allocates two arrays per sector per frame while the wheel is open (R5 fixed the panels and
     arcs, not the wheel). *Checked in code.*
 26. Gadget, combo and forensic components tick every frame even when idle. *Checked in code; cost not measured.*
+
+**Found in S0**
+
+27. The perf harness measured scenarios that were not in their state: `case-file-505` never opened the case file
+    until R4 (10 widgets), `pause-quit` never opened pause (a toggle popped settings again), and a paused world was
+    compared with a running one. The V4 to R0 case-file numbers and R5's pause-quit numbers did not measure those
+    screens. *Measured; fixed in S0.*
+28. The R1 plan says the UI subsystem owns pause; the pause screen still pauses and unpauses the game itself (R1 fixed
+    the bug through covered-versus-closed instead). Settings or the case file opened without pause do not pause.
+    *Checked in code; the plan's wording, not a bug.*
+29. The threat indicator layer runs an active timer and repaints every frame whenever a thug exists, even when nothing
+    moved. *Measured: the largest Slate item of the idle HUD.*

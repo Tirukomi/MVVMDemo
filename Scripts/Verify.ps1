@@ -11,7 +11,7 @@
 # G1 build (clean rebuild, zero project warnings)   G2 automation tests (editor pass + game pass, which includes the
 #                                                   menu input rules that were G3)
 # G4 screenshots vs Docs/img (DiffScreens.ps1)      G5 perf vs a reference build, measured side by side
-# G6 no ensures / project errors in logs
+# G6 no ensures / project errors in logs           G7 every string translated (CheckTranslations.py)
 param(
     [switch]$Quick,
     [string[]]$Only = @(),
@@ -69,10 +69,23 @@ function Read-Perf([string]$Path) {
     }
     return $table
 }
-# UI cost per scenario: its game-thread time minus no-ui from the same run.
-function UI-Cost($Table) {
+# Scenarios the world was paused in (the "Paused" column, from review S0 on; older reports have none).
+function Read-Paused([string]$Path) {
+    $paused = @{}
+    foreach ($line in Get-Content $Path) {
+        if ($line -match '^\|\s*([a-z0-9\-]+)\s*\|.*\|\s*(yes|no)\s*\|\s*(yes|no)\s*\|\s*$') { $paused[$Matches[1]] = ($Matches[3] -eq "yes") }
+    }
+    return $paused
+}
+# UI cost per scenario: its game-thread time minus the matching reference from the same run (no-ui-paused for a
+# scenario that ran paused, when the report has it; no-ui otherwise).
+function UI-Cost($Table, $Paused = @{}) {
     $cost = @{}
-    foreach ($k in $Table.Keys) { if ($k -ne "no-ui") { $cost[$k] = $Table[$k] - $Table["no-ui"] } }
+    foreach ($k in $Table.Keys) {
+        if ($k -like "no-ui*") { continue }
+        $reference = if ($Paused[$k] -and $Table.ContainsKey("no-ui-paused")) { "no-ui-paused" } else { "no-ui" }
+        $cost[$k] = $Table[$k] - $Table[$reference]
+    }
     return $cost
 }
 # A reference from before R8 (review 36, 37) takes the old flag prefix and calls the forensic scenario "detective".
@@ -86,8 +99,12 @@ function Run-Perf([string]$Label, [string]$ProjectDir, [string]$Extra = "") {
     Run-Game "-${prefix}Perf=$Label -${prefix}PerfSeconds=$PerfSampleSeconds $Extra" 300 (Join-Path $ProjectDir "MVVMSample.uproject") | Out-Null
     $path = Join-Path $ProjectDir "Saved\Perf\$Label.md"
     if (-not (Test-Path $path)) { return $null }
+    # Scenarios the harness found not in the state they measure (the "Valid" column, from review S0 on).
+    foreach ($line in Get-Content $path) {
+        if ($line -match '^\|\s*([a-z0-9\-]+)\s*\|.*\|\s*(yes|no)\s*\|\s*(yes|no)\s*\|\s*$' -and $Matches[2] -eq "no") { $script:invalidScenarios += "$Label/$($Matches[1])" }
+    }
     $cost = @{}
-    foreach ($entry in (UI-Cost (Read-Perf $path)).GetEnumerator()) {
+    foreach ($entry in (UI-Cost (Read-Perf $path) (Read-Paused $path)).GetEnumerator()) {
         $name = if ($scenarioRenames.ContainsKey($entry.Key)) { $scenarioRenames[$entry.Key] } else { $entry.Key }
         $cost[$name] = $entry.Value
     }
@@ -177,7 +194,16 @@ if (-not $Quick -and (Should-Run "G5")) {
         Record "G5" $false $problem
     } else {
         $extra = if ($PerfInject) { "-MvsPerfInject=$PerfInject" } else { "" }
-        $diffs = @{}; $missing = 0
+        $diffs = @{}; $current = @{}; $missing = 0
+        $script:invalidScenarios = @()
+        # Absolute budgets (UI cost of the current build, median over rounds): relative checks alone let small
+        # regressions add up across merges.
+        $budgets = @{}
+        $budgetFile = Join-Path $root "Scripts\PerfBudgets.json"
+        if (Test-Path $budgetFile) {
+            (Get-Content $budgetFile -Raw | ConvertFrom-Json).PSObject.Properties | Where-Object { $_.Name -notlike "_*" } |
+                ForEach-Object { $budgets[$_.Name] = [double]$_.Value }
+        }
         for ($r = 1; $r -le $PerfRounds; $r++) {
             $order = if ($r % 2 -eq 1) { @("ref", "cur") } else { @("cur", "ref") }
             $costs = @{}
@@ -190,9 +216,16 @@ if (-not $Quick -and (Should-Run "G5")) {
                 if (-not $diffs.ContainsKey($k)) { $diffs[$k] = @() }
                 $diffs[$k] += , ($costs.cur[$k] - $costs.ref[$k])
             }
+            foreach ($k in $costs.cur.Keys) {
+                if (-not $current.ContainsKey($k)) { $current[$k] = @() }
+                $current[$k] += , $costs.cur[$k]
+            }
         }
+        $invalidCurrent = @($script:invalidScenarios | Where-Object { $_ -match '_cur\d+/' })
         if ($missing -gt 0) {
             Record "G5" $false ("{0} of {1} rounds produced no perf report" -f $missing, $PerfRounds)
+        } elseif ($invalidCurrent.Count -gt 0) {
+            Record "G5" $false ("{0} scenario runs were not in the state they measure" -f $invalidCurrent.Count) ($invalidCurrent -join "`n")
         } else {
             $refSha = (git -C $refDir rev-parse --short HEAD)
             $lines = @("reference: $PerfRef ($refSha), $PerfRounds rounds, tolerance +$PerfToleranceMs ms on the median")
@@ -205,7 +238,16 @@ if (-not $Quick -and (Should-Run "G5")) {
                 $rounds = ($diffs[$k] | ForEach-Object { "{0:+0.000;-0.000}" -f $_ }) -join " "
                 $lines += ("{0,-7} {1,-15} median {2:+0.000;-0.000} ms   rounds {3}" -f $flag, $k, $median, $rounds)
             }
-            Record "G5" ($bad -eq 0) ("{0} scenarios vs {1}, {2} slower than allowed" -f $diffs.Count, $PerfRef, $bad) ($lines -join "`n")
+            $over = 0
+            $lines += "budgets (Scripts/PerfBudgets.json): UI cost of the current build, median over rounds"
+            foreach ($k in ($current.Keys | Sort-Object)) {
+                $sorted = @($current[$k] | Sort-Object)
+                $median = $sorted[[int][math]::Floor($sorted.Count / 2)]
+                if (-not $budgets.ContainsKey($k)) { $over++; $lines += ("NO BUDGET {0,-15} median {1:+0.000;-0.000} ms" -f $k, $median); continue }
+                $flag = if ($median -gt $budgets[$k]) { $over++; "OVER" } else { "ok" }
+                $lines += ("{0,-7} {1,-15} median {2:+0.000;-0.000} ms   budget {3:0.000} ms" -f $flag, $k, $median, $budgets[$k])
+            }
+            Record "G5" ($bad -eq 0 -and $over -eq 0) ("{0} scenarios vs {1}, {2} slower than allowed, {3} over budget" -f $diffs.Count, $PerfRef, $bad, $over) ($lines -join "`n")
         }
     }
     }
@@ -223,6 +265,12 @@ if (Should-Run "G6") {
             ForEach-Object { "$($l.Name): $($_.Line)" }
     }
     Record "G6" ($hits.Count -eq 0) ("{0} logs scanned, {1} ensures, project errors/warnings or content warnings" -f $logs.Count, $hits.Count) (($hits | Select-Object -First 40) -join "`n")
+}
+
+# G7: every English string has a current translation in each shipped culture.
+if (Should-Run "G7") {
+    $out = & python (Join-Path $root "Scripts\CheckTranslations.py") 2>&1 | ForEach-Object { "$_" }
+    Record "G7" ($LASTEXITCODE -eq 0) (($out | Select-Object -Last 1)) (($out | Select-Object -SkipLast 1 | Select-Object -First 40) -join "`n")
 }
 
 # Report.

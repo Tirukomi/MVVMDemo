@@ -1,4 +1,4 @@
-// Copyright IG. All Rights Reserved.
+﻿// Copyright IG. All Rights Reserved.
 
 #include "Core/MvsPerfHarness.h"
 
@@ -12,15 +12,19 @@
 #include "Engine/LocalPlayer.h"
 #include "Gameplay/ForensicComponent.h"
 #include "HAL/PlatformMemory.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "ProfilingDebugging/MiscTrace.h"
 #include "DynamicRHI.h"
 #include "RenderTimer.h"
 #include "Gameplay/ThreatSubsystem.h"
 #include "UI/ClueEntryWidget.h"
+#include "UI/Screens/ClueLogScreen.h"
 #include "UI/Screens/ConfirmModalScreen.h"
 #include "UI/Screens/GadgetWheelScreen.h"
 #include "UI/Screens/PauseMenuScreen.h"
+#include "UI/Screens/SettingsScreen.h"
 #include "UI/MvsUISettings.h"
 #include "UI/Layout/MvsUISubsystem.h"
 #include "ViewModels/ClueViewModels.h"
@@ -36,6 +40,10 @@ namespace
 		TFunction<void()> Setup;
 		TFunction<void(float /*Seconds*/)> PerFrame;
 		TFunction<void()> Teardown;
+		/** Whether the scenario is in the state it measures (checked on the first sampled frame). A scenario whose
+		 *  setup silently failed would otherwise measure nothing and look cheap: until R4, case-file-505 never
+		 *  opened the case file. Null means nothing to check. */
+		TFunction<bool()> Check;
 	};
 
 	struct FResult
@@ -51,6 +59,9 @@ namespace
 		int32 Ticking = 0;
 		int32 UObjects = 0;
 		double UsedMB = 0.0;
+		bool bValid = true;
+		/** The world was paused while sampled (the pause menu pauses it): compare with no-ui-paused, not no-ui. */
+		bool bPaused = false;
 	};
 
 	constexpr float WarmupSeconds = 2.f;
@@ -79,6 +90,9 @@ namespace
 		double GameMsSum = 0.0;
 		double GpuMsSum = 0.0;
 		int32 GameSamples = 0;
+		bool bInRegion = false;
+		bool bValid = true;
+		bool bPaused = false;
 		double StartMB = 0.0;
 		/** -MvsPerfInject=<scenario>:<ms>: busy-waits that long on the game thread every frame of one scenario, so
 		 *  the gate can prove it catches a real regression of a known size. */
@@ -139,6 +153,11 @@ namespace
 
 		void FinishScenario()
 		{
+			if (bInRegion)
+			{
+				TRACE_END_REGION(*Scenarios[Index].Name);
+				bInRegion = false;
+			}
 			FResult Result;
 			Result.Name = Scenarios[Index].Name;
 			Result.Frames = FrameMs.Num();
@@ -157,6 +176,8 @@ namespace
 			Result.Ticking = CountUserWidgets(true);
 			Result.UObjects = GUObjectArray.GetObjectArrayNumMinusAvailable();
 			Result.UsedMB = UsedMB();
+			Result.bValid = bValid;
+			Result.bPaused = bPaused;
 			Results.Add(Result);
 			UE_LOG(LogMvsPerf, Log, TEXT("%-16s frames=%d avg=%.3fms p95=%.3fms game=%.3fms widgets=%d objects=%d"),
 				*Result.Name, Result.Frames, Result.AvgFrameMs, Result.P95FrameMs, Result.AvgGameMs, Result.UserWidgets, Result.UObjects);
@@ -183,6 +204,19 @@ namespace
 			}
 			if (Elapsed > WarmupSeconds)
 			{
+				if (!bInRegion)
+				{
+					bValid = !Scenarios[Index].Check || Scenarios[Index].Check();
+					bPaused = Controller->GetWorld() && Controller->GetWorld()->IsPaused();
+					if (!bValid)
+					{
+						UE_LOG(LogMvsPerf, Error, TEXT("Scenario %s is not in the state it measures; its numbers are invalid."), *Scenarios[Index].Name);
+					}
+					// One Insights timing region per scenario's sampled frames: a trace taken with -trace=default
+					// can then be split per scenario (Scripts/ProfileUI.ps1).
+					TRACE_BEGIN_REGION(*Scenarios[Index].Name);
+					bInRegion = true;
+				}
 				FrameMs.Add(DeltaTime * 1000.f);
 				GameMsSum += FPlatformTime::ToMilliseconds(GGameThreadTime);
 				GpuMsSum += FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles());
@@ -195,11 +229,12 @@ namespace
 			FString Md = FString::Printf(TEXT("# UI performance run: %s\n\nResolution %ux%u, uncapped, %.0fs warm-up + %.0fs sampled per scenario. Start memory %.0f MB.\n\n"),
 				*Label, GSystemResolution.ResX, GSystemResolution.ResY, WarmupSeconds, SampleSeconds(), StartMB);
 			// Columns are only ever appended: G5 reads the first five, so reports from older builds stay comparable.
-			Md += TEXT("| Scenario | Frames | Avg frame (ms) | P95 frame (ms) | Avg game thread (ms) | UUserWidgets | ticking | UObjects | Used MB | Avg GPU (ms) |\n|---|---|---|---|---|---|---|---|---|---|\n");
+			Md += TEXT("| Scenario | Frames | Avg frame (ms) | P95 frame (ms) | Avg game thread (ms) | UUserWidgets | ticking | UObjects | Used MB | Avg GPU (ms) | Valid | Paused |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n");
 			for (const FResult& R : Results)
 			{
-				Md += FString::Printf(TEXT("| %s | %d | %.3f | %.3f | %.3f | %d | %d | %d | %.0f | %.3f |\n"),
-					*R.Name, R.Frames, R.AvgFrameMs, R.P95FrameMs, R.AvgGameMs, R.UserWidgets, R.Ticking, R.UObjects, R.UsedMB, R.AvgGpuMs);
+				Md += FString::Printf(TEXT("| %s | %d | %.3f | %.3f | %.3f | %d | %d | %d | %.0f | %.3f | %s | %s |\n"),
+					*R.Name, R.Frames, R.AvgFrameMs, R.P95FrameMs, R.AvgGameMs, R.UserWidgets, R.Ticking, R.UObjects, R.UsedMB, R.AvgGpuMs,
+					R.bValid ? TEXT("yes") : TEXT("no"), R.bPaused ? TEXT("yes") : TEXT("no"));
 			}
 			const IConsoleVariable* Invalidation = IConsoleManager::Get().FindConsoleVariable(TEXT("Slate.EnableGlobalInvalidation"));
 			Md += FString::Printf(TEXT("\nSlate.EnableGlobalInvalidation = %d\n"), Invalidation ? Invalidation->GetInt() : -1);
@@ -238,6 +273,16 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 	const TWeakObjectPtr<UMvsUISubsystem> WeakUI(UI);
 	const TWeakObjectPtr<UMvsViewModelSubsystem> WeakVMs(ViewModels);
 	auto Hero = [WeakPC]() { return WeakPC.IsValid() ? Cast<AMvsCharacter>(WeakPC->GetPawn()) : nullptr; };
+	// What each scenario must be showing while it is sampled.
+	auto Showing = [WeakUI](EMvsUILayer Layer, const UClass* ScreenClass) -> TFunction<bool()>
+	{
+		return [WeakUI, Layer, ScreenClass]()
+		{
+			const UCommonActivatableWidget* Screen = WeakUI.IsValid() ? WeakUI->GetActiveScreen(Layer) : nullptr;
+			return Screen && Screen->IsA(ScreenClass);
+		};
+	};
+	const TFunction<bool()> HudShowing = Showing(EMvsUILayer::Game, UCommonActivatableWidget::StaticClass());
 
 	// 0. Reference: the same world with the whole UI layer hidden, so the other rows can be read as UI cost.
 	Run->Scenarios.Add({ TEXT("no-ui"),
@@ -246,7 +291,7 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->SetLayoutVisible(true); } } });
 
 	// 1. The HUD sitting idle in combat.
-	Run->Scenarios.Add({ TEXT("hud-idle"), nullptr, nullptr, nullptr });
+	Run->Scenarios.Add({ TEXT("hud-idle"), nullptr, nullptr, nullptr, HudShowing });
 
 	// 2. HUD while the combo meter and gadget cooldowns animate every frame.
 	Run->Scenarios.Add({ TEXT("hud-animating"),
@@ -259,13 +304,14 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 				if (FMath::Fmod(Seconds, 3.2f) < 0.02f) { H->UseGadget(0); H->UseGadget(1); H->UseGadget(2); }
 			}
 		},
-		nullptr });
+		nullptr, HudShowing });
 
 	// 3. Forensic Mode fully on (post-process + overlay material + objective tracker).
 	Run->Scenarios.Add({ TEXT("forensic"),
 		[Hero]() { if (AMvsCharacter* H = Hero()) { H->ToggleForensic(); } },
 		nullptr,
-		[Hero]() { if (AMvsCharacter* H = Hero()) { H->ToggleForensic(); } } });
+		[Hero]() { if (AMvsCharacter* H = Hero()) { H->ToggleForensic(); } },
+		[Hero]() { const AMvsCharacter* H = Hero(); return H && H->GetForensicComponent() && H->GetForensicComponent()->IsActive(); } });
 
 	// 4. Gadget wheel open with a hovered segment sweeping around.
 	Run->Scenarios.Add({ TEXT("gadget-wheel"),
@@ -278,7 +324,8 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 				It->SetStickInput(FVector2D(FMath::Sin(Seconds * 3.f), FMath::Cos(Seconds * 3.f)));
 			}
 		},
-		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } } });
+		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } },
+		Showing(EMvsUILayer::GameMenu, UGadgetWheelScreen::StaticClass()) });
 
 	// 5. Case file with 505 clues, scrolled continuously (worst case for the pooled list).
 	Run->Scenarios.Add({ TEXT("case-file-505"),
@@ -303,17 +350,32 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 			{
 				Clues->SetEntries(Clues->GetEntries().FilterByPredicate([](const UClueEntryViewModel* Entry) { return Entry && !Entry->IsDebug(); }));
 			}
+		},
+		[IsCaseFile = Showing(EMvsUILayer::Menu, UClueLogScreen::StaticClass())]()
+		{
+			// The case file, with the 505 entries and tiles on screen.
+			for (TObjectIterator<UMvsClueTileView> It; It && IsCaseFile(); ++It)
+			{
+				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->GetNumItems() >= 500 && It->GetDisplayedEntryWidgets().Num() > 0)
+				{
+					return true;
+				}
+			}
+			return false;
 		} });
 
 	// 6. Settings screen open (rows, scroll box, buttons).
 	Run->Scenarios.Add({ TEXT("settings"),
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->SettingsScreenClass); } },
 		nullptr,
-		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } } });
+		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } },
+		Showing(EMvsUILayer::Menu, USettingsScreen::StaticClass()) });
 
 	// 7. The quit confirmation over pause: a modal over a menu, the one case where two background blurs are on screen.
 	Run->Scenarios.Add({ TEXT("pause-quit"),
-		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->TogglePauseMenu(); } },
+		// Pushed, not toggled: settings' teardown leaves it on the stack for its outro, and a toggle would pop it again
+		// instead of opening pause (found by the Valid check in review S0; the scenario never showed the modal).
+		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->PauseMenuClass); } },
 		[](float)
 		{
 			// Once pause is up, ask to quit the way the menu does (only once: the modal then stays open).
@@ -343,7 +405,8 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 			{
 				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsActivated()) { It->DeactivateWidget(); }
 			}
-		} });
+		},
+		Showing(EMvsUILayer::Modal, UConfirmModalScreen::StaticClass()) });
 
 	// 8. Combat: two thugs telegraphing on a loop (one counter prompt in view, one edge arrow), combo milestones.
 	// Outside this scenario the attack director is off, so the other rows measure the same idle thugs.
@@ -366,7 +429,24 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 				if (FMath::Fmod(Seconds, 0.25f) < 0.02f) { H->Attack(); }
 			}
 		},
-		nullptr });
+		nullptr, HudShowing });
+
+	// 9. The no-ui reference with the world paused, for scenarios that pause it (pause-quit). A paused world does far less
+	// game-thread work, so against no-ui those scenarios would read as negative UI cost. Last, so the scenarios before it
+	// run at the same point of the session as in builds without it (G5 compares with those).
+	Run->Scenarios.Add({ TEXT("no-ui-paused"),
+		[WeakUI, WeakPC]()
+		{
+			if (WeakUI.IsValid()) { WeakUI->SetLayoutVisible(false); }
+			if (WeakPC.IsValid()) { UGameplayStatics::SetGamePaused(WeakPC.Get(), true); }
+		},
+		nullptr,
+		[WeakUI, WeakPC]()
+		{
+			if (WeakPC.IsValid()) { UGameplayStatics::SetGamePaused(WeakPC.Get(), false); }
+			if (WeakUI.IsValid()) { WeakUI->SetLayoutVisible(true); }
+		},
+		[WeakPC]() { return WeakPC.IsValid() && WeakPC->GetWorld() && WeakPC->GetWorld()->IsPaused(); } });
 
 	UE_LOG(LogMvsPerf, Log, TEXT("Perf run '%s' starting (%d scenarios)"), *Label, Run->Scenarios.Num());
 	Run->Begin();

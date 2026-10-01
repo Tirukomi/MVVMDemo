@@ -183,12 +183,43 @@ Summary: R5 is mostly hygiene that a reviewer would expect, not a big speed-up. 
 already small and dominated by the 505-clue list and the HUD; none of these changes moves it outside noise, and the
 GPU frame is the scene's.
 
+## Second review S0: what the numbers were measuring (2026-10-01)
+
+An Unreal Insights capture of every scenario (`Scripts/ProfileUI.ps1`: the harness marks each scenario's sampled frames
+as a timing region; `Scripts/profile_diff.py` compares each with its reference timer by timer) showed three problems
+with the method, all fixed in the harness:
+
+- **Two scenarios never showed what they measure.** Until R4, `case-file-505` never opened the case file (10 widgets,
+  the HUD's), so its +0.06 to +0.15 ms in the V4 to R0 tables measured the HUD. `pause-quit` (new in R5) never opened
+  pause: settings' teardown left settings on the stack for its outro, and the toggle popped it again. Each scenario now
+  has a check that runs on its first sampled frame; the report's `Valid` column records it, and G5 fails on `no`.
+- **The pause menu pauses the world**, which takes about 0.8 ms of game-thread work away, so against `no-ui` a paused
+  scenario reads as negative UI cost. A `no-ui-paused` reference and a `Paused` column fix that: G5, the budgets and
+  `profile_diff.py` compare a paused scenario with the paused reference.
+- **"Scenario minus no-ui" is not all UI.** For the idle HUD, the Slate timers (tick, paint, active timers) add about
+  0.04 ms of the ~0.15 ms; the rest is world work that differs between scenarios (`FXSystemPreRender` alone varies by
+  0.04 to 0.15 ms). The totals stay useful for A/B, but attributing cost needs the profile.
+
+What the profile says the UI costs (exclusive game-thread time over the reference, per frame, traced):
+
+| Scenario | Slate and widget timers | Biggest items |
+|---|---|---|
+| hud-idle | ~0.04 ms | the threat indicator layer's active timer (repaints every frame whenever a thug exists) |
+| case-file-505 | ~0.65 ms | the tile view rebuilding rows while it scrolls (`STableViewBase::Tick` 0.22 ms incl., 160 hit-grid removals and 16 rows removed from the tree per frame), tile paints 0.17 ms, prepass 0.06 ms |
+| settings | ~0.11 ms | two active timers, 16 ticking widgets |
+| pause-quit | ~0.05 ms | one active timer |
+
+`case-file-505` scrolls about one row of four tiles per frame at its fastest, so it is the worst case by design; but at
++0.55 to +0.65 ms it is over the 0.3 ms target below, and its 35 tiles tick (the list view requires it). Second review
+S7 takes it on. G5's absolute budgets (`Scripts/PerfBudgets.json`) start from today's numbers so nothing gets worse
+meanwhile; for the case file that is a ceiling, not the target.
+
 ## Budgets
 
 | Budget | Target | Status |
 |---|---|---|
-| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met: worst case +0.25 ms (Forensic Mode markers, V3); menus up to +0.12 ms |
-| Ticking widgets while idle | 0 | Met (0) |
+| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met except the case file: +0.55 to +0.65 ms while scrolling 505 clues continuously (measured since S0; before that the scenario never opened it). Others up to +0.22 ms (Forensic Mode). Gated per scenario by `Scripts/PerfBudgets.json` |
+| Ticking widgets while idle | 0 | Met for the HUD and menus; the case file's tiles tick (the list view requires it) |
 | Row widgets for any list | bounded by viewport, not item count | Met (case-file tile view: 20 tiles for 205 clues) |
 | Widget objects, all screens | no unbounded growth | Steady: 9 (HUD) to 38 (tabbed settings) |
 
@@ -199,8 +230,8 @@ Be sceptical of anything not in the table above:
 - **Per-pass GPU cost** (`stat gpu`, RenderDoc). Since R0 the harness records whole-frame GPU time
   (`RHIGetGPUFrameCycles`): Forensic Mode adds about 0.5 ms to the GPU frame at 1080p, a second background blur about
   0.035 ms. Which pass costs what inside a frame is still not measured.
-- **Slate Insights / Unreal Insights captures.** The harness gives before/after totals; it does not attribute cost
-  to individual widgets. That is the next step for anything that regresses.
+- **Per-widget attribution in G5.** The gate compares totals; `Scripts/ProfileUI.ps1` attributes cost per timer and
+  widget (see the S0 section), but it is run by hand.
 - **`memreport` and texture streaming.** Memory is reported as process working set and UObject count only.
 - **Lower-end hardware and other platforms.** The gains from removing ticks are expected to matter more there.
 - **Frame-time hitches** (max frame). Averages and P95 are recorded; maximum is dominated by warm-up.

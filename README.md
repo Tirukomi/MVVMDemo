@@ -72,12 +72,15 @@ for pause).
 python Scripts/run_tests.py          # editor pass (headless) + game pass (Mvs.Functional, small window); exit code reflects failures
 ```
 
-Before merging a refactor, run the whole gate (build, tests, menu input test, screenshot diff, perf versus baseline,
-log scan). See [Docs/RefactoringPlan.md](Docs/RefactoringPlan.md):
+Before merging a refactor, run the whole gate (build, tests, menu input test, screenshot diff, perf versus baseline
+and per-scenario budgets, log scan, translation check). See [Docs/RefactoringPlan.md](Docs/RefactoringPlan.md):
 
 ```bash
 powershell -ExecutionPolicy Bypass -File Scripts/Verify.ps1
 ```
+
+`Scripts/ProfileUI.ps1` breaks the perf scenarios down timer by timer with Unreal Insights (see
+[Docs/Performance.md](Docs/Performance.md)).
 
 45 automation tests cover view models, component logic, wheel hit-testing, layer/input-context rules, settings
 persistence and grouping, palette legibility, rebinding conflicts, subtitles, HUD motion and ghost timing, Forensic
