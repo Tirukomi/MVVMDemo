@@ -14,6 +14,7 @@
 #include "UI/Screens/ClueLogScreen.h"
 #include "UI/Screens/PauseMenuScreen.h"
 #include "UI/Screens/SettingsScreen.h"
+#include "UI/Widgets/GothamActionBar.h"
 #include "UI/Widgets/GothamHintButton.h"
 #include "UI/Widgets/GothamOptionRow.h"
 #include "UI/Widgets/GothamTabList.h"
@@ -108,17 +109,58 @@ namespace GothamMenuInputTestPrivate
 			.Do([At]() { MouseEvent(*At, false, true); });
 	}
 
-	/** The prompt with this keyboard key inside Screen (including nested widgets such as the tab list). */
+	/**
+	 * The prompt showing this keyboard key inside Screen: one the screen's action bar is showing (the bar pools the
+	 * prompts it replaces, so only its current entries count), or one of the tab list's.
+	 */
 	UGothamHintButton* FindHint(const UObject* Screen, const FKey& Key)
 	{
-		for (TObjectIterator<UGothamHintButton> It; It; ++It)
+		for (TObjectIterator<UGothamActionBar> Bar; Bar && Screen; ++Bar)
 		{
-			if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->GetKeyboardKey() == Key && It->IsIn(Screen))
+			if (!Bar->HasAnyFlags(RF_ClassDefaultObject) && Bar->IsIn(Screen))
 			{
-				return *It;
+				for (UGothamHintButton* Hint : Bar->GetTypedEntries<UGothamHintButton>())
+				{
+					if (Hint->IsVisible() && Hint->GetKeyboardKey() == Key)
+					{
+						return Hint;
+					}
+				}
+			}
+		}
+		for (TObjectIterator<UGothamTabList> Tabs; Tabs && Screen; ++Tabs)
+		{
+			if (!Tabs->HasAnyFlags(RF_ClassDefaultObject) && Tabs->IsIn(Screen) && Tabs->WidgetTree)
+			{
+				UGothamHintButton* Found = nullptr;
+				Tabs->WidgetTree->ForEachWidget([&Found, &Key](UWidget* Widget)
+				{
+					UGothamHintButton* Hint = Cast<UGothamHintButton>(Widget);
+					Found = !Found && Hint && Hint->GetKeyboardKey() == Key ? Hint : Found;
+				});
+				if (Found)
+				{
+					return Found;
+				}
 			}
 		}
 		return nullptr;
+	}
+
+	/** The text of Hint's key cap. */
+	FString GlyphText(const UGothamHintButton* Hint)
+	{
+		const UGothamInputGlyph* Glyph = nullptr;
+		if (Hint && Hint->WidgetTree)
+		{
+			Hint->WidgetTree->ForEachWidget([&Glyph](UWidget* W) { Glyph = Glyph ? Glyph : Cast<UGothamInputGlyph>(W); });
+		}
+		const UTextBlock* Text = nullptr;
+		if (Glyph && Glyph->WidgetTree)
+		{
+			Glyph->WidgetTree->ForEachWidget([&Text](UWidget* W) { Text = Text ? Text : Cast<UTextBlock>(W); });
+		}
+		return Text ? Text->GetText().ToString() : FString();
 	}
 
 	/** The settings row for one option, inside Screen. */
@@ -379,15 +421,29 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		})
 		.WaitUntil([LabelBefore]() { const FLinearColor Now = PromptLabelColor(ActiveScreen<USettingsScreen>()); return LabelBefore->A > 0.f && !Now.Equals(*LabelBefore, 0.01f); },
 			Quick, TEXT("turning high contrast on restyles an open screen live"))
-		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } });
+		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
+		// Prompts are the screen's bound actions, with the keys of the device in use (review 12, 15).
+		.Do([]() { SendKey(EKeys::Gamepad_DPad_Down); })
+		.WaitUntil([]() { return GlyphText(FindHint(ActiveScreen<USettingsScreen>(), EKeys::Enter)) == UGothamInputGlyph::GetKeyLabel(EKeys::Gamepad_FaceButton_Bottom).ToString(); },
+			Quick, TEXT("a gamepad press turns the accept prompt into the gamepad's accept button"))
+		.Do([]() { SendKey(EKeys::Gamepad_DPad_Up); })
+		.Do([]()
+		{
+			// A real move (the cursor travelled), which is what Common Input counts as switching to the mouse.
+			FSlateApplication& App = FSlateApplication::Get();
+			App.ProcessMouseMoveEvent(FPointerEvent(0, 0, FVector2D(60.0, 60.0), FVector2D(40.0, 40.0), TSet<FKey>(), EKeys::Invalid, 0.f, App.GetModifierKeys()));
+		})
+		.WaitUntil([]() { return GlyphText(FindHint(ActiveScreen<USettingsScreen>(), EKeys::Enter)) == UGothamInputGlyph::GetKeyLabel(EKeys::Enter).ToString(); },
+			Quick, TEXT("moving the mouse turns it back into Enter"));
 
 	// Review finding 1: opening Key bindings must keep unapplied settings.
 	Script->Do([Settings]() { if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::SubtitleSize, +1); } })
 		.Do(Push(&UGothamUISettings::ControlsScreenClass))
 		.WaitUntil([Settled]() { return Settled(ActiveScreen<UControlsScreen>()); }, Open, TEXT("key bindings open over settings (precondition)"))
 		.Do([Self, Settings]() { Self->Check(Settings() && Settings()->GetIsDirty(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); })
-		.Do([]() { if (UControlsScreen* Controls = ActiveScreen<UControlsScreen>()) { Controls->DeactivateWidget(); } })
-		.WaitUntil([Settled]() { return Settled(ActiveScreen<USettingsScreen>()); }, Open, TEXT("back on settings (precondition)"))
+		.Do([]() { SendKey(EKeys::Escape); })
+		.WaitUntil([Settled]() { return !ActiveScreen<UControlsScreen>() && Settled(ActiveScreen<USettingsScreen>()); }, Open,
+			TEXT("Esc closes key bindings and only key bindings (review 11)"))
 		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
 		.WaitUntil(Stable([]() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape); }), Quick, TEXT("the [Esc] prompt settles (precondition)"));
 	AddClick(*Script, []() { return FindHint(ActiveScreen<USettingsScreen>(), EKeys::Escape); }, TEXT("the [Esc] prompt is clickable"));
@@ -437,8 +493,8 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 			Algo::Reverse(Reversed);
 			Clues->SetEntries(Reversed);
 		})
-		.Do([]() { if (UClueLogScreen* Screen = ActiveScreen<UClueLogScreen>()) { Screen->DeactivateWidget(); } })
-		.WaitUntil([Closed]() { return Closed(ActiveScreen<UClueLogScreen>()); }, Quick, TEXT("the case file closes (cleanup)"));
+		.Do([]() { SendKey(EKeys::Virtual_Gamepad_Back.GetVirtualKey()); })
+		.WaitUntil([Closed]() { return Closed(ActiveScreen<UClueLogScreen>()); }, Quick, TEXT("the gamepad's back button closes the case file (review 11)"));
 
 	// Review finding 8: every HUD view model can be resolved by class (for designer bindings).
 	Script->Do([Self, WeakPC]()
@@ -449,11 +505,10 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 
 	// Review findings 3, 4, 6 and 10: the gadget wheel and gadget keys follow rebinding, the wheel's slow motion survives
 	// a hit-stop, and the wheel follows reduced motion live. Rebinds are in memory only (never saved) and undone.
-	Script->Do([WeakPC, WeakUI, Undo]()
+	Script->Do([WeakPC, Undo]()
 		{
 			Rebind(WeakPC, TEXT("GadgetWheel"), EKeys::Z, *Undo);
 			Rebind(WeakPC, TEXT("Gadget1"), EKeys::X, *Undo);
-			if (WeakUI.IsValid()) { WeakUI->NotifyBindingsChanged(); }
 		})
 		.Do([Self, WeakPC]()
 		{
@@ -482,11 +537,10 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		})
 		.Wait(0.5f)
 		.Do([Self]() { Self->Check(ActiveScreen<UGadgetWheelScreen>() == nullptr, TEXT("releasing the rebound wheel key closes the wheel (review 3)")); })
-		.Do([WeakPC, WeakUI, Undo]()
+		.Do([WeakPC, Undo]()
 		{
 			if (UGadgetWheelScreen* Wheel = ActiveScreen<UGadgetWheelScreen>()) { Wheel->DeactivateWidget(); }
 			RestoreBindings(WeakPC, *Undo);
-			if (WeakUI.IsValid()) { WeakUI->NotifyBindingsChanged(); }
 		})
 		.WaitUntil([Closed]() { return Closed(ActiveScreen<UGadgetWheelScreen>()); }, Quick, TEXT("the wheel closes (cleanup)"));
 

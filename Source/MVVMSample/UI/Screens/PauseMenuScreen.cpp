@@ -77,7 +77,7 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 		EvidenceText = MakeText(FText::GetEmpty(), EGothamTextStyle::Numeric, EGothamColorToken::Accent);
 		Status->AddChildToVerticalBox(EvidenceText)->SetPadding(FMargin(0.f, 2.f, 0.f, 0.f));
 
-		AddFooter(MakeHintBar(LOCTEXT("Select", "Select"), LOCTEXT("Back", "Resume")));
+		AddFooter(MakeActionBar(LOCTEXT("Select", "Select"), LOCTEXT("Back", "Resume")));
 	}
 	return Super::RebuildWidget();
 }

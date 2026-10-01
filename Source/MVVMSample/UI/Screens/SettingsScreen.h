@@ -32,7 +32,6 @@ protected:
 	virtual void NativeDestruct() override;
 	virtual void NativeOnClosed() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual FReply NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual void OnPaletteChanged() override;
 
 private:

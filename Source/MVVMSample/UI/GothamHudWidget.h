@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Accessibility/GothamSettingsListener.h"
 #include "Containers/Ticker.h"
-#include "UI/Screens/GothamScreen.h"
+#include "CommonActivatableWidget.h"
 #include "GothamHudWidget.generated.h"
 
 class UClueMarkerLayer;
@@ -23,9 +23,12 @@ class UThreatIndicatorLayer;
  * Combat HUD root. Layout: health and combo top-left, gadget selector top-right with the objective under it,
  * subtitles bottom-centre; Detective overlay, clue markers, threat indicators and the danger vignette full-screen behind
  * everything.
+ *
+ * A plain activatable widget on the Game layer: it shares nothing with the menu screens (no back handling, no focus,
+ * no menu frame) beyond keeping the game in control while it is the top widget.
  */
 UCLASS()
-class MVVMSAMPLE_API UGothamHudWidget : public UGothamScreen
+class MVVMSAMPLE_API UGothamHudWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 

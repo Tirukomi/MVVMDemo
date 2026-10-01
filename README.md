@@ -61,7 +61,7 @@ Requires UE 5.8 (path assumptions in `Scripts/` point at `D:\UnrealEngine\UE_5.8
 | Menus: change a value / switch settings tab | Left, right / Q, E | D-pad or stick / LB, RB |
 | Debug: damage, heal, combo hit | F1, F2, F3 | n/a |
 
-All of these are rebindable from **Pause > Settings > Controls**. In menus, every prompt in the hint bar is also a
+All of these are rebindable from **Pause > Settings > Controls**. In menus, every prompt in the action bar is also a
 button (click "[Esc] Back" to go back), and the key that opens a screen closes it again (J for the case file, Start
 for pause).
 

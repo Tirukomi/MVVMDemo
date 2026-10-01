@@ -6,6 +6,7 @@
 #include "Accessibility/GothamSettingsListener.h"
 #include "Accessibility/GothamSettingsTypes.h"
 #include "CommonButtonBase.h"
+#include "UI/Widgets/GothamAcceptable.h"
 #include "GothamOptionRow.generated.h"
 
 class UGothamSelectorDecor;
@@ -20,12 +21,15 @@ class UTextBlock;
  * menu highlight follows the mouse too.
  */
 UCLASS()
-class MVVMSAMPLE_API UGothamOptionRow : public UCommonButtonBase
+class MVVMSAMPLE_API UGothamOptionRow : public UCommonButtonBase, public IGothamAcceptable
 {
 	GENERATED_BODY()
 
 public:
 	UGothamOptionRow(const FObjectInitializer& ObjectInitializer);
+
+	/** The click Enter would make: steps the value forward (IGothamAcceptable). */
+	virtual void Accept() override { HandleButtonClicked(); }
 
 	void Setup(EGothamSetting InSetting, USettingsViewModel* InViewModel);
 	EGothamSetting GetSetting() const { return Setting; }

@@ -92,7 +92,7 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 		DetailBody->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
 		Detail->AddChildToVerticalBox(DetailBody);
 
-		AddFooter(MakeHintBar(LOCTEXT("Select", "Browse"), LOCTEXT("Back", "Close")));
+		AddFooter(MakeActionBar(LOCTEXT("Select", "Browse"), LOCTEXT("Back", "Close")));
 	}
 	return Super::RebuildWidget();
 }

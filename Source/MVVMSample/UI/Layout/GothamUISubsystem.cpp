@@ -125,12 +125,5 @@ void UGothamUISubsystem::OpenGadgetWheel()
 
 void UGothamUISubsystem::HandleLayerChanged(EGothamUILayer Layer)
 {
-	const EGothamInputContext Before = Tracker.GetInputContext();
 	Tracker.SetLayerOccupied(Layer, Layout->GetLayer(Layer)->GetActiveWidget() != nullptr);
-
-	const EGothamInputContext After = Tracker.GetInputContext();
-	if (After != Before)
-	{
-		OnInputContextChanged.Broadcast(After);
-	}
 }

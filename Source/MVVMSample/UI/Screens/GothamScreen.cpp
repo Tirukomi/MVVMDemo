@@ -3,7 +3,6 @@
 #include "UI/Screens/GothamScreen.h"
 
 #include "Accessibility/GothamSettingsListener.h"
-#include "Containers/Ticker.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/BackgroundBlur.h"
 #include "Components/Border.h"
@@ -16,16 +15,16 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Input/CommonUIInputTypes.h"
+#include "Input/GothamUIInput.h"
+#include "Slate/SObjectWidget.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Style/GothamMotion.h"
+#include "UI/Widgets/GothamAcceptable.h"
+#include "UI/Widgets/GothamActionBar.h"
 #include "UI/Widgets/GothamButton.h"
-#include "UI/Widgets/GothamHintButton.h"
-#include "UI/Widgets/GothamInputGlyph.h"
 #include "Core/GothamPlayerController.h"
 #include "Engine/LocalPlayer.h"
-#include "EnhancedInputSubsystems.h"
-#include "UserSettings/EnhancedInputUserSettings.h"
 #include "Framework/Application/SlateApplication.h"
 #include "UI/Widgets/GothamMenuList.h"
 #include "UI/Widgets/GothamScrim.h"
@@ -36,6 +35,8 @@ UGothamScreen::UGothamScreen(const FObjectInitializer& ObjectInitializer)
 	, SlideFrom(-GothamMotion::ScreenSlide, 0.f)
 {
 	SetIsFocusable(true);
+	// Back closes the screen (Common UI's default back handling); screens that must be answered turn it off.
+	bIsBackHandler = true;
 }
 
 TOptional<FUIInputConfig> UGothamScreen::GetDesiredInputConfig() const
@@ -49,6 +50,29 @@ void UGothamScreen::NativeConstruct()
 	Super::NativeConstruct();
 	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { OnPaletteChanged(); });
 	OnPaletteChanged();
+
+	// Bindings outlive the Slate widget (a pooled screen constructs again), so each is registered once.
+	if (!AcceptLabel.IsEmpty() && !AcceptHandle.IsValid())
+	{
+		FBindUIActionArgs Args(UGothamUIInputData::Get().GetAcceptAction(), true, FSimpleDelegate::CreateUObject(this, &UGothamScreen::AcceptFocused));
+		Args.OverrideDisplayName = AcceptLabel;
+		AcceptHandle = RegisterUIActionBinding(Args);
+	}
+	if (!ToggleActionName.IsNone() && !ToggleHandle.IsValid())
+	{
+		ToggleHandle = BindAction(FindGameplayAction(ToggleActionName), IE_Pressed, FSimpleDelegate::CreateWeakLambda(this, [this]() { DeactivateWidget(); }));
+	}
+	// Another screen's key opens that screen on top (gameplay input is blocked in menus, so the screen answers it).
+	if (bOpensScreensByKey && ToggleActionName != TEXT("ClueLog") && !ClueLogHandle.IsValid())
+	{
+		ClueLogHandle = BindAction(FindGameplayAction(TEXT("ClueLog")), IE_Pressed, FSimpleDelegate::CreateWeakLambda(this, [this]()
+		{
+			if (UGothamUISubsystem* UI = GetOwningLocalPlayer() ? GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>() : nullptr)
+			{
+				UI->ToggleClueLog();
+			}
+		}));
+	}
 }
 
 void UGothamScreen::NativeDestruct()
@@ -98,82 +122,41 @@ UWidget* UGothamScreen::NativeGetDesiredFocusTarget() const
 	return DefaultFocus ? DefaultFocus.Get() : Super::NativeGetDesiredFocusTarget();
 }
 
-FReply UGothamScreen::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+const UInputAction* UGothamScreen::FindGameplayAction(FName ActionName) const
 {
-	const FKey Key = InKeyEvent.GetKey();
-	// The key that opened the screen closes it (J for the case file, Start for pause), however it is bound.
-	if (!ToggleActionName.IsNone() && !InKeyEvent.IsRepeat() && IsKeyBoundToAction(Key, ToggleActionName))
-	{
-		DeactivateWidget();
-		return FReply::Handled();
-	}
-	// Another screen's key opens that screen on top (gameplay input is off in menus, so the key arrives here).
-	if (bOpensScreensByKey && !InKeyEvent.IsRepeat() && ToggleActionName != TEXT("ClueLog") && IsKeyBoundToAction(Key, TEXT("ClueLog")))
-	{
-		if (UGothamUISubsystem* UI = GetOwningLocalPlayer() ? GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>() : nullptr)
-		{
-			UI->ToggleClueLog();
-			return FReply::Handled();
-		}
-	}
-	if (bCanDismissWithBack && (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right))
-	{
-		HandleBack();
-		return FReply::Handled();
-	}
-	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+	const AGothamPlayerController* PC = GetOwningPlayer<AGothamPlayerController>();
+	return PC ? PC->FindAction(ActionName) : nullptr;
 }
 
-void UGothamScreen::HandleBack()
+FUIActionBindingHandle UGothamScreen::BindAction(const UInputAction* Action, EInputEvent Event, FSimpleDelegate Handler)
 {
-	if (bCanDismissWithBack)
+	if (!Action)
 	{
-		DeactivateWidget();
+		return FUIActionBindingHandle();
 	}
+	FBindUIActionArgs Args(Action, false, MoveTemp(Handler));
+	Args.KeyEvent = Event;
+	return RegisterUIActionBinding(Args);
 }
 
-void UGothamScreen::HandleAccept(TSharedPtr<SWidget> Target)
+void UGothamScreen::AcceptFocused()
 {
-	// Exactly what pressing Enter does, on the item that was current before the pointer went to the prompt (a
-	// button, an option row, a binding slot). Clicking the prompt let Slate move focus to the screen, so focus goes
-	// back first; the key is sent next frame, outside the prompt's own mouse handling.
+	// The same as pressing Enter on the current item: find the item that has focus and click it. A clicked prompt has
+	// already put focus back on the item that was current before the pointer went to the prompt.
 	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
-	const uint32 SlateUser = LocalPlayer ? LocalPlayer->GetControllerId() : 0;
-	const TWeakPtr<SWidget> WeakTarget = Target;
-	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [SlateUser, WeakTarget](float)
+	const TSharedPtr<SWidget> ScreenSlate = GetCachedWidget();
+	for (TSharedPtr<SWidget> Widget = FSlateApplication::Get().GetUserFocusedWidget(LocalPlayer ? LocalPlayer->GetControllerId() : 0);
+		Widget.IsValid() && Widget != ScreenSlate; Widget = Widget->GetParentWidget())
 	{
-		FSlateApplication& App = FSlateApplication::Get();
-		if (const TSharedPtr<SWidget> Restore = WeakTarget.Pin())
+		if (Widget->GetType() == TEXT("SObjectWidget"))
 		{
-			App.SetUserFocus(SlateUser, Restore, EFocusCause::SetDirectly);
-		}
-		App.ProcessKeyDownEvent(FKeyEvent(EKeys::Enter, App.GetModifierKeys(), SlateUser, false, 0, 0));
-		App.ProcessKeyUpEvent(FKeyEvent(EKeys::Enter, App.GetModifierKeys(), SlateUser, false, 0, 0));
-		return false;
-	}));
-}
-
-bool UGothamScreen::IsKeyBoundToAction(const FKey& Key, FName ActionName) const
-{
-	// Not QueryKeysMappedToAction: that only sees active mapping contexts, and the gameplay context is removed while
-	// a menu is open. The key profile holds every mappable action's current keys (rebinds included) regardless.
-	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
-	const auto* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
-	const UEnhancedInputUserSettings* UserSettings = Input ? Input->GetUserSettings() : nullptr;
-	const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings ? UserSettings->GetActiveKeyProfile() : nullptr;
-	const FKeyMappingRow* Row = Profile ? Profile->FindKeyMappingRow(ActionName) : nullptr;
-	if (!Row)
-	{
-		return false;
-	}
-	for (const FPlayerKeyMapping& Mapping : Row->Mappings)
-	{
-		if (Mapping.GetCurrentKey() == Key)
-		{
-			return true;
+			if (IGothamAcceptable* Item = Cast<IGothamAcceptable>(StaticCastSharedPtr<SObjectWidget>(Widget)->GetWidgetObject()))
+			{
+				Item->Accept();
+				return;
+			}
 		}
 	}
-	return false;
 }
 
 void UGothamScreen::OnPaletteChanged()
@@ -283,20 +266,11 @@ UGothamButton* UGothamScreen::AddMenuItem(UGothamMenuList* List, const FText& La
 	return Button;
 }
 
-UHorizontalBox* UGothamScreen::MakeHintBar(const FText& AcceptLabel, const FText& BackLabel)
+UWidget* UGothamScreen::MakeActionBar(const FText& InAcceptLabel, const FText& BackLabel)
 {
-	UHorizontalBox* Bar = WidgetTree->ConstructWidget<UHorizontalBox>();
-	UGothamHintButton* Accept = AddHint(Bar, EKeys::Enter, EKeys::Gamepad_FaceButton_Bottom, AcceptLabel);
-	const TWeakObjectPtr<UGothamHintButton> WeakAccept(Accept);
-	Accept->OnClicked().AddWeakLambda(this, [this, WeakAccept]() { HandleAccept(WeakAccept.IsValid() ? WeakAccept->GetFocusBeforePointer() : nullptr); });
-	AddHint(Bar, EKeys::Escape, EKeys::Gamepad_FaceButton_Right, BackLabel)->OnClicked().AddUObject(this, &UGothamScreen::HandleBack);
-	return Bar;
-}
-
-UGothamHintButton* UGothamScreen::AddHint(UHorizontalBox* Bar, const FKey& Keyboard, const FKey& Pad, const FText& Label)
-{
-	UGothamHintButton* Hint = WidgetTree->ConstructWidget<UGothamHintButton>();
-	Hint->SetHint(Keyboard, Pad, Label);
-	Bar->AddChildToHorizontalBox(Hint)->SetPadding(FMargin(20.f, 0.f, 0.f, 0.f));
-	return Hint;
+	// Read when the screen constructs, after it is built: the back handler takes its label then, and so does accept.
+	AcceptLabel = InAcceptLabel;
+	bIsBackActionDisplayedInActionBar = bIsBackHandler;
+	OverrideBackActionDisplayName = BackLabel;
+	return WidgetTree->ConstructWidget<UGothamActionBar>();
 }

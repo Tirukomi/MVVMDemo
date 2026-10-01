@@ -5,34 +5,38 @@
 #include "CoreMinimal.h"
 #include "Accessibility/GothamSettingsListener.h"
 #include "CommonButtonBase.h"
+#include "Input/CommonBoundActionButtonInterface.h"
 #include "InputCoreTypes.h"
 #include "GothamHintButton.generated.h"
 
 class UGothamInputGlyph;
+class UInputAction;
 class UTextBlock;
 
 /**
- * A button prompt: the key glyph (keyboard or gamepad, following the current device) and a label, as in
+ * A button prompt: the key glyph of an action (keyboard or gamepad, following the current device) and a label, as in
  * "[Esc] Back". Clicking it does what the key does, so mouse players never need the keyboard for menu actions.
  * Not focusable: pointing at it must not take focus (and the menu highlight) away from the current item.
+ *
+ * Used by UGothamActionBar for the actions a screen registers with Common UI (the action and the click both come from
+ * the binding), or on its own with SetInputAction, where the owner binds OnClicked (the tab list's Q / E prompts).
  */
 UCLASS()
-class MVVMSAMPLE_API UGothamHintButton : public UCommonButtonBase
+class MVVMSAMPLE_API UGothamHintButton : public UCommonButtonBase, public ICommonBoundActionButtonInterface
 {
 	GENERATED_BODY()
 
 public:
 	UGothamHintButton(const FObjectInitializer& ObjectInitializer);
 
-	/** Fixed keys, one per device family. Label may be empty (a bare key glyph, e.g. the tab prompts). */
-	void SetHint(const FKey& InKeyboardKey, const FKey& InGamepadKey, const FText& InLabel);
-	const FKey& GetKeyboardKey() const { return KeyboardKey; }
+	/** Shows Action's key. Label may be empty (a bare key glyph, e.g. the tab prompts). */
+	void SetInputAction(const UInputAction* InAction, const FText& InLabel);
 
-	/**
-	 * What had keyboard focus when the pointer arrived. Clicking a non-focusable widget lets Slate move focus to the
-	 * nearest focusable ancestor (the screen), so an "Accept" prompt restores this before acting on it.
-	 */
-	TSharedPtr<SWidget> GetFocusBeforePointer() const { return FocusBeforePointer.Pin(); }
+	/** ICommonBoundActionButtonInterface: shows a registered binding and runs it when clicked. */
+	virtual void SetRepresentedAction(FUIActionBindingHandle InBindingHandle) override;
+
+	/** The keyboard key this prompt shows when the player uses mouse and keyboard (tests find prompts by it). */
+	FKey GetKeyboardKey() const;
 
 protected:
 	virtual bool Initialize() override;
@@ -42,6 +46,7 @@ protected:
 	virtual void NativeOnUnhovered() override;
 	virtual void NativeOnPressed() override;
 	virtual void NativeOnReleased() override;
+	virtual void NativeOnClicked() override;
 
 private:
 	void ApplyState();
@@ -52,11 +57,18 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> Label;
 
-	FKey KeyboardKey;
-	FKey GamepadKey;
+	UPROPERTY(Transient)
+	TObjectPtr<const UInputAction> Action;
+
+	FUIActionBindingHandle BindingHandle;
 	FText PendingLabel;
 	bool bHoveredNow = false;
 	bool bPressedNow = false;
 	FGothamSettingsListener SettingsListener;
+	/**
+	 * What had keyboard focus when the pointer arrived. Clicking a non-focusable widget lets Slate move focus to the
+	 * nearest focusable ancestor (the screen), so a click puts focus back before acting: "Select" then acts on the item
+	 * that was current, and a gamepad picks up where it was.
+	 */
 	TWeakPtr<SWidget> FocusBeforePointer;
 };

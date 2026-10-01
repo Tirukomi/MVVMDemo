@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "UI/Layout/GothamUITypes.h"
 #include "GothamPlayerController.generated.h"
 
 class UInputAction;
@@ -52,10 +51,14 @@ private:
 	void OnScan();
 	void OnScanReleased();
 	void OnClueLog();
-	void ApplyInputContext(EGothamInputContext Context);
 
+	/** Always on. While a menu is open, Common UI's Menu input mode keeps its keys from reaching the game. */
 	UPROPERTY(Transient)
 	TObjectPtr<UInputMappingContext> GameplayContext;
+
+	/** The menu keys (accept, back, tabs), always on above gameplay (UGothamUIInputData). */
+	UPROPERTY(Transient)
+	TObjectPtr<UInputMappingContext> MenuContext;
 
 	/** Every gameplay action by table name (Input/GothamActionTable). */
 	UPROPERTY(Transient)

@@ -64,6 +64,14 @@ void UGadgetWheelScreen::NativeConstruct()
 		}
 	}
 	RefreshItems();
+
+	if (!bOpenKeyBound)
+	{
+		bOpenKeyBound = true;
+		const UInputAction* OpenAction = FindGameplayAction(TEXT("GadgetWheel"));
+		BindAction(OpenAction, IE_Pressed, FSimpleDelegate::CreateUObject(this, &UGadgetWheelScreen::HandleOpenKey, IE_Pressed));
+		BindAction(OpenAction, IE_Released, FSimpleDelegate::CreateUObject(this, &UGadgetWheelScreen::HandleOpenKey, IE_Released));
+	}
 }
 
 void UGadgetWheelScreen::NativeDestruct()
@@ -133,42 +141,15 @@ void UGadgetWheelScreen::OnPaletteChanged()
 	}
 }
 
-bool UGadgetWheelScreen::IsOpenKey(const FKey& Key) const
+void UGadgetWheelScreen::HandleOpenKey(EInputEvent Event)
 {
-	// Whatever the player bound the wheel to (either device), not the default keys.
-	return IsKeyBoundToAction(Key, TEXT("GadgetWheel"));
-}
-
-FReply UGadgetWheelScreen::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
-{
-	// Toggle mode: pressing the open key again commits (or closes if nothing is hovered).
-	const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this);
-	if (Settings && Settings->GetSettings().WheelMode == EGothamWheelMode::Toggle && IsOpenKey(InKeyEvent.GetKey()) && !InKeyEvent.IsRepeat())
-	{
-		if (!Wheel->CommitHovered())
-		{
-			DeactivateWidget();
-		}
-		return FReply::Handled();
-	}
-	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
-}
-
-FReply UGadgetWheelScreen::NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
-{
-	// Hold mode: releasing the key that opened the wheel commits the hovered gadget.
-	const FKey Key = InKeyEvent.GetKey();
+	// Hold mode commits on release of the key that opened the wheel; toggle mode on the next press.
 	const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this);
 	const bool bHoldMode = !Settings || Settings->GetSettings().WheelMode == EGothamWheelMode::Hold;
-	if (bHoldMode && IsOpenKey(Key))
+	if ((Event == IE_Released) == bHoldMode && !Wheel->CommitHovered())
 	{
-		if (!Wheel->CommitHovered())
-		{
-			DeactivateWidget();
-		}
-		return FReply::Handled();
+		DeactivateWidget();
 	}
-	return Super::NativeOnKeyUp(InGeometry, InKeyEvent);
 }
 
 void UGadgetWheelScreen::HandleItemSelected(int32 ItemIndex)

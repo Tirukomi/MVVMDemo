@@ -97,9 +97,9 @@ namespace GothamBindings
 
 	bool IsKeyAllowedForSlot(int32 Slot, const FKey& Key)
 	{
-		if (!Key.IsValid() || Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right)
+		if (!Key.IsValid() || Key == EKeys::Escape || Key == EKeys::Virtual_Gamepad_Back.GetVirtualKey())
 		{
-			return false; // reserved: these cancel a rebind
+			return false; // reserved: the menu back keys (UGothamUIInputData) cancel a rebind
 		}
 		if (Key.IsAxis1D() || Key.IsAxis2D() || Key.IsAxis3D())
 		{

@@ -116,7 +116,7 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 		AddAction(LOCTEXT("Defaults", "Defaults"), [this]() { if (ViewModel) { ViewModel->ResetDefaults(); } });
 		AddAction(LOCTEXT("Back", "Back"), [this]() { DeactivateWidget(); });
 
-		AddFooter(MakeHintBar(LOCTEXT("Select", "Change"), LOCTEXT("BackHint", "Back (discards unapplied changes)")));
+		AddFooter(MakeActionBar(LOCTEXT("Select", "Change"), LOCTEXT("BackHint", "Back (discards unapplied changes)")));
 	}
 	return Super::RebuildWidget();
 }
@@ -184,17 +184,6 @@ void USettingsScreen::NativeOnClosed()
 		ViewModel->Revert();
 	}
 	Super::NativeOnClosed();
-}
-
-FReply USettingsScreen::NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
-{
-	int32 Direction = 0;
-	if (Tabs && UGothamTabList::IsTabKey(InKeyEvent.GetKey(), Direction))
-	{
-		Tabs->SelectRelative(Direction);
-		return FReply::Handled();
-	}
-	return Super::NativeOnPreviewKeyDown(InGeometry, InKeyEvent);
 }
 
 void USettingsScreen::OnPageShown(UWidget* Page, int32 Index)

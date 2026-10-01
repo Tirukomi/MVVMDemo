@@ -17,6 +17,17 @@ the end.
   - German and Japanese translations for the key labels; the German and pseudo-locale screenshot baselines were
     refreshed for them.
 - Merged after repeated test runs (both passes green three times in a row), without the full gate.
+- **R2 done** (ADR 0007), findings 11 to 16:
+  - Common UI's Enhanced Input support is on. The menu actions (accept, back, tabs) are code-built input data,
+    `UGothamUIInputData`; their mapping context and the gameplay one stay on, and the context swap is gone.
+  - Back is the activatable back handler. Toggle keys, the case file key, the wheel's press / release and the tab keys
+    are Common UI bindings, so the key-profile lookup and every raw key check in the screens are gone.
+  - Prompts are a bound action bar. Clicking "Select" clicks the focused item; no key is injected.
+  - Glyphs resolve keys through Common UI and refresh when Enhanced Input rebuilds its mappings; the retry loop is gone.
+    Key caps stay localized text, not Common Input icon brushes: there is no icon art.
+  - The HUD is a plain activatable widget.
+  - New rules: Esc closes only the top screen, gamepad Back closes the case file, the prompts switch to gamepad keys and
+    back with the device. Under a modal, the screen behind no longer shows its prompts (`pause-quit` baseline refreshed).
 
 ## Rules for every iteration
 

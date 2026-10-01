@@ -13,28 +13,27 @@ namespace GothamUITests
 	constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter;
 }
 
-// Only the HUD up: gameplay owns input. Opening a menu or modal hands input to the menu context.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamUIContextTest, "Gotham.UI.Layers.InputContext", GothamUITests::Flags)
-bool FGothamUIContextTest::RunTest(const FString& Parameters)
+// Only the HUD up: no menu. A menu or modal counts as a menu (pause, the wheel's key); the in-world layer does not.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamUIMenuOpenTest, "Gotham.UI.Layers.MenuOpen", GothamUITests::Flags)
+bool FGothamUIMenuOpenTest::RunTest(const FString& Parameters)
 {
 	FGothamUIModeTracker Tracker;
-	TestTrue("empty tracker is gameplay", Tracker.GetInputContext() == EGothamInputContext::Gameplay);
+	TestFalse("empty tracker has no menu", Tracker.IsMenuOpen());
 
 	Tracker.SetLayerOccupied(EGothamUILayer::Game, true);
-	TestTrue("HUD alone keeps gameplay input", Tracker.GetInputContext() == EGothamInputContext::Gameplay);
 	TestFalse("HUD alone is not a menu", Tracker.IsMenuOpen());
 
 	Tracker.SetLayerOccupied(EGothamUILayer::GameMenu, true);
-	TestTrue("in-world overlay keeps gameplay input", Tracker.GetInputContext() == EGothamInputContext::Gameplay);
+	TestFalse("the in-world overlay is not a menu", Tracker.IsMenuOpen());
 
 	Tracker.SetLayerOccupied(EGothamUILayer::Menu, true);
-	TestTrue("pause menu switches to menu context", Tracker.GetInputContext() == EGothamInputContext::Menu);
+	TestTrue("the pause menu is a menu", Tracker.IsMenuOpen());
 
 	Tracker.SetLayerOccupied(EGothamUILayer::Menu, false);
-	TestTrue("closing the menu restores gameplay", Tracker.GetInputContext() == EGothamInputContext::Gameplay);
+	TestFalse("closing the menu leaves none", Tracker.IsMenuOpen());
 
 	Tracker.SetLayerOccupied(EGothamUILayer::Modal, true);
-	TestTrue("a modal alone also takes input", Tracker.GetInputContext() == EGothamInputContext::Menu);
+	TestTrue("a modal alone is a menu too", Tracker.IsMenuOpen());
 	return true;
 }
 

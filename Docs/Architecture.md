@@ -48,23 +48,26 @@ commands, never by a widget reaching into a component.
 | Glue | `ViewModels/GothamViewModelSubsystem`, `Core/GothamPlayerController` | Both sides | n/a |
 
 "Pure logic" is deliberately UObject-free where possible (settings data, palette, binding conflict resolution, wheel
-hit-testing, layer/input-context tracking) so the rules are unit-tested without a world.
+hit-testing, layer tracking) so the rules are unit-tested without a world.
 
 ## UI structure
 
 - **Layer stack.** `UGothamPrimaryLayout` holds four Common UI activatable stacks (Game, GameMenu, Menu, Modal).
-  `UGothamUISubsystem` is the only place screens are pushed and popped; `FGothamUIModeTracker` derives the input
-  context (gameplay vs menu) from what is open.
-- **Screens.** Everything full-screen derives `UGothamScreen` (input config, Esc / B to go back, default focus,
-  small builders for titles, buttons and hint bars). The HUD is a screen in the Game layer. `BuildMenuFrame` gives
+  `UGothamUISubsystem` is the only place screens are pushed and popped; `FGothamUIModeTracker` tracks what is open
+  (whether a menu is up).
+- **Screens.** Every menu and modal derives `UGothamScreen` (Menu input config, Common UI's back handler, default
+  focus, small builders for titles, buttons and the action bar). The HUD is a plain activatable widget in the Game
+  layer. `BuildMenuFrame` gives
   menus one look (background blur, a left-heavy scrim, section label, title and rule) and a content slide on
   activation; the layer stacks (`UGothamScreenStack`) add a 0.15 s fade on push and pop. Both are off under reduced
   motion.
-- **Prompts and toggles.** Hint-bar prompts are `UGothamHintButton`s: not focusable, and clicking one does what its
-  key does. "Accept" restores the item that had focus before the pointer arrived (clicking lets Slate move focus to
-  the screen), then sends Enter. A screen with `ToggleActionName` closes when any key bound to that action is
-  pressed. The keys come from the Enhanced Input key profile, because the gameplay context is inactive while a menu
-  is open. `-GothamMenuInputTest` checks both through Slate's input path.
+- **Prompts and toggles** (ADR 0007). A screen's keys are Common UI bindings it registers: back (the activatable back
+  handler), accept, the key that opened it (`ToggleActionName`), the case file's key, the wheel's press and release, the
+  tab list's tab actions. Only the active screen's bindings fire. The prompt row is a bound action bar
+  (`UGothamActionBar`) of `UGothamHintButton`s: not focusable, showing the key of the device in use, and clicking one
+  runs its binding. Clicking first restores the item that had focus before the pointer arrived (clicking lets Slate move
+  focus to the screen), so "Select" clicks that item through `IGothamAcceptable`. `Gotham.Functional.MenuInput` checks
+  all of it through Slate's input path.
 - **Menu focus.** `UGothamMenuList` draws a highlight bar behind the current item. It is event-driven:
   `NativeOnFocusChanging` finds which item is on the new focus path, and `SGothamHighlight` eases toward it with
   `FGothamSlideRect` (tested), reading the target's geometry only while the list holds focus. Buttons and option rows
@@ -97,8 +100,13 @@ Enhanced Input assets are created in code from one table (`Input/GothamActionTab
 default keyboard and gamepad keys, rebindable), so actions and the mapping context need no binary assets.
 `AGothamPlayerController::BuildInputAssets` loops over the table, `FindAction` looks actions up by name, and the
 Controls screen's rows (`GothamBindings::GetDefinitions`) are the table's rebindable entries in order. Rebindable actions carry player-mappable settings (ADR 0005); rebinding goes through
-`UEnhancedInputUserSettings`. Glyph widgets query the live mapping (`QueryKeysMappedToAction`) and follow the current
-input device (Common Input), so rebinding and device switches are reflected without extra code.
+`UEnhancedInputUserSettings`.
+
+The gameplay context and the menu context (`UGothamUIInputData`: accept, back, previous / next tab) are both added once
+and stay on. While a menu is open Common UI's Menu input mode keeps keys from reaching the game, so nothing swaps
+contexts (ADR 0007). Glyphs show the key Common UI resolves for the current device
+(`CommonUI::GetFirstKeyForInputType`) and refresh when Enhanced Input rebuilds its mappings, so rebinding and device
+switches are reflected without extra code.
 
 ## Settings, accessibility, localization
 

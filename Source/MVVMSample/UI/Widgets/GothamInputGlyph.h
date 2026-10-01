@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Accessibility/GothamSettingsListener.h"
 #include "CommonUserWidget.h"
-#include "Containers/Ticker.h"
 #include "InputCoreTypes.h"
 #include "GothamInputGlyph.generated.h"
 
@@ -16,8 +15,12 @@ class UTextBlock;
 enum class ECommonInputType : uint8;
 
 /**
- * Shows the key or button that triggers something, and swaps live when the player changes device.
- * Either follows an Enhanced Input action (so rebinding is reflected) or shows fixed hint keys.
+ * Shows the key or button that triggers an Enhanced Input action, as a key cap with its short name, and swaps live
+ * when the player changes device or rebinds. The key is the one Common UI would use for the current device (the first
+ * key of that device mapped to the action), so a prompt and the action it names always agree.
+ *
+ * Key caps are drawn from localized labels rather than Common Input's per-controller icon brushes: the project ships
+ * no icon art, and text caps follow UI scale, high contrast and language like every other label.
  */
 UCLASS()
 class MVVMSAMPLE_API UGothamInputGlyph : public UCommonUserWidget
@@ -28,14 +31,18 @@ public:
 	/** Follow a gameplay action by name (see AGothamPlayerController::FindAction). */
 	void SetAction(FName InActionName);
 
-	/** Show fixed hint keys, one per device family (used for UI navigation prompts). */
-	void SetFixedKeys(FKey InKeyboardMouseKey, FKey InGamepadKey);
+	/** Follow any action, e.g. one of the menu actions in UGothamUIInputData. */
+	void SetInputAction(const UInputAction* InAction);
 
-	/** Short label for a key, e.g. "Esc", "A". Static so tests can cover the mapping. */
 	/** The key's short name in the naming of the gamepad Player is using (Xbox if unknown). See GothamBindings::GetKeyLabel. */
 	static FText GetKeyLabel(const FKey& Key, const ULocalPlayer* Player = nullptr);
 
-	/** The key currently bound to a gameplay action for the device the player is using (invalid if none yet). */
+	/** The key Common UI shows for Action on the device Player is using now (invalid if none is mapped). */
+	static FKey FindKey(const ULocalPlayer* Player, const UInputAction* Action);
+	/** The same for one device. */
+	static FKey FindKey(const ULocalPlayer* Player, const UInputAction* Action, ECommonInputType InputType);
+
+	/** FindKey for a gameplay action by name. */
 	static FKey FindKeyForAction(const APlayerController* Player, FName InActionName);
 
 protected:
@@ -47,16 +54,16 @@ private:
 	void Refresh();
 	void HandleInputMethodChanged(ECommonInputType NewType) { Refresh(); }
 
-	/** Mapping queries return nothing until Enhanced Input rebuilds its mappings next tick; retry briefly. */
-	void ScheduleRetry();
-	int32 RetriesLeft = 10;
-	FTSTicker::FDelegateHandle RetryHandle;
+	/** Enhanced Input rebuilt its key mappings (first build, rebinding, a context added or removed). */
+	UFUNCTION()
+	void HandleMappingsRebuilt() { Refresh(); }
 
 	FName ActionName;
-	FKey FixedKeyboardMouse;
-	FKey FixedGamepad;
+
+	UPROPERTY(Transient)
+	TObjectPtr<const UInputAction> Action;
+
 	FDelegateHandle InputMethodHandle;
-	FDelegateHandle BindingsHandle;
 	FGothamSettingsListener SettingsListener;
 
 	UPROPERTY(Transient)

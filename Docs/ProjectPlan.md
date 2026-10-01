@@ -125,7 +125,7 @@ bindings can be added in M2. Debug keys are F1 damage, F2 heal, F3 combo hit. Co
 **As built (deviations):** layers are an `EGothamUILayer` enum rather than gameplay tags. `FGothamUIModeTracker` is a
 pure struct that derives the input context from what is open, so the rules are unit-tested without a world. Back/Esc is
 handled in `UGothamScreen::NativeOnKeyDown` (Esc / gamepad B) rather than through Common UI's input-data assets, and the
-gameplay mapping context is removed while a menu owns input. `UGothamButton` builds its content before
+gameplay mapping context is removed while a menu owns input (both replaced in review fix R2, see ADR 0007). `UGothamButton` builds its content before
 `UCommonButtonBase::Initialize` because the base only wires its internal button when a root already exists.
 Glyphs follow Enhanced Input mappings (`QueryKeysMappedToAction`), so M5 rebinding is reflected automatically.
 Dev aid: `-GothamOpenPause` opens the pause menu and saves `Saved/Screenshots/.../gotham_pause.png`.

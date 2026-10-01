@@ -12,7 +12,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
-#include "UI/Layout/GothamUISubsystem.h"
+#include "Input/GothamUIInput.h"
 #include "UI/Widgets/GothamButton.h"
 #include "UI/Widgets/GothamInputGlyph.h"
 #include "UI/Widgets/GothamMenuList.h"
@@ -111,7 +111,7 @@ TSharedRef<SWidget> UControlsScreen::RebuildWidget()
 		Back->OnClicked().AddLambda([this]() { DeactivateWidget(); });
 		Buttons->AddChildToHorizontalBox(Back);
 
-		AddFooter(MakeHintBar(LOCTEXT("Rebind", "Rebind"), LOCTEXT("BackHint", "Back")));
+		AddFooter(MakeActionBar(LOCTEXT("Rebind", "Rebind"), LOCTEXT("BackHint", "Back")));
 	}
 	return Super::RebuildWidget();
 }
@@ -185,10 +185,6 @@ void UControlsScreen::ApplyChanges(const TArray<FGothamBindingChange>& Changes)
 		UserSettings->SaveSettings();
 	}
 	PullSnapshot();
-	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
-	{
-		UI->NotifyBindingsChanged();
-	}
 }
 
 void UControlsScreen::ResetAll()
@@ -205,10 +201,6 @@ void UControlsScreen::ResetAll()
 	EndCapture();
 	ViewModel->SetStatus(LOCTEXT("WasReset", "Controls reset to defaults."));
 	PullSnapshot();
-	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
-	{
-		UI->NotifyBindingsChanged();
-	}
 }
 
 void UControlsScreen::BeginCapture(FName Name, int32 SlotIndex)
@@ -230,7 +222,9 @@ void UControlsScreen::EndCapture()
 
 bool UControlsScreen::HandleCapturedKey(const FKey& Key)
 {
-	if (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right)
+	// The back keys cancel (they are reserved and cannot be bound, see GothamBindings::IsKeyAllowedForSlot).
+	const auto* Enhanced = GetOwningLocalPlayer() ? GetOwningLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+	if (Enhanced && Enhanced->QueryKeysMappedToAction(UGothamUIInputData::Get().GetBackAction()).Contains(Key))
 	{
 		ViewModel->SetStatus(FText::GetEmpty());
 		EndCapture();

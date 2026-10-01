@@ -10,21 +10,14 @@ UENUM(BlueprintType)
 enum class EGothamUILayer : uint8
 {
 	Game,      // HUD
-	GameMenu,  // in-world overlays that keep gameplay input (later: gadget wheel)
+	GameMenu,  // in-world overlays over gameplay (the gadget wheel)
 	Menu,      // pause, settings, inventory
 	Modal,     // confirmations
 	Count UMETA(Hidden)
 };
 
-/** Which Enhanced Input mapping context set is live. Derived from what is open, never set by hand. */
-enum class EGothamInputContext : uint8
-{
-	Gameplay,
-	Menu,
-};
-
 /**
- * Pure bookkeeping for "what is open in each layer" and the input context that implies.
+ * Pure bookkeeping for "what is open in each layer" and whether that counts as a menu being open.
  * No UObjects or widgets, so the rules are unit-testable without a world.
  */
 struct FGothamUIModeTracker
@@ -39,15 +32,10 @@ struct FGothamUIModeTracker
 		return Occupied[static_cast<int32>(Layer)];
 	}
 
-	/** Anything above the HUD that takes input away from gameplay (GameMenu keeps gameplay input). */
+	/** A menu or modal is open (pause, settings, the case file, confirmations); the in-world GameMenu layer does not count. */
 	bool IsMenuOpen() const
 	{
 		return IsLayerOccupied(EGothamUILayer::Menu) || IsLayerOccupied(EGothamUILayer::Modal);
-	}
-
-	EGothamInputContext GetInputContext() const
-	{
-		return IsMenuOpen() ? EGothamInputContext::Menu : EGothamInputContext::Gameplay;
 	}
 
 	/** Topmost occupied layer that back/cancel should dismiss, or Count if only the HUD is up. */

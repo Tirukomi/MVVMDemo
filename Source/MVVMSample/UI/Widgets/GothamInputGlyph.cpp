@@ -6,13 +6,13 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "CommonInputSubsystem.h"
+#include "CommonUITypes.h"
 #include "UI/Slate/SGothamPanel.h"
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GothamPanel.h"
 #include "Components/TextBlock.h"
 #include "Core/GothamPlayerController.h"
 #include "UI/GothamWidgetTick.h"
-#include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Widgets/GothamText.h"
 #include "Engine/LocalPlayer.h"
 #include "Input/GothamBindings.h"
@@ -38,16 +38,15 @@ void UGothamInputGlyph::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer()))
+	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(LocalPlayer))
 	{
 		InputMethodHandle = Input->OnInputMethodChangedNative.AddUObject(this, &UGothamInputGlyph::HandleInputMethodChanged);
 	}
-	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	// Keys are known only once Enhanced Input has built its mappings, and change when the player rebinds.
+	if (auto* Enhanced = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr)
 	{
-		if (auto* UI = LocalPlayer->GetSubsystem<UGothamUISubsystem>())
-		{
-			BindingsHandle = UI->OnBindingsChanged.AddUObject(this, &UGothamInputGlyph::Refresh);
-		}
+		Enhanced->ControlMappingsRebuiltDelegate.AddUniqueDynamic(this, &UGothamInputGlyph::HandleMappingsRebuilt);
 	}
 	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { Refresh(); });
 	Refresh();
@@ -56,32 +55,29 @@ void UGothamInputGlyph::NativeConstruct()
 void UGothamInputGlyph::NativeDestruct()
 {
 	SettingsListener.Reset();
-	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer()))
+	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+	if (UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(LocalPlayer))
 	{
 		Input->OnInputMethodChangedNative.Remove(InputMethodHandle);
 	}
-	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	if (auto* Enhanced = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr)
 	{
-		if (auto* UI = LocalPlayer->GetSubsystem<UGothamUISubsystem>())
-		{
-			UI->OnBindingsChanged.Remove(BindingsHandle);
-		}
+		Enhanced->ControlMappingsRebuiltDelegate.RemoveDynamic(this, &UGothamInputGlyph::HandleMappingsRebuilt);
 	}
-	FTSTicker::GetCoreTicker().RemoveTicker(RetryHandle);
 	Super::NativeDestruct();
 }
 
 void UGothamInputGlyph::SetAction(FName InActionName)
 {
 	ActionName = InActionName;
-	RetriesLeft = 10;
+	Action = nullptr;
 	Refresh();
 }
 
-void UGothamInputGlyph::SetFixedKeys(FKey InKeyboardMouseKey, FKey InGamepadKey)
+void UGothamInputGlyph::SetInputAction(const UInputAction* InAction)
 {
-	FixedKeyboardMouse = InKeyboardMouseKey;
-	FixedGamepad = InGamepadKey;
+	ActionName = NAME_None;
+	Action = InAction;
 	Refresh();
 }
 
@@ -91,25 +87,22 @@ FText UGothamInputGlyph::GetKeyLabel(const FKey& Key, const ULocalPlayer* Player
 	return GothamBindings::GetKeyLabel(Key, Input ? GothamBindings::GamepadStyleFromName(Input->GetCurrentGamepadName()) : EGothamGamepadStyle::Xbox);
 }
 
+FKey UGothamInputGlyph::FindKey(const ULocalPlayer* Player, const UInputAction* InAction)
+{
+	const UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(Player);
+	return Input ? FindKey(Player, InAction, Input->GetCurrentInputType()) : FKey();
+}
+
+FKey UGothamInputGlyph::FindKey(const ULocalPlayer* Player, const UInputAction* InAction, ECommonInputType InputType)
+{
+	// Touch has no keys of its own; Common UI's prompts fall back to the keyboard there as well.
+	return CommonUI::GetFirstKeyForInputType(Player, InputType == ECommonInputType::Touch ? ECommonInputType::MouseAndKeyboard : InputType, InAction);
+}
+
 FKey UGothamInputGlyph::FindKeyForAction(const APlayerController* Player, FName InActionName)
 {
 	const AGothamPlayerController* PC = Cast<AGothamPlayerController>(Player);
-	ULocalPlayer* LocalPlayer = PC ? PC->GetLocalPlayer() : nullptr;
-	UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(LocalPlayer);
-	const bool bGamepad = Input && Input->GetCurrentInputType() == ECommonInputType::Gamepad;
-	const UInputAction* Action = PC ? PC->FindAction(InActionName) : nullptr;
-	auto* Enhanced = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
-	if (Action && Enhanced)
-	{
-		for (const FKey& Candidate : Enhanced->QueryKeysMappedToAction(Action))
-		{
-			if (Candidate.IsGamepadKey() == bGamepad)
-			{
-				return Candidate;
-			}
-		}
-	}
-	return EKeys::Invalid;
+	return PC ? FindKey(PC->GetLocalPlayer(), PC->FindAction(InActionName)) : FKey();
 }
 
 void UGothamInputGlyph::Refresh()
@@ -118,10 +111,13 @@ void UGothamInputGlyph::Refresh()
 	{
 		return;
 	}
+	if (!Action && !ActionName.IsNone())
+	{
+		const AGothamPlayerController* PC = Cast<AGothamPlayerController>(GetOwningPlayer());
+		Action = PC ? PC->FindAction(ActionName) : nullptr;
+	}
 
-	UCommonInputSubsystem* Input = UCommonInputSubsystem::Get(GetOwningLocalPlayer());
-	const bool bGamepad = Input && Input->GetCurrentInputType() == ECommonInputType::Gamepad;
-	const FKey Key = ActionName.IsNone() ? (bGamepad ? FixedGamepad : FixedKeyboardMouse) : FindKeyForAction(GetOwningPlayer(), ActionName);
+	const FKey Key = FindKey(GetOwningLocalPlayer(), Action);
 	Text->SetText(Key.IsValid() ? GetKeyLabel(Key, GetOwningLocalPlayer()) : FText::GetEmpty());
 	// Palette tokens, so the key caps follow high contrast like everything else.
 	const FLinearColor Ink = GothamStyle::Token(this, EGothamColorToken::TextPrimary);
@@ -131,24 +127,4 @@ void UGothamInputGlyph::Refresh()
 	const bool bFaceButton = Key == EKeys::Gamepad_FaceButton_Bottom || Key == EKeys::Gamepad_FaceButton_Right
 		|| Key == EKeys::Gamepad_FaceButton_Left || Key == EKeys::Gamepad_FaceButton_Top;
 	Frame->SetShape(bFaceButton ? 8.f : 4.f, bFaceButton ? EGothamChamfer::All : EGothamChamfer::BottomRight);
-
-	if (!Key.IsValid() && !ActionName.IsNone())
-	{
-		ScheduleRetry();
-	}
-}
-
-void UGothamInputGlyph::ScheduleRetry()
-{
-	FTSTicker::GetCoreTicker().RemoveTicker(RetryHandle);
-	if (RetriesLeft <= 0)
-	{
-		return;
-	}
-	RetryHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
-	{
-		--RetriesLeft;
-		Refresh();
-		return false;
-	}), 0.1f);
 }

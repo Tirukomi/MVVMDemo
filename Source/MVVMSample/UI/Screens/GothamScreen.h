@@ -5,20 +5,23 @@
 #include "CoreMinimal.h"
 #include "Accessibility/GothamSettingsListener.h"
 #include "CommonActivatableWidget.h"
+#include "Input/UIActionBindingHandle.h"
 #include "UI/Style/GothamStyle.h"
 #include "GothamScreen.generated.h"
 
 class UGothamButton;
-class UGothamHintButton;
-class UGothamInputGlyph;
 class UGothamMenuList;
-class UHorizontalBox;
+class UInputAction;
 class UTextBlock;
 class UVerticalBox;
 
 /**
- * Base for every full screen and modal. Gives menus their input config (cursor, UI-only input),
- * Esc / gamepad B to go back, and default focus so gamepad navigation always has somewhere to start.
+ * Base for every full screen and modal. Gives menus their input config (cursor, UI-only input) and default focus so
+ * gamepad navigation always has somewhere to start.
+ *
+ * Input is Common UI's: Back (Esc, or the platform's back button) is the activatable back handler, and every other key
+ * a screen answers to is a UI action binding, so keys follow rebinding and the prompts in the action bar always match
+ * what the keys do. Bindings belong to the screen and only fire while it is the active one.
  *
  * Also owns the shared menu look: BuildMenuFrame gives a blurred, darkened world with a left-aligned column under a
  * section label and title, and the frame slides in on activation (the layer stack adds the fade in and out).
@@ -44,30 +47,24 @@ protected:
 	/** This screen is leaving for good (back, close, or popped). What should happen once per visit goes here. */
 	virtual void NativeOnClosed() {}
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 	/** Re-apply palette-dependent colours (called on construct and whenever settings change). */
 	virtual void OnPaletteChanged();
-
-	/** Screens that must be answered (e.g. confirmations that block) can turn back off. */
-	bool bCanDismissWithBack = true;
 
 	/** Whether other screens' keys (the case file's) open those screens on top of this one. Off for modals. */
 	bool bOpensScreensByKey = true;
 
 	/**
-	 * The gameplay action that opens this screen (e.g. "ClueLog"). Pressing any key bound to it closes the screen
-	 * again, so the same button toggles it. Follows rebinding: the keys come from the live Enhanced Input mapping.
+	 * The gameplay action that opens this screen (e.g. "ClueLog"). Its keys close the screen again, so the same button
+	 * toggles it, however the player has bound it.
 	 */
 	FName ToggleActionName;
 
-	/** What the Back prompt and Esc / B do. Default: close the screen (if it may be dismissed). */
-	virtual void HandleBack();
-	/** What the Select prompt does when clicked: the same as pressing Enter on Target (what had focus before the
-	 *  pointer went to the prompt), or on whatever has focus if Target is gone. */
-	void HandleAccept(TSharedPtr<SWidget> Target);
-	/** True if Key is currently bound to the named gameplay action (either device). */
-	bool IsKeyBoundToAction(const FKey& Key, FName ActionName) const;
+	/** A gameplay action by name (AGothamPlayerController::FindAction), for screens that bind gameplay keys. */
+	const UInputAction* FindGameplayAction(FName ActionName) const;
+
+	/** Registers a key binding on this screen (not shown in the action bar). Call from NativeConstruct, once. */
+	FUIActionBindingHandle BindAction(const UInputAction* Action, EInputEvent Event, FSimpleDelegate Handler);
 
 	/** Set by subclasses to the widget that should receive focus when the screen opens. */
 	UPROPERTY(Transient)
@@ -93,12 +90,23 @@ protected:
 	UTextBlock* MakeText(const FText& Text, EGothamTextStyle Style, EGothamColorToken Color);
 	/** A big left-aligned menu item in a highlight list. */
 	UGothamButton* AddMenuItem(UGothamMenuList* List, const FText& Label) const;
-	/** "[Enter/A] Select   [Esc/B] Back" prompt row. Each prompt is also a button that does what its key does. */
-	UHorizontalBox* MakeHintBar(const FText& AcceptLabel, const FText& BackLabel);
-	/** Adds one more clickable prompt to a hint bar; bind its OnClicked() to the action. */
-	UGothamHintButton* AddHint(UHorizontalBox* Bar, const FKey& Keyboard, const FKey& Pad, const FText& Label);
+	/**
+	 * The "[Enter/A] Select   [Esc/B] Back" prompt row: a bound action bar, with this screen's labels for the accept and
+	 * back actions. Each prompt is also a button that does what its key does. Call while building the screen.
+	 */
+	UWidget* MakeActionBar(const FText& InAcceptLabel, const FText& BackLabel);
 
 private:
+	/** What accept does when it reaches the screen (the prompt was clicked): accepts the focused item. */
+	void AcceptFocused();
+
+	/** Shown on the accept prompt; empty for screens without one. */
+	FText AcceptLabel;
+
+	FUIActionBindingHandle AcceptHandle;
+	FUIActionBindingHandle ToggleHandle;
+	FUIActionBindingHandle ClueLogHandle;
+
 	UPROPERTY(Transient)
 	TObjectPtr<UVerticalBox> FrameBox;
 

@@ -18,6 +18,7 @@
 #include "UI/ObjectiveTrackerWidget.h"
 #include "UI/SubtitleWidget.h"
 #include "UI/ThreatIndicatorLayer.h"
+#include "UI/GothamWidgetTick.h"
 #include "UI/Style/GothamMotion.h"
 #include "UI/Widgets/GothamHudPrimitives.h"
 #include "ViewModels/GothamMVVM.h"
@@ -52,7 +53,6 @@ namespace
 UGothamHudWidget::UGothamHudWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	bCanDismissWithBack = false;
 	SetIsFocusable(false);
 }
 
@@ -107,6 +107,7 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 
 void UGothamHudWidget::NativeConstruct()
 {
+	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
 
 	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Accessibility/GothamSettingsListener.h"
 #include "CommonButtonBase.h"
+#include "UI/Widgets/GothamAcceptable.h"
 #include "UI/Style/GothamStyle.h"
 #include "GothamButton.generated.h"
 
@@ -43,12 +44,15 @@ enum class EGothamButtonKind : uint8
  * gamepad always agree on which item is current (and the menu highlight follows either).
  */
 UCLASS()
-class MVVMSAMPLE_API UGothamButton : public UCommonButtonBase
+class MVVMSAMPLE_API UGothamButton : public UCommonButtonBase, public IGothamAcceptable
 {
 	GENERATED_BODY()
 
 public:
 	UGothamButton(const FObjectInitializer& ObjectInitializer);
+
+	/** The click Enter would make (IGothamAcceptable). */
+	virtual void Accept() override { HandleButtonClicked(); }
 
 	void SetLabel(const FText& InLabel);
 	void SetKind(EGothamButtonKind InKind);

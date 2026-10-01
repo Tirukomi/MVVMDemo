@@ -383,7 +383,6 @@ namespace GothamDevAidsPrivate
 				UserSettings->SaveSettings();
 				UE_LOG(LogGothamDevAids, Log, TEXT("Rebind demo: Scan -> R (failure tags: %d)"), Failure.Num());
 			}
-			WeakUI->NotifyBindingsChanged();
 			WeakUI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass.LoadSynchronous());
 		});
 	}

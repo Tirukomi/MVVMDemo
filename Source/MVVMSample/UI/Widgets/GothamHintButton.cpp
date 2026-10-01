@@ -3,11 +3,14 @@
 #include "UI/Widgets/GothamHintButton.h"
 
 #include "Blueprint/WidgetTree.h"
+#include "CommonInputTypeEnum.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/TextBlock.h"
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
+#include "Input/UIActionBinding.h"
+#include "InputAction.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GothamButton.h"
@@ -38,25 +41,36 @@ bool UGothamHintButton::Initialize()
 		UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
 		LabelSlot->SetVerticalAlignment(VAlign_Center);
 		LabelSlot->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
-		if (KeyboardKey.IsValid() || GamepadKey.IsValid())
+		if (Action)
 		{
-			SetHint(KeyboardKey, GamepadKey, PendingLabel);
+			SetInputAction(Action, PendingLabel);
 		}
 	}
 	return Super::Initialize();
 }
 
-void UGothamHintButton::SetHint(const FKey& InKeyboardKey, const FKey& InGamepadKey, const FText& InLabel)
+void UGothamHintButton::SetInputAction(const UInputAction* InAction, const FText& InLabel)
 {
-	KeyboardKey = InKeyboardKey;
-	GamepadKey = InGamepadKey;
+	Action = InAction;
 	PendingLabel = InLabel;
 	if (Glyph)
 	{
-		Glyph->SetFixedKeys(KeyboardKey, GamepadKey);
+		Glyph->SetInputAction(Action);
 		Label->SetText(PendingLabel);
 		Label->SetVisibility(PendingLabel.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 	}
+}
+
+void UGothamHintButton::SetRepresentedAction(FUIActionBindingHandle InBindingHandle)
+{
+	BindingHandle = InBindingHandle;
+	const TSharedPtr<FUIActionBinding> Binding = FUIActionBinding::FindBinding(BindingHandle);
+	SetInputAction(Binding ? Binding->InputAction.Get() : nullptr, BindingHandle.GetDisplayName());
+}
+
+FKey UGothamHintButton::GetKeyboardKey() const
+{
+	return UGothamInputGlyph::FindKey(GetOwningLocalPlayer(), Action, ECommonInputType::MouseAndKeyboard);
 }
 
 void UGothamHintButton::NativeConstruct()
@@ -102,6 +116,20 @@ void UGothamHintButton::NativeOnReleased()
 	Super::NativeOnReleased();
 	bPressedNow = false;
 	ApplyState();
+}
+
+void UGothamHintButton::NativeOnClicked()
+{
+	if (const TSharedPtr<SWidget> Restore = FocusBeforePointer.Pin())
+	{
+		const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+		FSlateApplication::Get().SetUserFocus(LocalPlayer ? LocalPlayer->GetControllerId() : 0, Restore, EFocusCause::SetDirectly);
+	}
+	Super::NativeOnClicked();
+	if (const TSharedPtr<FUIActionBinding> Binding = FUIActionBinding::FindBinding(BindingHandle))
+	{
+		Binding->OnExecuteAction.ExecuteIfBound();
+	}
 }
 
 void UGothamHintButton::ApplyState()

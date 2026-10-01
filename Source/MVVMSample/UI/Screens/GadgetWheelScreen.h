@@ -10,8 +10,9 @@ class UGadgetBarViewModel;
 class UGadgetWheel;
 
 /**
- * Hold-to-open gadget wheel. Slows time while open; releasing the open key uses the hovered gadget,
- * Esc / B cancels. Items come from the gadget bar view model, so cooldowns update live inside the wheel.
+ * Hold-to-open gadget wheel. Slows time while open; releasing the open key uses the hovered gadget (in toggle mode,
+ * pressing it again does), Back cancels. The open key is the GadgetWheel action's, bound with Common UI, so it follows
+ * rebinding. Items come from the gadget bar view model, so cooldowns update live inside the wheel.
  */
 UCLASS()
 class MVVMSAMPLE_API UGadgetWheelScreen : public UGothamScreen
@@ -31,12 +32,10 @@ protected:
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnClosed() override;
 	virtual void OnPaletteChanged() override;
-	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
-	virtual FReply NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 private:
-	/** A key bound to the GadgetWheel action (rebinding included). */
-	bool IsOpenKey(const FKey& Key) const;
+	/** The open key went down (Toggle) or up (Hold): use the hovered gadget, or close if none is hovered. */
+	void HandleOpenKey(EInputEvent Event);
 	UFUNCTION()
 	void HandleItemSelected(int32 ItemIndex);
 
@@ -48,4 +47,6 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UGadgetBarViewModel> GadgetBar;
+
+	bool bOpenKeyBound = false;
 };

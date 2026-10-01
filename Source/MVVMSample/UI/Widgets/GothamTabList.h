@@ -21,8 +21,8 @@ public:
 
 /**
  * Common UI tab list with UGothamButton tabs laid out in a row between the "previous" and "next" prompts
- * (Q / E, LB / RB). The owning screen forwards those keys to SelectRelative: tabs are not focus stops, so up / down
- * navigation stays inside the page.
+ * (Q / E, LB / RB). The keys are Common UI's tab actions (UGothamUIInputData), bound while the list is on screen; tabs
+ * are not focus stops, so up / down navigation stays inside the page.
  */
 UCLASS()
 class MVVMSAMPLE_API UGothamTabList : public UCommonTabListWidgetBase
@@ -30,14 +30,13 @@ class MVVMSAMPLE_API UGothamTabList : public UCommonTabListWidgetBase
 	GENERATED_BODY()
 
 public:
+	UGothamTabList(const FObjectInitializer& ObjectInitializer);
+
 	/** Registers a tab page. The tab button is created by Common UI's pool, then labelled. */
 	bool AddTab(FName TabId, const FText& Label, UWidget* Content);
 
 	/** Selects the tab Direction steps away (wrapping). Returns true if the selection changed. */
 	bool SelectRelative(int32 Direction);
-
-	/** True for the keys that step tabs: Q / E and the shoulder buttons. Out Direction is -1 or +1. */
-	static bool IsTabKey(const FKey& Key, int32& OutDirection);
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;

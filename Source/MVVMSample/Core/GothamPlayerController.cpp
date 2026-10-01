@@ -13,6 +13,7 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "Input/GothamActionTable.h"
+#include "Input/GothamUIInput.h"
 #include "InputModifiers.h"
 #include "PlayerMappableKeySettings.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
@@ -83,7 +84,6 @@ void AGothamPlayerController::BeginPlay()
 		if (auto* UI = LocalPlayer->GetSubsystem<UGothamUISubsystem>())
 		{
 			UI->EnsureLayout(this);
-			UI->OnInputContextChanged.AddUObject(this, &AGothamPlayerController::ApplyInputContext);
 
 			if (const TSubclassOf<UCommonActivatableWidget> HudClass = GetDefault<UGothamUISettings>()->HudScreenClass.LoadSynchronous())
 			{
@@ -136,7 +136,10 @@ void AGothamPlayerController::SetupInputComponent()
 	{
 		if (auto* Input = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 		{
+			// Both stay on for the whole session: Common UI finds a menu action's keys through the active mappings, and
+			// its Menu input mode blocks game input while a menu is open, so there is no context to swap.
 			Input->AddMappingContext(GameplayContext, 0);
+			Input->AddMappingContext(MenuContext, UGothamUIInputData::MappingPriority);
 		}
 	}
 
@@ -197,6 +200,8 @@ void AGothamPlayerController::BuildInputAssets()
 	}
 	// Dev shortcut: F3 also attacks.
 	GameplayContext->MapKey(Actions.FindRef(TEXT("Attack")), EKeys::F3);
+
+	MenuContext = UGothamUIInputData::Get().BuildMappingContext(this);
 }
 
 void AGothamPlayerController::OnPossess(APawn* InPawn)
@@ -353,23 +358,4 @@ const UInputAction* AGothamPlayerController::FindAction(FName Name) const
 {
 	const TObjectPtr<UInputAction>* Found = Actions.Find(Name);
 	return Found ? Found->Get() : nullptr;
-}
-
-/** The gameplay mapping context is live only while no menu owns input. */
-void AGothamPlayerController::ApplyInputContext(EGothamInputContext Context)
-{
-	ULocalPlayer* LocalPlayer = GetLocalPlayer();
-	auto* Input = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
-	if (!Input)
-	{
-		return;
-	}
-	if (Context == EGothamInputContext::Gameplay)
-	{
-		Input->AddMappingContext(GameplayContext, 0);
-	}
-	else
-	{
-		Input->RemoveMappingContext(GameplayContext);
-	}
 }

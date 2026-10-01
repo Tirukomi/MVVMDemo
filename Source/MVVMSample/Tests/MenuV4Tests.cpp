@@ -6,7 +6,11 @@
 #include "UI/ClueEntryWidget.h"
 #include "UI/Style/GothamMotion.h"
 #include "UI/Widgets/GothamInputGlyph.h"
-#include "UI/Widgets/GothamTabList.h"
+#include "CommonInputSettings.h"
+#include "ICommonInputModule.h"
+#include "Input/GothamUIInput.h"
+#include "InputAction.h"
+#include "InputMappingContext.h"
 #include "ViewModels/SettingsViewModel.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -123,10 +127,26 @@ bool FGothamOptionPositionTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamMenuTextTest, "Gotham.Menus.PromptsAndCaseNumbers", GothamV4Tests::Flags)
 bool FGothamMenuTextTest::RunTest(const FString& Parameters)
 {
-	int32 Direction = 0;
-	TestTrue("Q steps back", UGothamTabList::IsTabKey(EKeys::Q, Direction) && Direction == -1);
-	TestTrue("RB steps forward", UGothamTabList::IsTabKey(EKeys::Gamepad_RightShoulder, Direction) && Direction == +1);
-	TestFalse("Enter is not a tab key", UGothamTabList::IsTabKey(EKeys::Enter, Direction));
+	// The menu keys come from one mapping context; Common UI matches keys to actions through it.
+	const UGothamUIInputData& Menu = UGothamUIInputData::Get();
+	const UInputMappingContext* Context = Menu.BuildMappingContext(GetTransientPackage());
+	auto Maps = [Context](const UInputAction* Action, const FKey& Key)
+	{
+		return Context->GetMappings().ContainsByPredicate([Action, Key](const FEnhancedActionKeyMapping& Mapping) { return Mapping.Action == Action && Mapping.Key == Key; });
+	};
+	TestTrue("Q steps back", Maps(Menu.GetPreviousTabAction(), EKeys::Q));
+	TestTrue("RB steps forward", Maps(Menu.GetNextTabAction(), EKeys::Gamepad_RightShoulder));
+	TestFalse("Enter is not a tab key", Maps(Menu.GetNextTabAction(), EKeys::Enter) || Maps(Menu.GetPreviousTabAction(), EKeys::Enter));
+	TestTrue("Enter and the platform's accept button accept", Maps(Menu.GetAcceptAction(), EKeys::Enter) && Maps(Menu.GetAcceptAction(), EKeys::Virtual_Gamepad_Accept.GetVirtualKey()));
+	TestTrue("Esc and the platform's back button go back", Maps(Menu.GetBackAction(), EKeys::Escape) && Maps(Menu.GetBackAction(), EKeys::Virtual_Gamepad_Back.GetVirtualKey()));
+	UCommonInputSettings& CommonInput = ICommonInputModule::GetSettings();
+	CommonInput.LoadData();
+	TestTrue("Common UI's Enhanced Input support is on", CommonInput.IsEnhancedInputSupportEnabled());
+	TestTrue("Common UI uses these actions for accept and back", CommonInput.GetEnhancedInputClickAction() == Menu.GetAcceptAction()
+		&& CommonInput.GetEnhancedInputBackAction() == Menu.GetBackAction());
+	// Gameplay keys (Q opens the wheel, E scans) share these keys; a consuming menu action would hide them.
+	TestFalse("menu actions never consume their keys", Menu.GetAcceptAction()->bConsumeInput || Menu.GetBackAction()->bConsumeInput
+		|| Menu.GetPreviousTabAction()->bConsumeInput || Menu.GetNextTabAction()->bConsumeInput);
 	TestEqual("shoulder glyphs are abbreviated", UGothamInputGlyph::GetKeyLabel(EKeys::Gamepad_LeftShoulder).ToString(), FString(TEXT("LB")));
 
 	TestEqual("case numbers are 1-based and padded", GothamCaseNumber(6).ToString(), FString(TEXT("No. 007")));
