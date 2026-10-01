@@ -165,8 +165,10 @@ void AMvsPlayerController::SetupInputComponent()
 		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Completed, this, &AMvsPlayerController::OnScanReleased);
 		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Canceled, this, &AMvsPlayerController::OnScanReleased);
 		EIC->BindAction(Action(TEXT("ClueLog")), ETriggerEvent::Started, this, &AMvsPlayerController::OnClueLog);
+#if !UE_BUILD_SHIPPING
 		EIC->BindAction(Action(TEXT("DebugDamage")), ETriggerEvent::Started, this, &AMvsPlayerController::OnDebugDamage);
 		EIC->BindAction(Action(TEXT("DebugHeal")), ETriggerEvent::Started, this, &AMvsPlayerController::OnDebugHeal);
+#endif
 	}
 }
 
@@ -199,8 +201,10 @@ void AMvsPlayerController::BuildInputAssets()
 		}
 		Actions.Add(Def.Name, Action);
 	}
+#if !UE_BUILD_SHIPPING
 	// Dev shortcut: F3 also attacks.
 	GameplayContext->MapKey(Actions.FindRef(TEXT("Attack")), EKeys::F3);
+#endif
 
 	MenuContext = UMvsUIInputData::Get().BuildMappingContext(this);
 }
@@ -280,6 +284,7 @@ void AMvsPlayerController::OnGadget(int32 SlotIndex)
 	}
 }
 
+#if !UE_BUILD_SHIPPING
 void AMvsPlayerController::OnDebugDamage()
 {
 	if (AMvsCharacter* Hero = Cast<AMvsCharacter>(GetPawn()))
@@ -295,6 +300,7 @@ void AMvsPlayerController::OnDebugHeal()
 		Hero->DebugHeal();
 	}
 }
+#endif
 
 void AMvsPlayerController::OnPause()
 {

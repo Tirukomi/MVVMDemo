@@ -5,7 +5,7 @@
 
 #include "Misc/AutomationTest.h"
 
-#include "Core/MvsMenuInputTest.h"
+#include "MvsMenuInputTest.h"
 #include "Core/MvsPlayerController.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"

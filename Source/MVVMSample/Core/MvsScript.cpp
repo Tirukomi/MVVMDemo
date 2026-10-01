@@ -2,6 +2,8 @@
 
 #include "Core/MvsScript.h"
 
+#if !UE_BUILD_SHIPPING
+
 #include "HAL/PlatformMisc.h"
 #include "UnrealClient.h"
 
@@ -209,3 +211,5 @@ bool FMvsScript::Advance(float DeltaSeconds)
 	}
 	return false;
 }
+
+#endif // !UE_BUILD_SHIPPING

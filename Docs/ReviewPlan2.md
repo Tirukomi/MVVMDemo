@@ -48,6 +48,16 @@ left is mostly four things:
     (`Docs/Performance.md`). Its self-test still catches an injected 0.1 ms, but it reads as +0.067 ms, so the
     margin for regressions near the 0.05 ms tolerance is thin: worth more samples per scenario if that matters.
 
+- **S2 done** (findings 5 to 8):
+  - The menu-input rules are in the test module (`Source/MVVMSampleTests/Private/MvsMenuInputTest.*`); the
+    `-MvsMenuInputTest` dev aid is gone (the automation test runs the same rules). `FMvsScript`, the debug actions
+    (F1 damage, F2 heal, the F3 attack shortcut) and `AddDebugClues` are compiled out of Shipping.
+  - Checked in the binary: a Shipping build of master contained the debug actions; after S2 it contains none of the
+    probe strings (rules, script log, debug actions, debug clues). Findings 5 and 7 were overstated: master compiled
+    that code for Shipping, but nothing referenced it there, so the linker had already dropped it. Only the debug keys
+    really shipped.
+  - `MVVMSample.Build.cs`: template comments gone, RenderCore and RHI only outside Shipping (the perf harness), and
+    the public module root kept on purpose (documented: the test module is its only consumer).
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured
@@ -181,10 +191,12 @@ About 7 to 9 days. S0, S1 and S2 are cheap and independent, so they go first.
 **Shipping hygiene**
 
 5. `Core/MvsMenuInputTest.cpp` and `Core/MvsScript.cpp` have no `!UE_BUILD_SHIPPING` guard (the dev aids and perf
-   harness do), so the menu-input test is compiled into Shipping. *Checked in code.*
+   harness do), so the menu-input test is compiled into Shipping. *Checked in code. Corrected in S2: compiled, but
+   unreferenced in Shipping, so the linker dropped it; the binary did not contain it.*
 6. The debug actions F1 (damage), F2 (heal) and F3 (attack) are mapped and bound in every build
    (`MvsActionTable.cpp`, `AMvsPlayerController::BuildInputAssets`). *Checked in code.*
-7. `AddDebugClues` (view-model subsystem and clue binder) ships too. *Checked in code.*
+7. `AddDebugClues` (view-model subsystem and clue binder) ships too. *Checked in code. Corrected in S2: compiled
+   for Shipping but dropped by the linker, as in 5.*
 8. `MVVMSample.Build.cs` keeps the template comments and links RHI and RenderCore for the perf harness alone, and
    `PublicIncludePaths.Add(ModuleDirectory)` makes every header public. *Checked in code.*
 

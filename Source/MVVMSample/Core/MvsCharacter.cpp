@@ -165,6 +165,7 @@ void AMvsCharacter::Tick(float DeltaSeconds)
 		: FRotator::ZeroRotator);
 }
 
+#if !UE_BUILD_SHIPPING
 void AMvsCharacter::DebugDamage()
 {
 	Health->ApplyDamage(FMath::FRandRange(8.f, 20.f));
@@ -175,3 +176,4 @@ void AMvsCharacter::DebugHeal()
 {
 	Health->Heal(15.f);
 }
+#endif

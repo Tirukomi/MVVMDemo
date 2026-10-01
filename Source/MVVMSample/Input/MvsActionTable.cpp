@@ -29,8 +29,11 @@ namespace MvsActions
 			// Fixed: sticks and mouse motion, and the dev shortcuts.
 			{ TEXT("Move"),        FText(),                                    EType::Axis2D,  FKey(),                  EKeys::Gamepad_Left2D },
 			{ TEXT("Look"),        FText(),                                    EType::Axis2D,  EKeys::Mouse2D,          EKeys::Gamepad_Right2D,            false,      true },
+#if !UE_BUILD_SHIPPING
+			// Dev shortcuts, not in Shipping.
 			{ TEXT("DebugDamage"), FText(),                                    EType::Boolean, EKeys::F1,               FKey() },
 			{ TEXT("DebugHeal"),   FText(),                                    EType::Boolean, EKeys::F2,               FKey() },
+#endif
 		};
 		return Table;
 	}

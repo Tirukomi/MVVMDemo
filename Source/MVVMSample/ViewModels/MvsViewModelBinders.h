@@ -165,8 +165,10 @@ public:
 	virtual void Bind(AMvsCharacter& Character) override;
 	virtual void Deinitialize() override;
 
+#if !UE_BUILD_SHIPPING
 	/** Dev aid: appends fake undiscovered clues (flagged IsDebug); they never count toward the objective. */
 	void AddDebugClues(int32 Count);
+#endif
 
 private:
 	void Rebuild(const AMvsCharacter* Character);

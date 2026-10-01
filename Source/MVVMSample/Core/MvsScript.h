@@ -6,6 +6,9 @@
 #include "Containers/Ticker.h"
 #include "Templates/Function.h"
 
+// Dev aids, the perf harness and tests only: compiled out of Shipping with them.
+#if !UE_BUILD_SHIPPING
+
 /**
  * A scripted scenario: a list of steps run one after another, frame by frame. The dev aids, the perf harness and the
  * menu input test are all scripts for it, so "do X, wait, check Y" lives in one place.
@@ -17,7 +20,7 @@
  *     Script->Start();
  *
  * Time is real time from the core ticker, not game time: the pause menu and the wheel's slow motion stop or slow the
- * world, and scripts must keep running. Timing rules (unit-tested with a fake clock, see Tests/ScriptTests.cpp):
+ * world, and scripts must keep running. Timing rules (unit-tested with a fake clock, see Source/MVVMSampleTests/Private/ScriptTests.cpp):
  * - Do / Expect / Screenshot / Quit take no time; several in a row run in the same frame.
  * - At(T) waits until T seconds after the script started (the first frame's delta counts).
  * - Wait(S) and Sample(S) start counting on the frame after they begin, and end on the frame their own time reaches S;
@@ -106,3 +109,5 @@ private:
 	FReporter Reporter;
 	FTSTicker::FDelegateHandle Handle;
 };
+
+#endif // !UE_BUILD_SHIPPING

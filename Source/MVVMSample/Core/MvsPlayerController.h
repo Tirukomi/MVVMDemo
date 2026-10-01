@@ -44,8 +44,10 @@ private:
 	void OnAttack();
 	void OnCounter();
 	void OnGadget(int32 SlotIndex);
+#if !UE_BUILD_SHIPPING
 	void OnDebugDamage();
 	void OnDebugHeal();
+#endif
 	void OnPause();
 	void OnGadgetWheel();
 	void OnForensic();

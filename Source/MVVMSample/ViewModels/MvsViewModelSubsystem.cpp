@@ -82,6 +82,7 @@ UClueListViewModel* UMvsViewModelSubsystem::GetClues() const { return Get<UClueL
 USubtitleViewModel* UMvsViewModelSubsystem::GetSubtitles() const { return Get<USubtitleViewModel>(); }
 UThreatViewModel* UMvsViewModelSubsystem::GetThreats() const { return Get<UThreatViewModel>(); }
 
+#if !UE_BUILD_SHIPPING
 void UMvsViewModelSubsystem::AddDebugClues(int32 Count)
 {
 	if (ClueBinder)
@@ -89,3 +90,4 @@ void UMvsViewModelSubsystem::AddDebugClues(int32 Count)
 		ClueBinder->AddDebugClues(Count);
 	}
 }
+#endif

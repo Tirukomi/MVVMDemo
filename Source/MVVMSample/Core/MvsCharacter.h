@@ -45,8 +45,11 @@ public:
 	void ToggleForensic();
 	void ScanClue();
 
-	// Debug helpers bound to F1-F3.
+#if !UE_BUILD_SHIPPING
+	// Dev shortcuts (F1 damage, F2 heal), not in Shipping.
 	void DebugDamage();
+	void DebugHeal();
+#endif
 
 	/** Counters the nearest thug that is telegraphing an attack. Returns true if one was countered. */
 	bool Counter();
@@ -55,7 +58,6 @@ public:
 	void AddCameraTrauma(float Amount);
 
 	virtual void Tick(float DeltaSeconds) override;
-	void DebugHeal();
 
 private:
 	UPROPERTY(VisibleAnywhere)

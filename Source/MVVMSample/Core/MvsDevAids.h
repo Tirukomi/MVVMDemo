@@ -14,7 +14,6 @@ class UMvsUISubsystem;
  * Screenshot flags save a screenshot after -MvsShotDelay seconds (default 4). See README for the full list.
  *   -MvsOpenPause     opens the pause menu
  *   -MvsOpenQuit      opens the pause menu, then its (destructive) quit confirmation
- *   -MvsMenuInputTest toggle-key and clickable-prompt checks through Slate input; logs PASS / FAIL, then quits
  *   -MvsPerf=<label>  runs the UI performance harness, writes Saved/Perf/<label>.md, then quits
  *   -MvsQuitAfterLoad quits once the level and HUD are up (the perf gate's warm-up)
  *   -MvsCombatDemo    a thug in view and one behind telegraph at once (prompt + arrow), with a 10-hit combo

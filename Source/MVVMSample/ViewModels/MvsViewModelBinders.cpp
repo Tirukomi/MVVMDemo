@@ -295,6 +295,7 @@ void UMvsClueBinder::ShowSubtitle(const FText& Speaker, const FText& Line, float
 	}));
 }
 
+#if !UE_BUILD_SHIPPING
 void UMvsClueBinder::AddDebugClues(int32 Count)
 {
 	TArray<TObjectPtr<UClueEntryViewModel>> Entries = Clues->GetEntries();
@@ -309,3 +310,4 @@ void UMvsClueBinder::AddDebugClues(int32 Count)
 	}
 	Clues->SetEntries(MoveTemp(Entries));
 }
+#endif

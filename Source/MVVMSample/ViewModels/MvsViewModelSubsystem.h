@@ -50,9 +50,11 @@ public:
 	USubtitleViewModel* GetSubtitles() const;
 	UThreatViewModel* GetThreats() const;
 
+#if !UE_BUILD_SHIPPING
 	/** Dev aid: appends fake undiscovered clues (flagged IsDebug) to exercise the virtualised clue log. They never count
 	 *  toward the objective, which tracks the level's real clues. Remove them by filtering the clue list on IsDebug. */
 	void AddDebugClues(int32 Count);
+#endif
 
 private:
 	template<typename TBinder>

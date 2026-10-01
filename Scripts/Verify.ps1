@@ -65,8 +65,8 @@ if ($referenceSha) {
     $changedFiles = @(git -C $root diff --name-only $referenceSha) + @(git -C $root ls-files --others --exclude-standard) |
         Where-Object { $_ } | Sort-Object -Unique
 }
-# Code that runs only in tests: the test module, and the menu-input rules (in the game module until second review S2).
-$testOnly = '^Source/MVVMSampleTests/|^Source/MVVMSample/Core/MvsMenuInputTest\.'
+# Code that runs only in tests: the test module (the menu-input rules moved into it in second review S2).
+$testOnly = '^Source/MVVMSampleTests/'
 # What the game runs: its code, config, content and project file.
 $runtimePattern = '^(Source/|Config/|Content/|MVVMSample\.uproject$)'
 # What a screenshot depends on: the same, plus the baselines and the capture and diff scripts.

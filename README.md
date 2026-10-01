@@ -93,7 +93,7 @@ screenshots (below), not asserted in tests.
 These make the game reproduce a state, screenshot itself and stay out of the way of the OS. `Scripts/CaptureScreens.ps1`
 uses them to regenerate every image above.
 
-`-MvsMenuInputTest` (drives the menus through Slate input and logs PASS / FAIL), `-MvsCombatDemo`, `-MvsNoThugs`, `-MvsOpenPause`, `-MvsOpenQuit`, `-MvsOpenWheel`, `-MvsForensic`, `-MvsClueLog[=N]`, `-MvsOpenSettings`,
+`-MvsCombatDemo`, `-MvsNoThugs`, `-MvsOpenPause`, `-MvsOpenQuit`, `-MvsOpenWheel`, `-MvsForensic`, `-MvsClueLog[=N]`, `-MvsOpenSettings`,
 `-MvsSettingsTab=<Display|Accessibility|Controls|Language>`, `-MvsSettingsItem=<n>`, `-MvsIgnoreHover`, `-MvsOpenControls`, `-MvsRebindDemo`, `-MvsCycleLanguage`, `-MvsShotDelay=<s>`,
 `-MvsLanguage=<culture>`, `-MvsColorMode=0..3`, `-MvsUIScale=0..4`, `-MvsHighContrast`,
 `-MvsReducedMotion`, `-MvsPerf=<label>` (see [Performance](Docs/Performance.md)).
@@ -112,7 +112,7 @@ Project-settings soft references (materials, clue assets) are listed under `Dire
 
 ## Honest limitations
 
-- **Little real input has been driven by a script.** `-MvsMenuInputTest` drives menu keys, prompt clicks and
+- **Little real input has been driven by a script.** The menu-input test (`Mvs.Functional.MenuInput`) drives menu keys, prompt clicks and
   toggles through Slate's own input path, and the project owner has played it by hand. Everything else (combat
   counters, hold-to-use wheel, rebinding capture) is verified through unit tests, dev flags and screenshots.
 - The HUD widgets are C++-built rather than designer-authored; see [ADR 0002](Docs/ADR/0002-code-built-widgets.md).

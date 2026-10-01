@@ -1,6 +1,6 @@
 // Copyright IG. All Rights Reserved.
 
-#include "Core/MvsMenuInputTest.h"
+#include "MvsMenuInputTest.h"
 
 #include "UI/Style/MvsMetrics.h"
 #include "Accessibility/MvsSettingsSubsystem.h"
@@ -340,18 +340,6 @@ namespace MvsMenuInputTestPrivate
 			UserSettings->ApplySettings();
 		}
 		Undo.Reset();
-	}
-}
-
-void FMvsMenuInputTest::Start(AMvsPlayerController* Controller)
-{
-	if (const TSharedPtr<FMvsScript> Script = Build(Controller, [](EMvsCheck Result, const FString& Rule)
-	{
-		UE_LOG(LogMvsMenuTest, Display, TEXT("%s: %s"), FMvsScript::ResultLabel(Result), *Rule);
-	}))
-	{
-		Script->Quit();
-		Script->Start();
 	}
 }
 

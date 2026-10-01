@@ -6,7 +6,6 @@
 
 #include "Accessibility/MvsSettingsSubsystem.h"
 #include "Core/MvsCharacter.h"
-#include "Core/MvsMenuInputTest.h"
 #include "Core/MvsPerfHarness.h"
 #include "Core/MvsScript.h"
 #include "Core/MvsPlayerController.h"
@@ -154,7 +153,8 @@ namespace MvsDevAidsPrivate
 		}
 	}
 
-	/** -MvsQuitAfterLoad, -MvsMenuInputTest, -MvsPerf: runs that take over and quit on their own. */
+	/** -MvsQuitAfterLoad, -MvsPerf: runs that take over and quit on their own. (The menu-input rules are the automation
+	 *  test Mvs.Functional.MenuInput, in the test module, so they are not in the game.) */
 	bool RunSelfContained(AMvsPlayerController* Controller, FTimeline& Timeline)
 	{
 		const TCHAR* Cmd = FCommandLine::Get();
@@ -163,12 +163,6 @@ namespace MvsDevAidsPrivate
 		if (FParse::Param(Cmd, TEXT("MvsQuitAfterLoad")))
 		{
 			Timeline.After(1.f, [] { FPlatformMisc::RequestExit(false); });
-			return true;
-		}
-		// Drives the menus through Slate input and logs PASS / FAIL per rule, then quits.
-		if (FParse::Param(Cmd, TEXT("MvsMenuInputTest")))
-		{
-			FMvsMenuInputTest::Start(Controller);
 			return true;
 		}
 		// Runs the UI performance harness and quits (see Docs/Performance.md).
