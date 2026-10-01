@@ -1,30 +1,30 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
 
-#include "Accessibility/GothamSettingsListener.h"
-#include "Accessibility/GothamSettingsSubsystem.h"
-#include "Accessibility/GothamSettingsTypes.h"
+#include "Accessibility/MvsSettingsListener.h"
+#include "Accessibility/MvsSettingsSubsystem.h"
+#include "Accessibility/MvsSettingsTypes.h"
 #include "Engine/GameInstance.h"
 #include "ViewModels/SettingsViewModel.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamSettingsListenerTest, "Gotham.Settings.Listener",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsSettingsListenerTest, "Mvs.Settings.Listener",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
-bool FGothamSettingsListenerTest::RunTest(const FString& Parameters)
+bool FMvsSettingsListenerTest::RunTest(const FString& Parameters)
 {
 	// An uninitialised subsystem is enough (the listener only touches its delegate); it must live in a game instance.
 	UGameInstance* GameInstance = NewObject<UGameInstance>(GetTransientPackage());
-	UGothamSettingsSubsystem* Settings = NewObject<UGothamSettingsSubsystem>(GameInstance);
+	UMvsSettingsSubsystem* Settings = NewObject<UMvsSettingsSubsystem>(GameInstance);
 	// Any concrete UObject works as the owner that scopes the callback.
 	UObject* Owner = NewObject<USettingsViewModel>();
-	const FGothamSettingsData Data;
+	const FMvsSettingsData Data;
 	int32 Calls = 0;
-	auto Count = [&Calls](const FGothamSettingsData&) { ++Calls; };
+	auto Count = [&Calls](const FMvsSettingsData&) { ++Calls; };
 
 	{
-		FGothamSettingsListener Listener;
+		FMvsSettingsListener Listener;
 		TestFalse("no subsystem: binding fails", Listener.Bind(nullptr, Owner, Count));
 		TestTrue("binds", Listener.Bind(Settings, Owner, Count) && Listener.IsBound());
 		Settings->OnSettingsChanged.Broadcast(Data);
@@ -49,7 +49,7 @@ bool FGothamSettingsListenerTest::RunTest(const FString& Parameters)
 
 	// The callback is scoped to its owner: once the owner is gone it is skipped, even if nobody called Reset.
 	{
-		FGothamSettingsListener Listener;
+		FMvsSettingsListener Listener;
 		UObject* ShortLived = NewObject<USettingsViewModel>();
 		Listener.Bind(Settings, ShortLived, Count);
 		ShortLived->MarkAsGarbage();
@@ -59,8 +59,8 @@ bool FGothamSettingsListenerTest::RunTest(const FString& Parameters)
 
 	// The subsystem going first is also fine: Reset and destruction just do nothing.
 	{
-		FGothamSettingsListener Listener;
-		UGothamSettingsSubsystem* Gone = NewObject<UGothamSettingsSubsystem>(GameInstance);
+		FMvsSettingsListener Listener;
+		UMvsSettingsSubsystem* Gone = NewObject<UMvsSettingsSubsystem>(GameInstance);
 		Listener.Bind(Gone, Owner, Count);
 		Gone->MarkAsGarbage(); // weak pointers to a garbage object are already invalid; no GC pass needed
 		TestFalse("a destroyed subsystem leaves the listener unbound", Listener.IsBound());

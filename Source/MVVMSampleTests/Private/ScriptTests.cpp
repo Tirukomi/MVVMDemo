@@ -1,22 +1,22 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
 
-#include "Core/GothamScript.h"
+#include "Core/MvsScript.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
 // The scripted-scenario runner's timing, driven by hand (a fake clock): every script in the game depends on it.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamScriptTimingTest, "Gotham.Script.Timing",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsScriptTimingTest, "Mvs.Script.Timing",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
-bool FGothamScriptTimingTest::RunTest(const FString& Parameters)
+bool FMvsScriptTimingTest::RunTest(const FString& Parameters)
 {
 	TArray<FString> Log;
 	int32 Frame = 0;
 	auto Mark = [&Log, &Frame](const TCHAR* What) { return [&Log, &Frame, What]() { Log.Add(FString::Printf(TEXT("%s@%d"), What, Frame)); }; };
 	TArray<float> SampleTimes;
 
-	TSharedRef<FGothamScript> Script = MakeShared<FGothamScript>();
+	TSharedRef<FMvsScript> Script = MakeShared<FMvsScript>();
 	Script->Do(Mark(TEXT("start")))
 		.At(0.3f).Do(Mark(TEXT("at0.3")))
 		.Wait(0.2f).Do(Mark(TEXT("waited")))
@@ -46,9 +46,9 @@ bool FGothamScriptTimingTest::RunTest(const FString& Parameters)
 	TestFalse("advancing a finished script does nothing", Script->Advance(0.1f));
 
 	// Expect / Check count results and go to the reporter.
-	TSharedRef<FGothamScript> Checks = MakeShared<FGothamScript>();
+	TSharedRef<FMvsScript> Checks = MakeShared<FMvsScript>();
 	TArray<FString> Reported;
-	Checks->SetReporter([&Reported](EGothamCheck Result, const FString& Rule) { Reported.Add(FString::Printf(TEXT("%s: %s"), FGothamScript::ResultLabel(Result), *Rule)); });
+	Checks->SetReporter([&Reported](EMvsCheck Result, const FString& Rule) { Reported.Add(FString::Printf(TEXT("%s: %s"), FMvsScript::ResultLabel(Result), *Rule)); });
 	Checks->Expect([] { return true; }, TEXT("yes")).Expect([] { return false; }, TEXT("no"));
 	Checks->Do([&Checks] { Checks->CheckKnownBug(false, TEXT("still broken")); Checks->CheckKnownBug(true, TEXT("now works")); Checks->CheckKnownBug(true, TEXT("flaky"), true); });
 	Checks->Advance(0.f);
@@ -61,11 +61,11 @@ bool FGothamScriptTimingTest::RunTest(const FString& Parameters)
 
 	// WaitUntil: passes the frame its condition holds (the frame it begins included), fails on its own timeout, and
 	// the script carries on either way.
-	TSharedRef<FGothamScript> Waits = MakeShared<FGothamScript>();
+	TSharedRef<FMvsScript> Waits = MakeShared<FMvsScript>();
 	bool bReady = false;
 	int32 WaitFrame = 0;
 	TArray<FString> WaitLog;
-	Waits->SetReporter([&WaitLog, &WaitFrame](EGothamCheck Result, const FString& Rule) { WaitLog.Add(FString::Printf(TEXT("%s %s@%d"), FGothamScript::ResultLabel(Result), *Rule, WaitFrame)); });
+	Waits->SetReporter([&WaitLog, &WaitFrame](EMvsCheck Result, const FString& Rule) { WaitLog.Add(FString::Printf(TEXT("%s %s@%d"), FMvsScript::ResultLabel(Result), *Rule, WaitFrame)); });
 	Waits->WaitUntil([] { return true; }, 1.f, TEXT("already true"))
 		.WaitUntil([&bReady] { return bReady; }, 1.f, TEXT("becomes true"))
 		.WaitUntil([] { return false; }, 0.25f, TEXT("never true"))
@@ -81,7 +81,7 @@ bool FGothamScriptTimingTest::RunTest(const FString& Parameters)
 		TEXT("after@6") });            // the script goes on in the same frame
 
 	// WaitFrames counts whole frames from the next one.
-	TSharedRef<FGothamScript> Frames = MakeShared<FGothamScript>();
+	TSharedRef<FMvsScript> Frames = MakeShared<FMvsScript>();
 	int32 FrameCount = 0;
 	int32 DoneAt = -1;
 	Frames->WaitFrames(2).Do([&DoneAt, &FrameCount] { DoneAt = FrameCount; });
@@ -89,9 +89,9 @@ bool FGothamScriptTimingTest::RunTest(const FString& Parameters)
 	TestEqual("WaitFrames(2) begins on frame 0 and ends on frame 2", DoneAt, 2);
 
 	// A step may add steps while it runs.
-	TSharedRef<FGothamScript> Growing = MakeShared<FGothamScript>();
+	TSharedRef<FMvsScript> Growing = MakeShared<FMvsScript>();
 	bool bRanAdded = false;
-	FGothamScript* Raw = &Growing.Get();
+	FMvsScript* Raw = &Growing.Get();
 	Growing->Do([Raw, &bRanAdded] { for (int32 i = 0; i < 64; ++i) { Raw->Do([&bRanAdded] { bRanAdded = true; }); } });
 	Growing->Advance(0.f);
 	TestTrue("steps added by a step run too", bRanAdded && Growing->IsFinished());

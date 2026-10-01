@@ -1,15 +1,15 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Screens/GothamScreen.h"
+#include "UI/Screens/MvsScreen.h"
 #include "ClueLogScreen.generated.h"
 
 class UClueEntryViewModel;
 class UClueListViewModel;
-class UGothamClueTileView;
-class UGothamPanel;
+class UMvsClueTileView;
+class UMvsPanel;
 class UImage;
 class UTextBlock;
 
@@ -18,7 +18,7 @@ class UTextBlock;
  * pane for the selected one (large thumbnail, case number, title, notes). Undiscovered clues show as "???".
  */
 UCLASS()
-class MVVMSAMPLE_API UClueLogScreen : public UGothamScreen
+class MVVMSAMPLE_API UClueLogScreen : public UMvsScreen
 {
 	GENERATED_BODY()
 
@@ -37,7 +37,7 @@ private:
 	void OnDetailChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { RefreshDetail(); }
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamClueTileView> TileView;
+	TObjectPtr<UMvsClueTileView> TileView;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> Summary;
@@ -49,7 +49,7 @@ private:
 	TObjectPtr<UClueEntryViewModel> DetailEntry;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> DetailPanel;
+	TObjectPtr<UMvsPanel> DetailPanel;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UImage> DetailImage;

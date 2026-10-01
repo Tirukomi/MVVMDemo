@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Gameplay/ClueActor.h"
 
@@ -20,13 +20,13 @@ AClueActor::AClueActor()
 		Mesh->SetStaticMesh(Sphere.Object);
 	}
 
-	// Hidden from the normal view; only the detective post-process pass draws it, via custom depth.
+	// Hidden from the normal view; only the forensic post-process pass draws it, via custom depth.
 	Mesh->SetVisibility(false);
 	Mesh->SetRenderCustomDepth(false);
 	Mesh->SetCustomDepthStencilValue(StencilUnscanned);
 }
 
-void AClueActor::SetDetectiveHighlight(bool bEnabled)
+void AClueActor::SetForensicHighlight(bool bEnabled)
 {
 	bHighlighted = bEnabled;
 	RefreshRendering();

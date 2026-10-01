@@ -1,17 +1,17 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Accessibility/GothamSettingsTypes.h"
-#include "UI/Screens/GothamScreen.h"
+#include "Accessibility/MvsSettingsTypes.h"
+#include "UI/Screens/MvsScreen.h"
 #include "SettingsScreen.generated.h"
 
-class UGothamMenuList;
-class UGothamOptionRow;
-class UGothamPanel;
-class UGothamSwitcher;
-class UGothamTabList;
+class UMvsMenuList;
+class UMvsOptionRow;
+class UMvsPanel;
+class UMvsSwitcher;
+class UMvsTabList;
 class USettingsViewModel;
 class UTextBlock;
 
@@ -22,7 +22,7 @@ class UTextBlock;
  * unapplied changes. Every control is reachable with a gamepad.
  */
 UCLASS()
-class MVVMSAMPLE_API USettingsScreen : public UGothamScreen
+class MVVMSAMPLE_API USettingsScreen : public UMvsScreen
 {
 	GENERATED_BODY()
 
@@ -46,24 +46,24 @@ private:
 	TObjectPtr<USettingsViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UGothamOptionRow>> Rows;
-	TArray<EGothamSetting> RowSettings;
+	TArray<TObjectPtr<UMvsOptionRow>> Rows;
+	TArray<EMvsSetting> RowSettings;
 
 	/** One highlight list per tab page, in tab order. */
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UGothamMenuList>> Pages;
+	TArray<TObjectPtr<UMvsMenuList>> Pages;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UWidget> KeyBindingsItem;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamTabList> Tabs;
+	TObjectPtr<UMvsTabList> Tabs;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamSwitcher> Switcher;
+	TObjectPtr<UMvsSwitcher> Switcher;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> DetailPanel;
+	TObjectPtr<UMvsPanel> DetailPanel;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> DetailTitle;

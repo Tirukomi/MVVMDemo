@@ -1,3 +1,4 @@
+# Copyright IG. All Rights Reserved.
 """Fills the en-XA pseudo-locale's .po file: every string accented, about 40% longer and bracketed, for layout testing.
 
 Run by Scripts/Localize.bat between the .po export and the second import. The other cultures' .po files are edited by

@@ -1,12 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "ViewModels/ControlsViewModel.h"
 
-#include "Input/GothamBindingStore.h"
+#include "Input/MvsBindingStore.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Controls"
+#define LOCTEXT_NAMESPACE "Mvs.Controls"
 
-void UControlsViewModel::SetStore(TSharedPtr<IGothamBindingStore> InStore)
+void UControlsViewModel::SetStore(TSharedPtr<IMvsBindingStore> InStore)
 {
 	Store = MoveTemp(InStore);
 	Refresh();
@@ -14,10 +14,10 @@ void UControlsViewModel::SetStore(TSharedPtr<IGothamBindingStore> InStore)
 
 void UControlsViewModel::Refresh()
 {
-	SetSnapshot(Store ? Store->GetBindings() : TArray<FGothamBindingSlot>());
+	SetSnapshot(Store ? Store->GetBindings() : TArray<FMvsBindingSlot>());
 }
 
-void UControlsViewModel::SetSnapshot(TArray<FGothamBindingSlot> InSnapshot)
+void UControlsViewModel::SetSnapshot(TArray<FMvsBindingSlot> InSnapshot)
 {
 	Snapshot = MoveTemp(InSnapshot);
 	UE_MVVM_SET_PROPERTY_VALUE(Revision, Revision + 1);
@@ -25,7 +25,7 @@ void UControlsViewModel::SetSnapshot(TArray<FGothamBindingSlot> InSnapshot)
 
 FKey UControlsViewModel::GetKey(FName Name, int32 Slot) const
 {
-	const FGothamBindingSlot* Found = Snapshot.FindByPredicate([&](const FGothamBindingSlot& S) { return S.Name == Name && S.Slot == Slot; });
+	const FMvsBindingSlot* Found = Snapshot.FindByPredicate([&](const FMvsBindingSlot& S) { return S.Name == Name && S.Slot == Slot; });
 	return Found ? Found->Key : FKey();
 }
 
@@ -36,15 +36,15 @@ void UControlsViewModel::SetStatus(const FText& InStatus)
 
 bool UControlsViewModel::RequestRebind(FName Name, int32 Slot, const FKey& NewKey)
 {
-	if (!GothamBindings::IsKeyAllowedForSlot(Slot, NewKey))
+	if (!MvsBindings::IsKeyAllowedForSlot(Slot, NewKey))
 	{
-		SetStatus(Slot == GothamBindings::GamepadSlot
+		SetStatus(Slot == MvsBindings::GamepadSlot
 			? LOCTEXT("BadPad", "That button cannot be used here. Choose a gamepad button.")
 			: LOCTEXT("BadKey", "That key cannot be used here. Choose another key or mouse button."));
 		return false;
 	}
 
-	const TArray<FGothamBindingChange> Changes = GothamBindings::PlanRebind(Snapshot, Name, Slot, NewKey);
+	const TArray<FMvsBindingChange> Changes = MvsBindings::PlanRebind(Snapshot, Name, Slot, NewKey);
 	if (Changes.IsEmpty())
 	{
 		SetStatus(FText::GetEmpty());
@@ -67,7 +67,7 @@ void UControlsViewModel::ResetToDefaults()
 		Store->ResetToDefaults();
 	}
 	// Same key as when the screen set it, so existing translations keep working.
-	SetStatus(NSLOCTEXT("Gotham.ControlsScreen", "WasReset", "Controls reset to defaults."));
+	SetStatus(NSLOCTEXT("Mvs.ControlsScreen", "WasReset", "Controls reset to defaults."));
 	Refresh();
 }
 

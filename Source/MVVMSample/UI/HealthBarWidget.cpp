@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/HealthBarWidget.h"
 
@@ -8,13 +8,13 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Style/MvsStyle.h"
 #include "UI/Widgets/ComboMeter.h"
-#include "UI/Widgets/GothamText.h"
-#include "ViewModels/GothamMVVM.h"
+#include "UI/Widgets/MvsText.h"
+#include "ViewModels/MvsMVVM.h"
 #include "ViewModels/PlayerVitalsViewModel.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.HealthBar"
+#define LOCTEXT_NAMESPACE "Mvs.HealthBar"
 
 namespace
 {
@@ -38,10 +38,10 @@ TSharedRef<SWidget> UHealthBarWidget::RebuildWidget()
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Row)->SetPadding(FMargin(0.f, 6.f, 0.f, 0.f));
 
-		StatusText = WidgetTree->ConstructWidget<UGothamText>();
+		StatusText = WidgetTree->ConstructWidget<UMvsText>();
 		Row->AddChildToHorizontalBox(StatusText)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
 
-		ValueText = WidgetTree->ConstructWidget<UGothamText>();
+		ValueText = WidgetTree->ConstructWidget<UMvsText>();
 		Row->AddChildToHorizontalBox(ValueText);
 	}
 	return Super::RebuildWidget();
@@ -50,9 +50,9 @@ TSharedRef<SWidget> UHealthBarWidget::RebuildWidget()
 void UHealthBarWidget::SetViewModel(UPlayerVitalsViewModel* InViewModel)
 {
 	using FVM = UPlayerVitalsViewModel::FFieldNotificationClassDescriptor;
-	GothamMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	GothamMVVM::Bind(ViewModel, this, &UHealthBarWidget::OnFieldChanged, { FVM::HealthPercent, FVM::Health, FVM::bIsLowHealth });
+	MvsMVVM::Bind(ViewModel, this, &UHealthBarWidget::OnFieldChanged, { FVM::HealthPercent, FVM::Health, FVM::bIsLowHealth });
 	Refresh();
 }
 
@@ -69,23 +69,23 @@ void UHealthBarWidget::Refresh()
 		return;
 	}
 	const bool bLow = ViewModel->GetIsLowHealth();
-	FLinearColor Empty = GetToken(EGothamColorToken::PanelEdge);
+	FLinearColor Empty = GetToken(EMvsColorToken::PanelEdge);
 	Empty.A = 0.35f;
-	FLinearColor Ghost = GetToken(EGothamColorToken::Danger);
+	FLinearColor Ghost = GetToken(EMvsColorToken::Danger);
 	Ghost.A = 0.8f;
 
-	Bar->FilledColor = bLow ? GetToken(EGothamColorToken::Danger) : GetToken(EGothamColorToken::TextPrimary);
+	Bar->FilledColor = bLow ? GetToken(EMvsColorToken::Danger) : GetToken(EMvsColorToken::TextPrimary);
 	Bar->EmptyColor = Empty;
 	Bar->GhostColor = Ghost;
-	Bar->bReduceMotion = GetGothamSettings().bReducedMotion;
+	Bar->bReduceMotion = GetMvsSettings().bReducedMotion;
 	Bar->SynchronizeProperties();
 	Bar->SetPercent(ViewModel->GetHealthPercent());
 
-	GothamStyle::ApplyText(StatusText, EGothamTextStyle::Label, GetToken(EGothamColorToken::Danger));
+	MvsStyle::ApplyText(StatusText, EMvsTextStyle::Label, GetToken(EMvsColorToken::Danger));
 	StatusText->SetText(LOCTEXT("Low", "Low"));
 	StatusText->SetVisibility(bLow ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
-	GothamStyle::ApplyText(ValueText, EGothamTextStyle::Label, GetToken(EGothamColorToken::TextMuted));
+	MvsStyle::ApplyText(ValueText, EMvsTextStyle::Label, GetToken(EMvsColorToken::TextMuted));
 	ValueText->SetText(FText::Format(LOCTEXT("HealthFmt", "{0} / {1}"),
 		FText::AsNumber(FMath::CeilToInt(ViewModel->GetHealth())), FText::AsNumber(FMath::RoundToInt(ViewModel->GetMaxHealth()))));
 }

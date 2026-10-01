@@ -1,9 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Screens/GothamScreen.h"
+#include "UI/Screens/MvsScreen.h"
 #include "GadgetWheelScreen.generated.h"
 
 class UGadgetBarViewModel;
@@ -15,7 +15,7 @@ class UGadgetWheel;
  * rebinding. Items come from the gadget bar view model, so cooldowns update live inside the wheel.
  */
 UCLASS()
-class MVVMSAMPLE_API UGadgetWheelScreen : public UGothamScreen
+class MVVMSAMPLE_API UGadgetWheelScreen : public UMvsScreen
 {
 	GENERATED_BODY()
 

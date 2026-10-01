@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/ComboWidget.h"
 
@@ -8,16 +8,16 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Style/GothamMotion.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Style/MvsMotion.h"
+#include "UI/Style/MvsStyle.h"
 #include "UI/Widgets/ComboMeter.h"
-#include "UI/Widgets/GothamPanel.h"
-#include "UI/Widgets/GothamText.h"
+#include "UI/Widgets/MvsPanel.h"
+#include "UI/Widgets/MvsText.h"
 #include "ViewModels/ComboViewModel.h"
-#include "ViewModels/GothamMVVM.h"
+#include "ViewModels/MvsMVVM.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Combo"
+#define LOCTEXT_NAMESPACE "Mvs.Combo"
 
 TSharedRef<SWidget> UComboWidget::RebuildWidget()
 {
@@ -29,7 +29,7 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Row);
 
-		CountText = WidgetTree->ConstructWidget<UGothamText>();
+		CountText = WidgetTree->ConstructWidget<UMvsText>();
 		Row->AddChildToHorizontalBox(CountText)->SetVerticalAlignment(VAlign_Center);
 
 		UVerticalBox* Side = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -37,14 +37,14 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		SideSlot->SetVerticalAlignment(VAlign_Center);
 		SideSlot->SetPadding(FMargin(10.f, 6.f, 0.f, 0.f));
 
-		HitsLabel = WidgetTree->ConstructWidget<UGothamText>();
+		HitsLabel = WidgetTree->ConstructWidget<UMvsText>();
 		HitsLabel->SetText(LOCTEXT("Hits", "Hits"));
 		Side->AddChildToVerticalBox(HitsLabel);
 
-		MultiplierTag = WidgetTree->ConstructWidget<UGothamPanel>();
-		MultiplierTag->SetShape(5.f, EGothamChamfer::Opposite);
+		MultiplierTag = WidgetTree->ConstructWidget<UMvsPanel>();
+		MultiplierTag->SetShape(5.f, EMvsChamfer::Opposite);
 		MultiplierTag->SetPanelPadding(FMargin(8.f, 1.f));
-		MultiplierText = WidgetTree->ConstructWidget<UGothamText>();
+		MultiplierText = WidgetTree->ConstructWidget<UMvsText>();
 		MultiplierTag->SetContent(MultiplierText);
 		Side->AddChildToVerticalBox(MultiplierTag)->SetHorizontalAlignment(HAlign_Left);
 
@@ -55,7 +55,7 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 		Column->AddChildToVerticalBox(DecayBar)->SetPadding(FMargin(2.f, 2.f, 0.f, 0.f));
 
 		// Milestone callout ("10-HIT COMBO"): shown on each multiple of ten, then fades.
-		MilestoneText = WidgetTree->ConstructWidget<UGothamText>();
+		MilestoneText = WidgetTree->ConstructWidget<UMvsText>();
 		MilestoneText->SetRenderOpacity(0.f);
 		Column->AddChildToVerticalBox(MilestoneText)->SetPadding(FMargin(0.f, 8.f, 0.f, 0.f));
 	}
@@ -65,10 +65,10 @@ TSharedRef<SWidget> UComboWidget::RebuildWidget()
 void UComboWidget::SetViewModel(UComboViewModel* InViewModel)
 {
 	using FVM = UComboViewModel::FFieldNotificationClassDescriptor;
-	GothamMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	GothamMVVM::Bind(ViewModel, this, &UComboWidget::OnFieldChanged, { FVM::HitCount, FVM::DecayAlpha, FVM::MultiplierText, FVM::bIsActive });
-	GothamMVVM::Bind(ViewModel, this, &UComboWidget::OnMilestone, { FVM::MilestoneCount });
+	MvsMVVM::Bind(ViewModel, this, &UComboWidget::OnFieldChanged, { FVM::HitCount, FVM::DecayAlpha, FVM::MultiplierText, FVM::bIsActive });
+	MvsMVVM::Bind(ViewModel, this, &UComboWidget::OnMilestone, { FVM::MilestoneCount });
 	if (ViewModel)
 	{
 		LastHits = ViewModel->GetHitCount();
@@ -104,18 +104,18 @@ void UComboWidget::ApplyTheme()
 	{
 		return;
 	}
-	const FLinearColor Accent = GetToken(EGothamColorToken::Accent);
-	GothamStyle::ApplyText(CountText, EGothamTextStyle::Display, GetToken(EGothamColorToken::TextPrimary));
-	GothamStyle::ApplyText(HitsLabel, EGothamTextStyle::Label, GetToken(EGothamColorToken::TextMuted));
-	GothamStyle::ApplyText(MultiplierText, EGothamTextStyle::Numeric, GetToken(EGothamColorToken::Panel));
-	GothamStyle::ApplyText(MilestoneText, EGothamTextStyle::Header, Accent);
+	const FLinearColor Accent = GetToken(EMvsColorToken::Accent);
+	MvsStyle::ApplyText(CountText, EMvsTextStyle::Display, GetToken(EMvsColorToken::TextPrimary));
+	MvsStyle::ApplyText(HitsLabel, EMvsTextStyle::Label, GetToken(EMvsColorToken::TextMuted));
+	MvsStyle::ApplyText(MultiplierText, EMvsTextStyle::Numeric, GetToken(EMvsColorToken::Panel));
+	MvsStyle::ApplyText(MilestoneText, EMvsTextStyle::Header, Accent);
 	MultiplierTag->SetColors(Accent, FLinearColor::Transparent, 0.f);
 
-	FLinearColor Track = GetToken(EGothamColorToken::PanelEdge);
+	FLinearColor Track = GetToken(EMvsColorToken::PanelEdge);
 	Track.A = 0.3f;
 	DecayBar->FilledColor = Accent;
 	DecayBar->EmptyColor = Track;
-	DecayBar->bReduceMotion = GetGothamSettings().bReducedMotion;
+	DecayBar->bReduceMotion = GetMvsSettings().bReducedMotion;
 	DecayBar->SynchronizeProperties();
 	Refresh();
 }
@@ -133,11 +133,11 @@ void UComboWidget::Refresh()
 
 	if (ViewModel->GetHitCount() > LastHits)
 	{
-		GothamMotion::Pop(CountText, 1.22f);
+		MvsMotion::Pop(CountText, 1.22f);
 	}
 	if (ViewModel->GetMultiplier() > LastMultiplier)
 	{
-		GothamMotion::Pop(MultiplierTag, 1.35f, 0.2f);
+		MvsMotion::Pop(MultiplierTag, 1.35f, 0.2f);
 	}
 	LastHits = ViewModel->GetHitCount();
 	LastMultiplier = ViewModel->GetMultiplier();
@@ -152,11 +152,11 @@ void UComboWidget::OnMilestone(UObject* Source, UE::FieldNotification::FFieldId 
 	// Text first, then a pop; hold, then fade. Under reduced motion there is no pop and the fade is a cut.
 	MilestoneText->SetText(ViewModel->GetMilestoneText());
 	MilestoneText->SetRenderOpacity(1.f);
-	GothamMotion::Pop(MilestoneText, 1.3f, 0.22f);
+	MvsMotion::Pop(MilestoneText, 1.3f, 0.22f);
 	FTSTicker::GetCoreTicker().RemoveTicker(MilestoneHandle);
 	MilestoneHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
 	{
-		GothamMotion::Fade(MilestoneText, 1.f, 0.f, 0.45f);
+		MvsMotion::Fade(MilestoneText, 1.f, 0.f, 0.45f);
 		MilestoneHandle.Reset();
 		return false;
 	}), MilestoneHoldSeconds);

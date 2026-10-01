@@ -1,16 +1,16 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/SubtitleWidget.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Style/MvsStyle.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Widgets/GothamPanel.h"
-#include "UI/Widgets/GothamText.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Widgets/MvsPanel.h"
+#include "UI/Widgets/MvsText.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
-#include "ViewModels/GothamMVVM.h"
+#include "ViewModels/MvsMVVM.h"
 #include "ViewModels/SubtitleViewModel.h"
 
 TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
@@ -21,18 +21,18 @@ TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
 		Size->SetMaxDesiredWidth(900.f);
 		WidgetTree->RootWidget = Size;
 
-		Panel = WidgetTree->ConstructWidget<UGothamPanel>();
+		Panel = WidgetTree->ConstructWidget<UMvsPanel>();
 		Panel->SetPanelPadding(FMargin(20.f, 10.f));
-		Panel->SetShape(8.f, EGothamChamfer::Opposite);
+		Panel->SetShape(8.f, EMvsChamfer::Opposite);
 		Size->SetContent(Panel);
 
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
 		Panel->SetContent(Column);
 
-		SpeakerText = WidgetTree->ConstructWidget<UGothamText>();
+		SpeakerText = WidgetTree->ConstructWidget<UMvsText>();
 		Column->AddChildToVerticalBox(SpeakerText);
 
-		LineText = WidgetTree->ConstructWidget<UGothamText>();
+		LineText = WidgetTree->ConstructWidget<UMvsText>();
 		LineText->SetAutoWrapText(true);
 		Column->AddChildToVerticalBox(LineText);
 	}
@@ -42,9 +42,9 @@ TSharedRef<SWidget> USubtitleWidget::RebuildWidget()
 void USubtitleWidget::SetViewModel(USubtitleViewModel* InViewModel)
 {
 	using FVM = USubtitleViewModel::FFieldNotificationClassDescriptor;
-	GothamMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	GothamMVVM::Bind(ViewModel, this, &USubtitleWidget::OnFieldChanged,
+	MvsMVVM::Bind(ViewModel, this, &USubtitleWidget::OnFieldChanged,
 		{ FVM::Line, FVM::Speaker, FVM::bIsVisible, FVM::FontSize, FVM::bHasBackground });
 	Refresh();
 }
@@ -63,7 +63,7 @@ void USubtitleWidget::Refresh()
 	}
 	SetVisibility(ViewModel->GetIsVisible() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
-	GothamStyle::ApplyText(SpeakerText, EGothamTextStyle::Label, GetToken(EGothamColorToken::Accent));
+	MvsStyle::ApplyText(SpeakerText, EMvsTextStyle::Label, GetToken(EMvsColorToken::Accent));
 	FSlateFontInfo SpeakerFont = SpeakerText->GetFont();
 	SpeakerFont.Size = FMath::Max(12, ViewModel->GetFontSize() - 6);
 	SpeakerText->SetFont(SpeakerFont);
@@ -72,12 +72,12 @@ void USubtitleWidget::Refresh()
 	LineText->SetText(ViewModel->GetLine());
 
 	// Backing panel is optional; in high contrast it is near-opaque so the text always has a solid backdrop.
-	FLinearColor Fill = GetToken(EGothamColorToken::Panel);
+	FLinearColor Fill = GetToken(EMvsColorToken::Panel);
 	Fill.A = GetPanelAlpha() * 0.85f;
-	FLinearColor Edge = GetToken(EGothamColorToken::PanelEdge);
+	FLinearColor Edge = GetToken(EMvsColorToken::PanelEdge);
 	Edge.A = 0.5f;
 	Panel->SetColors(ViewModel->GetHasBackground() ? Fill : FLinearColor::Transparent, ViewModel->GetHasBackground() ? Edge : FLinearColor::Transparent);
-	GothamStyle::ApplyText(LineText, EGothamTextStyle::Body, GetToken(EGothamColorToken::TextPrimary));
+	MvsStyle::ApplyText(LineText, EMvsTextStyle::Body, GetToken(EMvsColorToken::TextPrimary));
 	FSlateFontInfo SizedFont = LineText->GetFont();
 	SizedFont.Size = ViewModel->GetFontSize();
 	LineText->SetFont(SizedFont);

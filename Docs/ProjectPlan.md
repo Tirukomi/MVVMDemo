@@ -1,10 +1,10 @@
-# Blackwater Ops — UI Showcase Project Plan
+# MVVM Sample — UI Showcase Project Plan
 
 A portfolio project targeting a **Senior UI Programmer** role on AAA titles. The product is a
-production-style UI layer for a small third-person combat/detective sandbox in **Unreal Engine 5.8**.
+production-style UI layer for a small third-person combat/forensic sandbox in **Unreal Engine 5.8**.
 Gameplay is deliberately thin; the UI architecture, tooling and polish are the deliverable.
 
-> Original placeholder branding only. No third-party (WB/DC/Rocksteady) assets or trademarks.
+> Original placeholder branding only. No third-party assets or trademarks.
 
 ---
 
@@ -17,7 +17,7 @@ Gameplay is deliberately thin; the UI architecture, tooling and polish are the d
 | UMG + Common UI | Activatable widget stack, input routing, gamepad/KBM parity |
 | Enhanced Input | Context-per-layer, rebinding, device-aware glyphs |
 | Slate | Custom radial gadget wheel + combo meter, wrapped as `UWidget` |
-| Shaders / materials | Scanner UI materials, Detective Mode post-process |
+| Shaders / materials | Scanner UI materials, Forensic Mode post-process |
 | Accessibility + localization | Colour-blind modes, text scale, reduced motion, 2+ languages incl. expansion stress test |
 | Performance / memory | Budgets, Slate Insights captures, pooling, before/after numbers |
 | Engineering standards | Automation tests, coding standard, review-style commit history, designer docs |
@@ -39,7 +39,7 @@ Principles:
 1. **One-way flow.** Gameplay -> ViewModel -> View. User intent returns via commands/events (input actions,
    `UFUNCTION` view-model commands), never by widgets mutating gameplay state directly.
 2. **View models are plain C++ objects** with no widget or world dependency, so automation tests run headless.
-3. **`UGothamViewModelSubsystem` (`ULocalPlayerSubsystem`)** owns and resolves view models per local player
+3. **`UMvsViewModelSubsystem` (`ULocalPlayerSubsystem`)** owns and resolves view models per local player
    (split-screen safe). Widgets get them via the MVVM view-model resolver.
 4. **Layered UI** via Common UI primary game layout: `Game`, `GameMenu`, `Menu`, `Modal` stacks. Screens are
    `UCommonActivatableWidget`s pushed by gameplay tag.
@@ -56,7 +56,7 @@ Source/MVVMSample/
   ViewModels/    PlayerVitals, GadgetBar, GadgetSlot, Combo, Objectives, Clues, Settings
   UI/
     Layout/      PrimaryGameLayout, UI manager subsystem, screen tags
-    Screens/     HUD, PauseMenu, Settings, GadgetWheelScreen, Detective screens
+    Screens/     HUD, PauseMenu, Settings, GadgetWheelScreen, Forensic screens
     Widgets/     Reusable C++ base widgets, styled buttons, list-entry widgets
     Slate/       SRadialMenu, SComboMeter (+ UWidget wrappers)
   Input/         Input action assets setup, glyph subsystem, rebinding
@@ -85,14 +85,14 @@ short README/ADR update so the portfolio write-up grows as work proceeds.
 
 Deliverable: playable map where damage, gadget use and hits update the HUD **purely through view-model bindings**.
 
-1. Core classes: `AGothamGameMode`, `AGothamCharacter`, `AGothamPlayerController`.
+1. Core classes: `AMvsGameMode`, `AMvsCharacter`, `AMvsPlayerController`.
 2. Gameplay components: `UHealthComponent`, `UGadgetComponent` (3 gadgets, cooldowns), `UComboComponent`
    (multiplier that decays).
 3. View models (`UE_MVVM_SET_PROPERTY_VALUE`, field-notify):
    - `UPlayerVitalsViewModel` — health, max, percent, low-health flag.
    - `UGadgetBarViewModel` / `UGadgetSlotViewModel` — icon, cooldown remaining/percent, ready.
    - `UComboViewModel` — count, multiplier, decay percent.
-4. `UGothamViewModelSubsystem` creating/registering view models per local player and wiring them to components.
+4. `UMvsViewModelSubsystem` creating/registering view models per local player and wiring them to components.
 5. `WBP_CombatHUD` (C++ base class + UMG layout) with MVVM bindings authored in the widget editor:
    health bar, gadget bar, combo counter, simple animations.
 6. Enhanced Input set up in C++: Input Actions + mapping context for move/look/attack/gadget 1–3.
@@ -103,32 +103,32 @@ Deliverable: playable map where damage, gadget use and hits update the HUD **pur
 **Exit:** builds clean, HUD reflects all three systems, view-model test passes, GIF captured.
 
 **As built (deviations):** HUD widgets are C++-built UMG trees that bind through field-notify delegates rather than
-editor-authored MVVM bindings; `UGothamViewModelResolver` is in place so designer-authored `WBP_` widgets with editor
+editor-authored MVVM bindings; `UMvsViewModelResolver` is in place so designer-authored `WBP_` widgets with editor
 bindings can be added in M2. Debug keys are F1 damage, F2 heal, F3 combo hit. Component tick logic lives in
 `Advance()` so tests can drive unregistered components. Known M2 item: CommonUI logs that input routing needs a
 `CommonGameViewportClient`.
 
 ### M2 — Common UI layer stack, menus, input (1.5 weeks)
 
-1. `UPrimaryGameLayout` with `Game` / `GameMenu` / `Menu` / `Modal` layers; `UGothamUISubsystem` to push/pop
+1. `UPrimaryGameLayout` with `Game` / `GameMenu` / `Menu` / `Modal` layers; `UMvsUISubsystem` to push/pop
    screens by gameplay tag.
 2. Screens: Pause menu, confirmation modal, placeholder Inventory/Settings.
 3. Common UI styling: button/text/border styles as data assets, so a re-skin is a content change.
 4. Enhanced Input **contexts per UI layer** (gameplay vs menu), input mode switching handled in one place.
 5. `UCommonInputSubsystem` integration: mouse/keyboard <-> gamepad detection, **device-aware glyph** widget
-   (`UGothamInputGlyph`) driven by a glyph data table.
+   (`UMvsInputGlyph`) driven by a glyph data table.
 6. Full gamepad navigation (focus, d-pad, back action, action bar with bound hints).
 7. Tests: screen stack push/pop and input-context switching.
 
 **Exit:** every screen fully usable with gamepad or keyboard, glyphs swap live when the device changes.
 
-**As built (deviations):** layers are an `EGothamUILayer` enum rather than gameplay tags. `FGothamUIModeTracker` is a
+**As built (deviations):** layers are an `EMvsUILayer` enum rather than gameplay tags. `FMvsUIModeTracker` is a
 pure struct that derives the input context from what is open, so the rules are unit-tested without a world. Back/Esc is
-handled in `UGothamScreen::NativeOnKeyDown` (Esc / gamepad B) rather than through Common UI's input-data assets, and the
-gameplay mapping context is removed while a menu owns input (both replaced in review fix R2, see ADR 0007). `UGothamButton` builds its content before
+handled in `UMvsScreen::NativeOnKeyDown` (Esc / gamepad B) rather than through Common UI's input-data assets, and the
+gameplay mapping context is removed while a menu owns input (both replaced in review fix R2, see ADR 0007). `UMvsButton` builds its content before
 `UCommonButtonBase::Initialize` because the base only wires its internal button when a root already exists.
 Glyphs follow Enhanced Input mappings (`QueryKeysMappedToAction`), so M5 rebinding is reflected automatically.
-Dev aid: `-GothamOpenPause` opens the pause menu and saves `Saved/Screenshots/.../gotham_pause.png`.
+Dev aid: `-MvsOpenPause` opens the pause menu and saves `Saved/Screenshots/.../mvs_pause.png`.
 
 ### M3 — Custom Slate: radial gadget wheel + combo meter (1.5 weeks)
 
@@ -144,43 +144,43 @@ Dev aid: `-GothamOpenPause` opens the pause menu and saves `Saved/Screenshots/..
 **Exit:** wheel and meter usable from UMG by a designer; documented paint/hit-test approach.
 
 **As built:** `SGadgetWheel` (`SLeafWidget`) draws ring sectors with `FSlateDrawElement::MakeCustomVerts` on a shared
-white brush, so it needs no image assets; hit-testing is `GothamWheel::IndexFromOffset` (pure, unit-tested). Hover
+white brush, so it needs no image assets; hit-testing is `MvsWheel::IndexFromOffset` (pure, unit-tested). Hover
 animation and `SComboMeter`'s drain run on active timers that unregister once settled, so an idle wheel or full/empty
 meter costs no per-frame work. `UGadgetWheel` / `UComboMeter` are the UMG wrappers (style struct, dynamic events,
 `SetItems`). The wheel screen (`Q` / left shoulder to open, release to use, Esc / B cancels, 1-3 pick directly) slows
 world time to 0.1x and feeds items from the gadget bar view model. Not yet captured: a Slate Insights baseline
-(planned for M6 with the other profiling numbers). Dev aid: `-GothamOpenWheel` opens the wheel, hovers a segment,
-builds a combo and saves `gotham_wheel.png`.
+(planned for M6 with the other profiling numbers). Dev aid: `-MvsOpenWheel` opens the wheel, hovers a segment,
+builds a combo and saves `mvs_wheel.png`.
 
-### M4 — Detective Mode: shaders, post-process, data-driven clues (2 weeks)
+### M4 — Forensic Mode: shaders, post-process, data-driven clues (2 weeks)
 
 1. **UI materials:** scanline/hologram wipe, animated outline glow, distortion-in transition, driven by
    material parameter collections and dynamic instances from view-model values.
-2. **Post-process:** Detective Mode pass (desaturate, edge highlight, custom-depth-based clue highlight).
+2. **Post-process:** Forensic Mode pass (desaturate, edge highlight, custom-depth-based clue highlight).
 3. Clue system: `UClueDataAsset`, placed clue actors, `UClueComponent`; scanning reveals clues in the world.
 4. View models: `UObjectivesViewModel`, `UClueListViewModel`; UI for objective tracker and clue log using
    virtualised list views with pooled entry widgets (`UListView`).
 5. Async widget/asset loading for clue thumbnails; no hitches on entering the mode.
 6. Transition polish: mode-enter animation across HUD, materials and post-process together.
 
-**Exit:** toggling Detective Mode is a single coordinated, performant transition; clue list scales to 500+
+**Exit:** toggling Forensic Mode is a single coordinated, performant transition; clue list scales to 500+
 entries without hitching.
 
-**As built:** `UDetectiveComponent` owns the on/off state and one eased transition alpha; everything else keys off
-it. The world side (`UDetectiveVisionComponent`) drives the post-process material and a FOV pinch; the UI side
-(`UDetectiveOverlayWidget`) drives a UI material through `UDetectiveViewModel`. Clues are `UClueDataAsset`s placed via
+**As built:** `UForensicComponent` owns the on/off state and one eased transition alpha; everything else keys off
+it. The world side (`UForensicVisionComponent`) drives the post-process material and a FOV pinch; the UI side
+(`UForensicOverlayWidget`) drives a UI material through `UForensicViewModel`. Clues are `UClueDataAsset`s placed via
 `AClueActor`, which turns on custom depth while highlighted so the post-process draws them through walls (orange =
 unscanned, green = scanned, via stencil 1 / 2; `r.CustomDepth=3`). Materials are generated by
-`Scripts/CreateDetectiveAssets.py` (which also builds the data assets, places the clues and creates `WBP_ClueEntry`),
+`Scripts/CreateForensicAssets.py` (which also builds the data assets, places the clues and creates `WBP_ClueEntry`),
 so the graphs are reviewable as code. The clue log uses `UListView` (pooled rows) over `UClueEntryViewModel`s; row
 thumbnails stream in with `FStreamableManager` only for discovered clues and are cancelled when a row is recycled.
-The list view needs a Blueprint entry class in editor builds, hence `WBP_ClueEntry`. Keys: `V` detective, `E` scan,
-`J` case file (gamepad D-pad up / right, Select). Dev aids: `-GothamDetective`, `-GothamClueLog[=N]`,
-`-GothamShotDelay=S`.
+The list view needs a Blueprint entry class in editor builds, hence `WBP_ClueEntry`. Keys: `V` forensic, `E` scan,
+`J` case file (gamepad D-pad up / right, Select). Dev aids: `-MvsForensic`, `-MvsClueLog[=N]`,
+`-MvsShotDelay=S`.
 
 ### M5 — Settings, accessibility, localization (1.5 weeks)
 
-1. Settings screen built on a **settings view model** (`UGothamSettingsViewModel`) with apply/revert/defaults.
+1. Settings screen built on a **settings view model** (`UMvsSettingsViewModel`) with apply/revert/defaults.
 2. **Input rebinding** (Enhanced Input user settings), conflict detection, gamepad + keyboard.
 3. **Accessibility:**
    - colour-blind palettes (data-driven colour tokens applied through styles/materials)
@@ -193,21 +193,21 @@ The list view needs a Blueprint entry class in editor builds, hence `WBP_ClueEnt
 **Exit:** language and accessibility changes apply live; screenshot test set passes in all locales.
 
 **As built:**
-- **Settings:** `FGothamSettingsData` (pure, persisted in GameUserSettings.ini) is edited through `USettingsViewModel`
-  (live preview, Apply / Revert / Defaults); `UGothamSettingsSubsystem` applies side effects (culture, DPI scale via
+- **Settings:** `FMvsSettingsData` (pure, persisted in GameUserSettings.ini) is edited through `USettingsViewModel`
+  (live preview, Apply / Revert / Defaults); `UMvsSettingsSubsystem` applies side effects (culture, DPI scale via
   `UUserInterfaceSettings::ApplicationScale`) and broadcasts to widgets. Leaving the screen reverts unapplied changes.
-- **Accessibility:** colour tokens (`GothamPalette`) resolved per colour-vision preset (Okabe-Ito based) and high
-  contrast, used by HUD widgets and the Detective post-process (clue colours are material parameters). Reduced motion
-  snaps the wheel and combo meter, freezes overlay scanlines, drops the FOV pinch and shortens the detective
+- **Accessibility:** colour tokens (`MvsPalette`) resolved per colour-vision preset (Okabe-Ito based) and high
+  contrast, used by HUD widgets and the Forensic post-process (clue colours are material parameters). Reduced motion
+  snaps the wheel and combo meter, freezes overlay scanlines, drops the FOV pinch and shortens the forensic
   transition. Gadget wheel supports hold or toggle. Subtitles (`USubtitleViewModel`) follow size and background
   settings. Low health is also spelled out in text, so it never depends on colour alone. Everything is a focusable
   button, so the settings screens are gamepad-navigable.
 - **Rebinding:** Enhanced Input user settings. Each rebindable input action carries player-mappable settings (set
   through reflection, since the property is protected); mappings become keyboard / gamepad slots of one row.
-  `GothamBindings::PlanRebind` (pure, tested) swaps keys on conflict. Escape / gamepad B are reserved to cancel.
+  `MvsBindings::PlanRebind` (pure, tested) swaps keys on conflict. Escape / gamepad B are reserved to cancel.
 - **Localization:** the standard UE pipeline (`Scripts/Localize.bat`: gather -> `TranslateLocalization.py` -> compile)
   with English, German, Japanese and a generated pseudo-locale (`en-XA`). Clue text lives in a code-registered string
-  table (`GothamClues`) so the gatherer finds it. CJK renders through the engine's fallback font.
+  table (`MvsClues`) so the gatherer finds it. CJK renders through the engine's fallback font.
 - **Verified by screenshot:** German / Japanese / pseudo settings screens, a live English -> German switch, a
   deuteranopia HUD, 150% UI scale in German at 720p, a 2560x1080 HUD, and a code-driven rebind (Scan E -> R).
 - **Known gaps:** high contrast recolours tokens and subtitle panels but not every panel; text scale is a whole-UI
@@ -223,19 +223,19 @@ The list view needs a Blueprint entry class in editor builds, hence `WBP_ClueEnt
 3. Automation: view-model specs, screen-stack tests, functional screenshot tests, CI-runnable command line.
 4. Docs: architecture write-up, ADRs (why MVVM, trade-offs, where it hurt), "how a designer adds a widget"
    guide, coding standard.
-5. Portfolio assets: 60-second video (gamepad + KBM, language switch, accessibility toggle, Detective Mode),
+5. Portfolio assets: 60-second video (gamepad + KBM, language switch, accessibility toggle, Forensic Mode),
    README with GIFs, packaged Windows build.
 
 **Exit:** packaged build, tagged release, README/video ready to link from a CV.
 
 **As built:**
-- **Measured, not guessed:** `FGothamPerfHarness` (`-GothamPerf=<label>`) with A/B switches; results and the honest
+- **Measured, not guessed:** `FMvsPerfHarness` (`-MvsPerf=<label>`) with A/B switches; results and the honest
   reading (tick removal: no measurable change; global Slate invalidation: UI overhead down from ~0.28 to ~0.04 ms on
   the settings screen) are in `Docs/Performance.md`. Slate Insights, GPU and memreport were not captured.
 - **Tests:** 20 automation tests; `Scripts/run_tests.py` is the CI entry point (exit code reflects failures).
 - **Docs:** README, `Docs/Architecture.md`, six ADRs, `Docs/DesignerGuide.md`, `Docs/Performance.md`.
 - **Screenshots:** `Scripts/CaptureScreens.ps1` regenerates every image in `Docs/img` from the game's own dev flags.
-- **Package:** Windows Development build cooked and run (HUD, Detective Mode, materials, German localization). A
+- **Package:** Windows Development build cooked and run (HUD, Forensic Mode, materials, German localization). A
   Shipping build was not produced.
 - **Not delivered:** a demo video (no way to assemble one without installing extra tooling).
 
@@ -247,7 +247,7 @@ The list view needs a Blueprint entry class in editor builds, hence `WBP_ClueEnt
 | M1 MVVM HUD | 1–1.5 wk | 2 |
 | M2 Common UI + input | 1.5 wk | 3.5 |
 | M3 Slate | 1.5 wk | 5 |
-| M4 Detective Mode | 2 wk | 7 |
+| M4 Forensic Mode | 2 wk | 7 |
 | M5 Settings / a11y / loc | 1.5 wk | 8.5 |
 | M6 Perf / docs / release | 1.5 wk | 10 |
 

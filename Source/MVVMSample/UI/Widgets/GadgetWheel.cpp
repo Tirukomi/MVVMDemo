@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Widgets/GadgetWheel.h"
 
@@ -32,7 +32,7 @@ void UGadgetWheel::ReleaseSlateResources(bool bReleaseChildren)
 	SlateWheel.Reset();
 }
 
-void UGadgetWheel::SetItems(const TArray<FGothamWheelItem>& InItems)
+void UGadgetWheel::SetItems(const TArray<FMvsWheelItem>& InItems)
 {
 	Items = InItems;
 	if (SlateWheel.IsValid())

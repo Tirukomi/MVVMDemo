@@ -1,9 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/GothamSettingsAwareWidget.h"
+#include "UI/MvsSettingsAwareWidget.h"
 #include "HealthBarWidget.generated.h"
 
 class UComboMeter;
@@ -15,7 +15,7 @@ class UTextBlock;
  * spelled out ("LOW") as well as coloured, so it never depends on colour alone.
  */
 UCLASS()
-class MVVMSAMPLE_API UHealthBarWidget : public UGothamSettingsAwareWidget
+class MVVMSAMPLE_API UHealthBarWidget : public UMvsSettingsAwareWidget
 {
 	GENERATED_BODY()
 

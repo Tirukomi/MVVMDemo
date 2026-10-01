@@ -1,9 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/GothamWorldOverlayLayer.h"
+#include "UI/MvsWorldOverlayLayer.h"
 #include "ThreatIndicatorLayer.generated.h"
 
 class UThreatViewModel;
@@ -13,7 +13,7 @@ class UThreatViewModel;
  * player's camera and hands the result to SThreatIndicatorLayer. Its active timer runs only while hostiles exist.
  */
 UCLASS()
-class MVVMSAMPLE_API UThreatIndicatorLayer : public UGothamWorldOverlayLayer
+class MVVMSAMPLE_API UThreatIndicatorLayer : public UMvsWorldOverlayLayer
 {
 	GENERATED_BODY()
 
@@ -25,13 +25,13 @@ public:
 	void SetViewModel(UThreatViewModel* InViewModel);
 
 protected:
-	virtual TSharedRef<SGothamWorldOverlayBase> MakeOverlay() override;
+	virtual TSharedRef<SMvsWorldOverlayBase> MakeOverlay() override;
 	virtual bool ShouldBeActive() const override;
 	virtual void ApplyTheme() override;
 
 private:
 	void OnThreatsChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
-	void BuildIndicators(TArray<struct FGothamThreatIndicator>& Out) const;
+	void BuildIndicators(TArray<struct FMvsThreatIndicator>& Out) const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UThreatViewModel> ViewModel;

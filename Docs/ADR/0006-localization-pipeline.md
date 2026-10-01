@@ -5,12 +5,12 @@
 ## Decision
 Use UE's own gather -> translate -> compile (`Config/Localization/Game_Gather.ini`, `Game_Compile.ini`) so the result
 is real `.locres` files, live-switchable with `FInternationalization::SetCurrentCulture`. Code text uses `LOCTEXT`.
-Text that lives in data assets (clue titles and descriptions) is a code-registered string table (`GothamClues`,
+Text that lives in data assets (clue titles and descriptions) is a code-registered string table (`MvsClues`,
 `Gameplay/ClueStrings.cpp`) that the gatherer understands and the assets reference by key. An `en-XA` pseudo-locale is
 generated (accents, +40% length) to stress layouts.
 
 ## Consequences
-- Adding a language is: add it to the localization configs and `FGothamSettingsData::GetLanguages`, run
+- Adding a language is: add it to the localization configs and `FMvsSettingsData::GetLanguages`, run
   `Scripts/Localize.bat`, translate the new `.po`, run it again.
 - **Update (refactoring pass P8):** translations live in `Content/Localization/Game/<culture>/Game.po`, imported and
   exported by the engine (`Game_ImportPO.ini`, `Game_ExportPO.ini`). This replaced `TranslateLocalization.py`, whose

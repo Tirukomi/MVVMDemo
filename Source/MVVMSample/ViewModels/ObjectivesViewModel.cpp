@@ -1,8 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "ViewModels/ObjectivesViewModel.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Objectives"
+#define LOCTEXT_NAMESPACE "Mvs.Objectives"
 
 void UObjectivesViewModel::SetProgress(int32 InFound, int32 InTotal)
 {

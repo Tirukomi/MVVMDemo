@@ -14,7 +14,7 @@ intended behaviour change gets its own commit.
 - **Behaviour first, structure second.** Where a pass touches logic that tests do not pin yet, characterization
   tests go in first, in their own commit, and must pass against the old code.
 - **Compatibility is frozen.** Saved user data keeps its format across every pass:
-  - config keys in the `[/Script/MVVMSample.GothamSettings]` section (`Language`, `ColorMode`, `UIScaleIndex`, and the rest)
+  - config keys in the `[/Script/MVVMSample.MvsSettings]` section (`Language`, `ColorMode`, `UIScaleIndex`, and the rest)
   - Enhanced Input mappable names (`Attack`, `Counter`, `ClueLog`, ...), which are what saved rebinds refer to
   - LOCTEXT namespaces and keys, which translations refer to
 - **Project files.** Regenerate them in any pass that adds or removes source files, so Rider and Visual Studio see
@@ -28,10 +28,10 @@ Pass 0 builds this as a single script, `Scripts/Verify.ps1`, which prints one PA
 |---|---|---|
 | G1 | Full clean rebuild (`Rebuild.bat`), zero warnings in project code | unity-build clashes, shadowing; the two bugs adaptive non-unity builds hid |
 | G2 | `python Scripts/run_tests.py`, all green | logic regressions |
-| G3 | `-GothamMenuInputTest`, all PASS (since P9: `Gotham.Functional.MenuInput` in G2's game pass) | focus, hit-testing, prompt clicks, toggle keys |
+| G3 | `-MvsMenuInputTest`, all PASS (since P9: `Mvs.Functional.MenuInput` in G2's game pass) | focus, hit-testing, prompt clicks, toggle keys |
 | G4 | Screenshot regression: recapture the set and diff against `Docs/img` in 8x8 blocks (so animated scanlines and rain average out). Deterministic images (no recorded noise) are held to 0.1%; animated ones get 3x their recorded noise (`Scripts/ScreenNoise.json`, from two captures of the same code) plus 0.5 points. Review any image over that | layout, colour and localization regressions, and stale baselines |
 | G5 | Perf harness at 1080p, side by side with a reference build (default `master`). Both sides are built and run from sibling worktrees (`Saved/PerfRef`, and `Saved/PerfCur` = HEAD plus this checkout's `Source` and `Config`), because running from this checkout biased the current side by about +0.05 ms: five ABBA rounds, and every scenario's UI cost within 0.05 ms of the reference on the median | accidental per-frame work |
-| G6 | Logs of every run in the gate: no `Ensure condition failed`, no project (`LogGotham*`) errors or warnings, and no content-integrity warnings (materials, skeletal meshes, missing usage flags, failed package loads) | tick, focus and lifetime mistakes; content that silently renders wrong (a material without its skeletal-mesh flag showed the engine default on the thugs for all of V5) |
+| G6 | Logs of every run in the gate: no `Ensure condition failed`, no project (`LogMvs*`) errors or warnings, and no content-integrity warnings (materials, skeletal meshes, missing usage flags, failed package loads) | tick, focus and lifetime mistakes; content that silently renders wrong (a material without its skeletal-mesh flag showed the engine default on the thugs for all of V5) |
 
 A pass that fails any check does not merge. Fix it on the branch, or drop the branch.
 
@@ -65,18 +65,18 @@ A pass that fails any check does not merge. Fix it on the branch, or drop the br
 
 ### P1: Settings-listener helper (proposal item 3)
 
-1. Add `FGothamSettingsListener` (`Accessibility/GothamSettingsListener.h`): `Bind(const UObject* Owner,
-   TFunction<void(const FGothamSettingsData&)>)`, `Reset()`, and an unbind in its destructor. Include a unit test
+1. Add `FMvsSettingsListener` (`Accessibility/MvsSettingsListener.h`): `Bind(const UObject* Owner,
+   TFunction<void(const FMvsSettingsData&)>)`, `Reset()`, and an unbind in its destructor. Include a unit test
    that binds, broadcasts, resets, and checks no call after reset or destruction.
-2. Convert the 11 subscribers one commit per class group: buttons (`UGothamButton`, `UGothamHintButton`), rows and
+2. Convert the 11 subscribers one commit per class group: buttons (`UMvsButton`, `UMvsHintButton`), rows and
    lists, screens and layout, glyph and HUD. Behaviour is identical.
-3. `UGothamSettingsAwareWidget` becomes a thin user of the helper (its public API is unchanged).
+3. `UMvsSettingsAwareWidget` becomes a thin user of the helper (its public API is unchanged).
 4. **Watch for:** unbind order in `NativeDestruct`, since the helper must reset before `Super`. Also, the settings
    screen previews high contrast live, so G4 must include the `colour-blind` and `combat-access` shots.
 
 ### P2: View-model binding helper (item 4, part a)
 
-1. Add `GothamMVVM::Bind(VM, Owner, Handler, { Fields... })` and `Unbind(VM, Owner)`, with a test on a real view
+1. Add `MvsMVVM::Bind(VM, Owner, Handler, { Fields... })` and `Unbind(VM, Owner)`, with a test on a real view
    model.
 2. Convert the widgets that bind several fields to one handler, file by file. Widgets that route fields to
    different handlers (the combo's decay fast path) keep their explicit calls.
@@ -85,20 +85,20 @@ A pass that fails any check does not merge. Fix it on the branch, or drop the br
 
 ### P3: One input-action table (item 2)
 
-1. Add `Input/GothamActionTable` with one `FGothamActionDef` per action (name, display text, value type,
+1. Add `Input/MvsActionTable` with one `FMvsActionDef` per action (name, display text, value type,
    default keyboard and gamepad keys, rebindable, has gamepad slot). The names are exactly today's mappable names.
 2. `BuildInputAssets` loops over the table. `FindAction` becomes a `TMap` lookup, and
-   `GothamBindings::GetDefinitions` is derived from the table (it keeps its signature, so the Controls screen and
+   `MvsBindings::GetDefinitions` is derived from the table (it keeps its signature, so the Controls screen and
    the rebinding tests don't change).
 3. Handlers stay explicit (`BindAction` per action), because their signatures differ.
-4. **Watch for:** saved rebinds. Before merging, run the rebind demo (`-GothamRebindDemo`), restart, and confirm the
+4. **Watch for:** saved rebinds. Before merging, run the rebind demo (`-MvsRebindDemo`), restart, and confirm the
    Controls screen still shows the rebound key. The P0 test pins the names.
 
 ### P4: Settings as a descriptor table (item 1, and item 4 part b for settings)
 
 This is the biggest logic pass, so it's split into three merges. Each one is gated.
 
-- **P4a: introduce the table beside the old code.** Add `FGothamSettingDescriptor` (id, config key, label,
+- **P4a: introduce the table beside the old code.** Add `FMvsSettingDescriptor` (id, config key, label,
   description, choice count, format-choice, get, set, wraps) and a table covering all nine settings. A test asserts
   that the table and the old switch statements agree for every setting and every choice (labels, values, positions,
   cycling). Nothing uses the table yet.
@@ -110,7 +110,7 @@ This is the biggest logic pass, so it's split into three merges. Each one is gat
   - The P0 characterization tests (including the config-format fixture) must pass unchanged.
 - **P4c: switch the view layer.**
   - `USettingsViewModel` gains a field-notify `Revision` counter.
-  - `UGothamOptionRow` subscribes to it instead of nine text fields.
+  - `UMvsOptionRow` subscribes to it instead of nine text fields.
   - The nine per-setting text properties stay for one pass (for any Blueprint binding), marked deprecated in a
     comment, then are removed in a follow-up commit once nothing reads them.
 - **Watch for:**
@@ -121,17 +121,17 @@ This is the biggest logic pass, so it's split into three merges. Each one is gat
 
 ### P5: Shared world-overlay base (item 7)
 
-1. Extract `SGothamWorldOverlay<TItem>` (provider, `SetActive`, active timer, per-frame invalidate) and a UMG base
-   `UGothamWorldOverlayLayer`, which holds the owning player, the projection helper and the view-model activation
+1. Extract `SMvsWorldOverlay<TItem>` (provider, `SetActive`, active timer, per-frame invalidate) and a UMG base
+   `UMvsWorldOverlayLayer`, which holds the owning player, the projection helper and the view-model activation
    hook.
-2. Port `SClueMarkerLayer` first. Detective shots go through G4, and the detective perf row through G5.
+2. Port `SClueMarkerLayer` first. Forensic shots go through G4, and the forensic perf row through G5.
 3. Port `SThreatIndicatorLayer`, then check the combat shots and combat perf row.
 4. **Watch for:** the timer must still unregister when inactive. G5's `hud-idle` row is the check.
 
 ### P6: Dev aids out of the player controller (item 5)
 
-1. **Move, no logic change:** `RunDevAids` and its helpers go to `Core/GothamDevAids.cpp` (compiled out of
-   Shipping), one function per flag. The controller calls `GothamDevAids::Run(this, UI)`.
+1. **Move, no logic change:** `RunDevAids` and its helpers go to `Core/MvsDevAids.cpp` (compiled out of
+   Shipping), one function per flag. The controller calls `MvsDevAids::Run(this, UI)`.
 2. **Separate behaviour commit:** fake clues become a flagged entry kind (`UClueEntryViewModel::bIsDebug`, set by
    the dev aid). The objective counts non-debug entries. `DebugClueCount` and `RemoveDebugClues` go away, and the
    harness teardown filters by the flag instead.
@@ -140,7 +140,7 @@ This is the biggest logic pass, so it's split into three merges. Each one is gat
 
 ### P7: One scripted-scenario runner (item 6)
 
-1. Add `FGothamScript` (steps `Wait`, `Do`, `Expect`, `Sample`, `Screenshot`, `Quit`), with a unit test of step
+1. Add `FMvsScript` (steps `Wait`, `Do`, `Expect`, `Sample`, `Screenshot`, `Quit`), with a unit test of step
    timing using a fake clock.
 2. Port the menu input test first (it has the most asserts). G3 must still show every PASS line, word for word.
 3. Port the perf harness scenarios. The report format stays identical, so G5 can still read both builds.
@@ -163,7 +163,7 @@ This is the biggest logic pass, so it's split into three merges. Each one is gat
 ### P9: Promote dev-flag checks to automation tests (item 11)
 
 1. Wrap the P7 scripts for the menu input rules as latent automation tests (they need a game world), tagged
-   `Gotham.Functional.*`.
+   `Mvs.Functional.*`.
 2. Teach `Scripts/run_tests.py` to run them in a game-mode pass, so G3 becomes part of G2.
 3. Screenshots stay a G4 review step; comparing screenshots automatically is out of scope.
 
@@ -177,7 +177,7 @@ This is the biggest logic pass, so it's split into three merges. Each one is gat
   existing C++ base class, starting with the simplest (pause).
 
 **P10 status (2026-09-30):** option rows are Common UI buttons (with a new menu rule for the selector's clicked
-half); `GothamLayout` exists and is used in the option row; ADR 0002 has the amendment for UMG static screens.
+half); `MvsLayout` exists and is used in the option row; ADR 0002 has the amendment for UMG static screens.
 Converting the pause menu itself needs its `WBP_` authored in the editor, so it waits for that.
 
 ## Timeline

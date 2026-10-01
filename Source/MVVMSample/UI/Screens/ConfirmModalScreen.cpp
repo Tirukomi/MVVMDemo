@@ -1,8 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Screens/ConfirmModalScreen.h"
 
-#include "UI/Style/GothamMetrics.h"
+#include "UI/Style/MvsMetrics.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/BackgroundBlur.h"
 #include "Components/Border.h"
@@ -14,12 +14,12 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
-#include "UI/Style/GothamMotion.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Widgets/GothamButton.h"
-#include "UI/Widgets/GothamPanel.h"
+#include "UI/Style/MvsMotion.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Widgets/MvsButton.h"
+#include "UI/Widgets/MvsPanel.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.ConfirmModal"
+#define LOCTEXT_NAMESPACE "Mvs.ConfirmModal"
 
 TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 {
@@ -41,14 +41,14 @@ TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 		Blur->SetContent(Dim);
 
 		USizeBox* Width = WidgetTree->ConstructWidget<USizeBox>();
-		Width->SetWidthOverride(GothamMetrics::ModalWidth);
+		Width->SetWidthOverride(MvsMetrics::ModalWidth);
 		UOverlaySlot* WidthSlot = Root->AddChildToOverlay(Width);
 		WidthSlot->SetHorizontalAlignment(HAlign_Center);
 		WidthSlot->SetVerticalAlignment(VAlign_Center);
 
-		Panel = WidgetTree->ConstructWidget<UGothamPanel>();
-		Panel->SetPanelPadding(GothamMetrics::ModalPadding);
-		Panel->SetShape(16.f, EGothamChamfer::Opposite);
+		Panel = WidgetTree->ConstructWidget<UMvsPanel>();
+		Panel->SetPanelPadding(MvsMetrics::ModalPadding);
+		Panel->SetShape(16.f, EMvsChamfer::Opposite);
 		Width->SetContent(Panel);
 		SlideTarget = Panel;
 		SlideFrom = FVector2D(0.f, 18.f);
@@ -56,27 +56,27 @@ TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
 		Panel->SetContent(Column);
 
-		CautionText = MakeText(LOCTEXT("Caution", "Caution"), EGothamTextStyle::Label, EGothamColorToken::Danger);
+		CautionText = MakeText(LOCTEXT("Caution", "Caution"), EMvsTextStyle::Label, EMvsColorToken::Danger);
 		CautionText->SetVisibility(ESlateVisibility::Collapsed);
 		Column->AddChildToVerticalBox(CautionText);
 
-		TitleText = MakeText(FText::GetEmpty(), EGothamTextStyle::Title, EGothamColorToken::TextPrimary);
+		TitleText = MakeText(FText::GetEmpty(), EMvsTextStyle::Title, EMvsColorToken::TextPrimary);
 		TitleText->SetAutoWrapText(true);
-		Column->AddChildToVerticalBox(TitleText)->SetPadding(GothamMetrics::TitlePadding);
+		Column->AddChildToVerticalBox(TitleText)->SetPadding(MvsMetrics::TitlePadding);
 
-		BodyText = MakeText(FText::GetEmpty(), EGothamTextStyle::Body, EGothamColorToken::TextMuted);
+		BodyText = MakeText(FText::GetEmpty(), EMvsTextStyle::Body, EMvsColorToken::TextMuted);
 		BodyText->SetAutoWrapText(true);
 		Column->AddChildToVerticalBox(BodyText)->SetPadding(FMargin(0.f, 0.f, 0.f, 26.f));
 
 		UHorizontalBox* Buttons = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Buttons)->SetHorizontalAlignment(HAlign_Right);
 
-		YesButton = WidgetTree->ConstructWidget<UGothamButton>();
+		YesButton = WidgetTree->ConstructWidget<UMvsButton>();
 		YesButton->SetLabel(LOCTEXT("Yes", "Yes"));
 		YesButton->OnClicked().AddLambda([this]() { Finish(true); });
 		Buttons->AddChildToHorizontalBox(YesButton)->SetPadding(FMargin(0.f, 0.f, 12.f, 0.f));
 
-		UGothamButton* No = WidgetTree->ConstructWidget<UGothamButton>();
+		UMvsButton* No = WidgetTree->ConstructWidget<UMvsButton>();
 		No->SetLabel(LOCTEXT("No", "No"));
 		No->OnClicked().AddLambda([this]() { Finish(false); });
 		Buttons->AddChildToHorizontalBox(No);
@@ -98,7 +98,7 @@ void UConfirmModalScreen::Setup(const FText& InTitle, const FText& InBody, FOnCo
 		TitleText->SetText(InTitle);
 		BodyText->SetText(InBody);
 		CautionText->SetVisibility(bDestructive ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-		YesButton->SetKind(bDestructive ? EGothamButtonKind::Danger : EGothamButtonKind::Standard);
+		YesButton->SetKind(bDestructive ? EMvsButtonKind::Danger : EMvsButtonKind::Standard);
 	}
 	ApplyTheme();
 }
@@ -108,9 +108,9 @@ void UConfirmModalScreen::ApplyTheme()
 	Super::ApplyTheme();
 	if (Panel)
 	{
-		const EGothamColorToken Accent = bDestructive ? EGothamColorToken::Danger : EGothamColorToken::Accent;
-		Panel->SetColors(GothamStyle::Token(this, EGothamColorToken::Panel, 0.96f), GothamStyle::Token(this, Accent, 0.7f));
-		Panel->SetAccent(GothamStyle::Token(this, Accent), 4.f);
+		const EMvsColorToken Accent = bDestructive ? EMvsColorToken::Danger : EMvsColorToken::Accent;
+		Panel->SetColors(MvsStyle::Token(this, EMvsColorToken::Panel, 0.96f), MvsStyle::Token(this, Accent, 0.7f));
+		Panel->SetAccent(MvsStyle::Token(this, Accent), 4.f);
 	}
 }
 

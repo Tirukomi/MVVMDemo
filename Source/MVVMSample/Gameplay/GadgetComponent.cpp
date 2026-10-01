@@ -1,8 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Gameplay/GadgetComponent.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Gadgets"
+#define LOCTEXT_NAMESPACE "Mvs.Gadgets"
 
 UGadgetComponent::UGadgetComponent()
 {
@@ -11,7 +11,7 @@ UGadgetComponent::UGadgetComponent()
 
 	auto Make = [](FText Name, float Cooldown, FLinearColor Tint, int32 Icon)
 	{
-		FGothamGadgetDefinition Def;
+		FMvsGadgetDefinition Def;
 		Def.DisplayName = Name;
 		Def.CooldownSeconds = Cooldown;
 		Def.Tint = Tint;
@@ -19,14 +19,14 @@ UGadgetComponent::UGadgetComponent()
 		return Def;
 	};
 	Gadgets = {
-		Make(LOCTEXT("WingBlade", "Wing-Blade"), 3.f, FLinearColor(0.9f, 0.75f, 0.2f), 0),
+		Make(LOCTEXT("Glaive", "Glaive"), 3.f, FLinearColor(0.9f, 0.75f, 0.2f), 0),
 		Make(LOCTEXT("Grapnel", "Grapnel"), 6.f, FLinearColor(0.3f, 0.7f, 1.f), 1),
 		Make(LOCTEXT("Smoke", "Smoke Pellet"), 10.f, FLinearColor(0.7f, 0.4f, 1.f), 2),
 	};
 	Remaining.Init(0.f, Gadgets.Num());
 }
 
-void UGadgetComponent::SetGadgets(const TArray<FGothamGadgetDefinition>& NewGadgets)
+void UGadgetComponent::SetGadgets(const TArray<FMvsGadgetDefinition>& NewGadgets)
 {
 	Gadgets = NewGadgets;
 	Remaining.Init(0.f, Gadgets.Num());

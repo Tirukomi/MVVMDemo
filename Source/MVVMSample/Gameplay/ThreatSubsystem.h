@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
@@ -7,17 +7,17 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "ThreatSubsystem.generated.h"
 
-class AGothamThug;
+class AMvsThug;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnThreatsUpdated, const TArray<FGothamThreatSnapshot>&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnThreatsUpdated, const TArray<FMvsThreatSnapshot>&);
 
 /**
- * Runs every thug in the world: advances their brains, lets FGothamAttackDirector pick who telegraphs next, resolves
+ * Runs every thug in the world: advances their brains, lets FMvsAttackDirector pick who telegraphs next, resolves
  * strikes and counters, and publishes one snapshot list per frame for the HUD (via the threat view model). Ticks only
  * while thugs exist.
  */
 UCLASS()
-class MVVMSAMPLE_API UGothamThreatSubsystem : public UTickableWorldSubsystem
+class MVVMSAMPLE_API UMvsThreatSubsystem : public UTickableWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -29,18 +29,18 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Threats")
 	float CounterRange = 650.f;
 
-	void Register(AGothamThug* Thug);
-	void Unregister(AGothamThug* Thug);
+	void Register(AMvsThug* Thug);
+	void Unregister(AMvsThug* Thug);
 
 	/** The player pressed Counter. Returns the countered thug, or null if nobody was in a counterable warning. */
-	AGothamThug* TryCounter(APawn* Player);
+	AMvsThug* TryCounter(APawn* Player);
 
 	/** Off stops new warnings (screenshots, perf baselines). Warnings in flight still play out. */
 	void SetDirectorEnabled(bool bEnabled) { bDirectorEnabled = bEnabled; }
 	/** Dev aid: makes the thug nearest the camera's view centre start warning now. */
-	AGothamThug* ForceWarningOnVisible();
+	AMvsThug* ForceWarningOnVisible();
 	/** Dev aid: the idle thug most behind the camera starts warning now (shows the edge arrow). */
-	AGothamThug* ForceWarningBehind();
+	AMvsThug* ForceWarningBehind();
 
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
@@ -53,11 +53,11 @@ protected:
 private:
 	APawn* GetPlayerPawn() const;
 	/** Idle thug with the highest (or lowest) dot product against the camera's view direction. */
-	AGothamThug* ForceWarning(bool bMostInView);
+	AMvsThug* ForceWarning(bool bMostInView);
 	void Publish(const APawn* Player);
 
-	TArray<TWeakObjectPtr<AGothamThug>> Thugs;
-	TArray<FGothamThreatSnapshot> Snapshots;
-	FGothamAttackDirector Director;
+	TArray<TWeakObjectPtr<AMvsThug>> Thugs;
+	TArray<FMvsThreatSnapshot> Snapshots;
+	FMvsAttackDirector Director;
 	bool bDirectorEnabled = true;
 };

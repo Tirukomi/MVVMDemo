@@ -1,10 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/Widget.h"
-#include "UI/Slate/GothamWheelTypes.h"
+#include "UI/Slate/MvsWheelTypes.h"
 #include "GadgetWheel.generated.h"
 
 class SGadgetWheel;
@@ -19,11 +19,11 @@ class MVVMSAMPLE_API UGadgetWheel : public UWidget
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheel", meta = (ShowOnlyInnerProperties))
-	FGothamGadgetWheelStyle WheelStyle;
+	FMvsGadgetWheelStyle WheelStyle;
 
 	/** Default items, mostly useful in the designer; at runtime a view model supplies them. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheel")
-	TArray<FGothamWheelItem> Items;
+	TArray<FMvsWheelItem> Items;
 
 	UPROPERTY(BlueprintAssignable, Category = "Wheel|Events")
 	FOnGadgetWheelIndexEvent OnItemSelected;
@@ -35,7 +35,7 @@ public:
 	bool bReduceMotion = false;
 
 	UFUNCTION(BlueprintCallable, Category = "Wheel")
-	void SetItems(const TArray<FGothamWheelItem>& InItems);
+	void SetItems(const TArray<FMvsWheelItem>& InItems);
 
 	UFUNCTION(BlueprintCallable, Category = "Wheel")
 	void SetStickInput(FVector2D Stick);

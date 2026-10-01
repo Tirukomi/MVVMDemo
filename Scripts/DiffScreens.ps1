@@ -1,3 +1,4 @@
+# Copyright IG. All Rights Reserved.
 # Compares two folders of screenshots (same file names) and reports how much of each image changed.
 # Used by Scripts/Verify.ps1 as the screenshot regression check (G4). No downloads: System.Drawing plus a few lines
 # of C# compiled on the fly, because a per-pixel loop in PowerShell is far too slow for 1280x720 images.
@@ -12,7 +13,7 @@
 #
 # Per-image noise: -RecordNoise diffs two captures of the same code and writes each image's changed share to the
 # noise file (Scripts/ScreenNoise.json). Later runs hold deterministic images (menus: no noise) to 0.1% and allow
-# animated ones (Detective Mode, rain) 3x their noise + 0.5 points. Images without an entry use -Threshold.
+# animated ones (Forensic Mode, rain) 3x their noise + 0.5 points. Images without an entry use -Threshold.
 param(
     [Parameter(Mandatory = $true)][string]$Baseline,
     [Parameter(Mandatory = $true)][string]$Current,
@@ -28,14 +29,14 @@ if (-not $RecordNoise -and (Test-Path $NoiseFile)) {
 $measured = [ordered]@{}
 
 Add-Type -AssemblyName System.Drawing
-if (-not ("GothamImageDiff" -as [type])) {
+if (-not ("MvsImageDiff" -as [type])) {
     Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @"
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
-public static class GothamImageDiff
+public static class MvsImageDiff
 {
     // Returns the percentage of pixels whose summed RGB distance exceeds tolerance; writes a diff image if asked.
     public static double Compare(string a, string b, int tolerance, string diffPath)
@@ -114,7 +115,7 @@ foreach ($base in Get-ChildItem (Join-Path $Baseline "*.png")) {
         continue
     }
     try {
-        $pct = [GothamImageDiff]::Compare($base.FullName, (Resolve-Path $cur).Path, $ColorTolerance, "")
+        $pct = [MvsImageDiff]::Compare($base.FullName, (Resolve-Path $cur).Path, $ColorTolerance, "")
     } catch {
         # An unreadable image is a failure, never a silent pass.
         $rows += "ERROR    $($base.Name): $($_.Exception.Message)"
@@ -123,14 +124,14 @@ foreach ($base in Get-ChildItem (Join-Path $Baseline "*.png")) {
     }
     $measured[$base.Name] = [math]::Round($pct, 3)
     # Deterministic images (no measured noise) are held to 0.1%; animated ones get 3x their noise plus half a point,
-    # because one pair of captures understates noise that depends on when the frame lands (detective-reveal read
+    # because one pair of captures understates noise that depends on when the frame lands (forensic-reveal read
     # 0.7% in one pair and 2.3% in another).
     $allowed = if (-not $noise.ContainsKey($base.Name)) { $Threshold }
                elseif ($noise[$base.Name] -le 0.01) { 0.1 }
                else { 3 * $noise[$base.Name] + 0.5 }
     if (-not $RecordNoise -and $pct -gt $allowed) {
         $curPath = (Resolve-Path $cur).Path
-        [void][GothamImageDiff]::Compare($base.FullName, $curPath, $ColorTolerance, ($curPath -replace '\.png$', '.diff.png'))
+        [void][MvsImageDiff]::Compare($base.FullName, $curPath, $ColorTolerance, ($curPath -replace '\.png$', '.diff.png'))
         $rows += ("REVIEW   {0,-22} {1,6:N2}% changed (allowed {2:N2}%)" -f $base.Name, $pct, $allowed)
         $failed++
     } else {

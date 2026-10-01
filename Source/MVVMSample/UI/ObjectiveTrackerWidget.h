@@ -1,19 +1,19 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/GothamSettingsAwareWidget.h"
+#include "UI/MvsSettingsAwareWidget.h"
 #include "ObjectiveTrackerWidget.generated.h"
 
 class UComboMeter;
-class UGothamPanel;
+class UMvsPanel;
 class UObjectivesViewModel;
 class UTextBlock;
 
 /** Objective panel: a muted "OBJECTIVE" label, the objective, "2 / 5" and a segmented progress rule. */
 UCLASS()
-class MVVMSAMPLE_API UObjectiveTrackerWidget : public UGothamSettingsAwareWidget
+class MVVMSAMPLE_API UObjectiveTrackerWidget : public UMvsSettingsAwareWidget
 {
 	GENERATED_BODY()
 
@@ -33,7 +33,7 @@ private:
 	TObjectPtr<UObjectivesViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> Panel;
+	TObjectPtr<UMvsPanel> Panel;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> HeaderText;

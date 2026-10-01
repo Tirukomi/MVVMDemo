@@ -1,7 +1,7 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/ClueEntryWidget.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Style/MvsStyle.h"
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/Image.h"
@@ -12,15 +12,15 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Widgets/GothamPanel.h"
-#include "UI/Widgets/GothamText.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Widgets/MvsPanel.h"
+#include "UI/Widgets/MvsText.h"
 #include "ViewModels/ClueViewModels.h"
-#include "ViewModels/GothamMVVM.h"
+#include "ViewModels/MvsMVVM.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.ClueLog"
+#define LOCTEXT_NAMESPACE "Mvs.ClueLog"
 
-FText GothamCaseNumber(int32 Index)
+FText MvsCaseNumber(int32 Index)
 {
 	FNumberFormattingOptions Digits;
 	Digits.MinimumIntegralDigits = 3;
@@ -38,9 +38,9 @@ TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 		Outer->SetHeightOverride(TileHeight - 12.f);
 		WidgetTree->RootWidget = Outer;
 
-		Frame = WidgetTree->ConstructWidget<UGothamPanel>();
+		Frame = WidgetTree->ConstructWidget<UMvsPanel>();
 		Frame->SetPanelPadding(FMargin(7.f));
-		Frame->SetShape(10.f, EGothamChamfer::Opposite);
+		Frame->SetShape(10.f, EMvsChamfer::Opposite);
 		Outer->SetContent(Frame);
 
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -55,20 +55,20 @@ TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 		ThumbSlot->SetHorizontalAlignment(HAlign_Fill);
 		ThumbSlot->SetVerticalAlignment(VAlign_Fill);
 
-		UnknownMark = WidgetTree->ConstructWidget<UGothamText>();
+		UnknownMark = WidgetTree->ConstructWidget<UMvsText>();
 		UnknownMark->SetText(FText::FromString(TEXT("?")));
-		GothamStyle::SetTextStyle(UnknownMark, EGothamTextStyle::Display);
+		MvsStyle::SetTextStyle(UnknownMark, EMvsTextStyle::Display);
 		UOverlaySlot* MarkSlot = Picture->AddChildToOverlay(UnknownMark);
 		MarkSlot->SetHorizontalAlignment(HAlign_Center);
 		MarkSlot->SetVerticalAlignment(VAlign_Center);
 
-		CaseNumber = WidgetTree->ConstructWidget<UGothamText>();
-		GothamStyle::SetTextStyle(CaseNumber, EGothamTextStyle::Key);
+		CaseNumber = WidgetTree->ConstructWidget<UMvsText>();
+		MvsStyle::SetTextStyle(CaseNumber, EMvsTextStyle::Key);
 		UOverlaySlot* NumberSlot = Picture->AddChildToOverlay(CaseNumber);
 		NumberSlot->SetPadding(FMargin(5.f, 3.f));
 
-		TitleText = WidgetTree->ConstructWidget<UGothamText>();
-		GothamStyle::ApplyText(TitleText, EGothamTextStyle::Label, FLinearColor::White);
+		TitleText = WidgetTree->ConstructWidget<UMvsText>();
+		MvsStyle::ApplyText(TitleText, EMvsTextStyle::Label, FLinearColor::White);
 		TitleText->SetClipping(EWidgetClipping::ClipToBounds);
 		Column->AddChildToVerticalBox(TitleText)->SetPadding(FMargin(1.f, 6.f, 0.f, 0.f));
 	}
@@ -90,7 +90,7 @@ void UClueEntryWidget::NativeOnItemSelectionChanged(bool bIsSelected)
 
 void UClueEntryWidget::NativeConstruct()
 {
-	// Deliberately NOT GothamUI::DisableTick: list views force their entry rows to tick after generating them
+	// Deliberately NOT MvsUI::DisableTick: list views force their entry rows to tick after generating them
 	// (UListViewBase::HandleGenerateRow calls SetCanTick(true) so selection works). An entry flagged Never would then
 	// trip UUserWidget::NativeTick's "mismatching tick states" ensure. The tick itself is empty and bounded by the
 	// tiles on screen.
@@ -114,14 +114,14 @@ void UClueEntryWidget::Bind(UClueEntryViewModel* InViewModel)
 {
 	if (ViewModel)
 	{
-		GothamMVVM::Unbind(ViewModel, this);
+		MvsMVVM::Unbind(ViewModel, this);
 		ViewModel->CancelThumbnail();
 	}
 	ViewModel = InViewModel;
 	if (ViewModel)
 	{
 		using FVM = UClueEntryViewModel::FFieldNotificationClassDescriptor;
-		GothamMVVM::Bind(ViewModel, this, &UClueEntryWidget::OnFieldChanged, { FVM::DisplayTitle, FVM::bIsDiscovered, FVM::Thumbnail });
+		MvsMVVM::Bind(ViewModel, this, &UClueEntryWidget::OnFieldChanged, { FVM::DisplayTitle, FVM::bIsDiscovered, FVM::Thumbnail });
 		if (ViewModel->GetIsDiscovered())
 		{
 			ViewModel->RequestThumbnail();
@@ -136,14 +136,14 @@ void UClueEntryWidget::Refresh()
 	{
 		return;
 	}
-	using namespace GothamStyle;
+	using namespace MvsStyle;
 	const bool bDiscovered = ViewModel->GetIsDiscovered();
 	TitleText->SetText(ViewModel->GetDisplayTitle());
-	TitleText->SetColorAndOpacity(Token(this, bDiscovered ? EGothamColorToken::TextPrimary : EGothamColorToken::TextMuted));
+	TitleText->SetColorAndOpacity(Token(this, bDiscovered ? EMvsColorToken::TextPrimary : EMvsColorToken::TextMuted));
 
 	const UListView* Owner = Cast<UListView>(GetOwningListView());
-	CaseNumber->SetText(Owner ? GothamCaseNumber(Owner->GetIndexForItem(ViewModel)) : FText::GetEmpty());
-	CaseNumber->SetColorAndOpacity(Token(this, EGothamColorToken::TextMuted));
+	CaseNumber->SetText(Owner ? MvsCaseNumber(Owner->GetIndexForItem(ViewModel)) : FText::GetEmpty());
+	CaseNumber->SetColorAndOpacity(Token(this, EMvsColorToken::TextMuted));
 
 	// Thumbnails only load for discovered clues, and only once a tile that shows them is on screen.
 	if (bDiscovered)
@@ -159,10 +159,10 @@ void UClueEntryWidget::Refresh()
 	else
 	{
 		Thumbnail->SetBrush(FSlateBrush());
-		Thumbnail->SetColorAndOpacity(Token(this, EGothamColorToken::PanelEdge, 0.12f));
+		Thumbnail->SetColorAndOpacity(Token(this, EMvsColorToken::PanelEdge, 0.12f));
 	}
 	UnknownMark->SetVisibility(bDiscovered ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
-	UnknownMark->SetColorAndOpacity(Token(this, EGothamColorToken::PanelEdge, 0.5f));
+	UnknownMark->SetColorAndOpacity(Token(this, EMvsColorToken::PanelEdge, 0.5f));
 	ApplySelection();
 }
 
@@ -172,12 +172,12 @@ void UClueEntryWidget::ApplySelection()
 	{
 		return;
 	}
-	using namespace GothamStyle;
-	const FLinearColor Accent = Token(this, EGothamColorToken::Accent);
-	Frame->SetColors(Token(this, EGothamColorToken::Panel, PanelAlpha(this)),
-		bSelected ? Accent : Token(this, EGothamColorToken::PanelEdge, 0.45f), bSelected ? 1.5f : 1.f);
+	using namespace MvsStyle;
+	const FLinearColor Accent = Token(this, EMvsColorToken::Accent);
+	Frame->SetColors(Token(this, EMvsColorToken::Panel, PanelAlpha(this)),
+		bSelected ? Accent : Token(this, EMvsColorToken::PanelEdge, 0.45f), bSelected ? 1.5f : 1.f);
 	Frame->SetAccent(Accent, bSelected ? 3.f : 0.f);
-	Frame->SetGlow(Token(this, EGothamColorToken::Accent, 0.3f), bSelected ? 5.f : 0.f);
+	Frame->SetGlow(Token(this, EMvsColorToken::Accent, 0.3f), bSelected ? 5.f : 0.f);
 }
 
 #undef LOCTEXT_NAMESPACE

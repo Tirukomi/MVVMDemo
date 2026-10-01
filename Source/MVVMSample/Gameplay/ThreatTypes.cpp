@@ -1,65 +1,65 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Gameplay/ThreatTypes.h"
 
-bool FGothamThugBrain::BeginWarning()
+bool FMvsThugBrain::BeginWarning()
 {
-	if (State != EGothamThugState::Idle)
+	if (State != EMvsThugState::Idle)
 	{
 		return false;
 	}
-	State = EGothamThugState::Warning;
+	State = EMvsThugState::Warning;
 	Elapsed = 0.f;
 	return true;
 }
 
-bool FGothamThugBrain::Counter()
+bool FMvsThugBrain::Counter()
 {
-	if (State != EGothamThugState::Warning)
+	if (State != EMvsThugState::Warning)
 	{
 		return false;
 	}
-	State = EGothamThugState::Stunned;
+	State = EMvsThugState::Stunned;
 	Elapsed = 0.f;
 	return true;
 }
 
-EGothamThugEvent FGothamThugBrain::Advance(float DeltaSeconds)
+EMvsThugEvent FMvsThugBrain::Advance(float DeltaSeconds)
 {
 	Elapsed += FMath::Max(DeltaSeconds, 0.f);
 	switch (State)
 	{
-	case EGothamThugState::Warning:
+	case EMvsThugState::Warning:
 		if (Elapsed >= WarningSeconds)
 		{
-			State = EGothamThugState::Recover;
+			State = EMvsThugState::Recover;
 			Elapsed = 0.f;
-			return EGothamThugEvent::Strike;
+			return EMvsThugEvent::Strike;
 		}
 		break;
-	case EGothamThugState::Stunned:
-	case EGothamThugState::Recover:
-		if (Elapsed >= (State == EGothamThugState::Stunned ? StunSeconds : RecoverSeconds))
+	case EMvsThugState::Stunned:
+	case EMvsThugState::Recover:
+		if (Elapsed >= (State == EMvsThugState::Stunned ? StunSeconds : RecoverSeconds))
 		{
-			State = EGothamThugState::Idle;
+			State = EMvsThugState::Idle;
 			Elapsed = 0.f;
-			return EGothamThugEvent::Ready;
+			return EMvsThugEvent::Ready;
 		}
 		break;
 	default:
 		break;
 	}
-	return EGothamThugEvent::None;
+	return EMvsThugEvent::None;
 }
 
-float FGothamThugBrain::GetWarningProgress() const
+float FMvsThugBrain::GetWarningProgress() const
 {
-	return State == EGothamThugState::Warning ? FMath::Clamp(Elapsed / WarningSeconds, 0.f, 1.f) : 0.f;
+	return State == EMvsThugState::Warning ? FMath::Clamp(Elapsed / WarningSeconds, 0.f, 1.f) : 0.f;
 }
 
-int32 FGothamAttackDirector::Advance(float DeltaSeconds, const TArray<EGothamThugState>& States, const TArray<float>& Distances)
+int32 FMvsAttackDirector::Advance(float DeltaSeconds, const TArray<EMvsThugState>& States, const TArray<float>& Distances)
 {
-	if (States.Contains(EGothamThugState::Warning))
+	if (States.Contains(EMvsThugState::Warning))
 	{
 		// Someone is already telegraphing; the breather starts once they are done.
 		Cooldown = FMath::Max(Cooldown, MinGapSeconds);
@@ -74,7 +74,7 @@ int32 FGothamAttackDirector::Advance(float DeltaSeconds, const TArray<EGothamThu
 	TArray<int32> Candidates;
 	for (int32 i = 0; i < States.Num() && i < Distances.Num(); ++i)
 	{
-		if (States[i] == EGothamThugState::Idle && Distances[i] <= EngageRange)
+		if (States[i] == EMvsThugState::Idle && Distances[i] <= EngageRange)
 		{
 			Candidates.Add(i);
 		}
@@ -87,7 +87,7 @@ int32 FGothamAttackDirector::Advance(float DeltaSeconds, const TArray<EGothamThu
 	return Candidates[Random.RandHelper(Candidates.Num())];
 }
 
-namespace GothamThreat
+namespace MvsThreat
 {
 	void EdgeArrow(const FVector& ViewDirection, const FVector2D& Viewport, float Inset, FVector2D& OutPosition, float& OutAngle)
 	{
@@ -113,7 +113,7 @@ namespace GothamThreat
 	}
 }
 
-namespace GothamCombo
+namespace MvsCombo
 {
 	int32 MilestoneReached(int32 Previous, int32 Current, int32 Step)
 	{
@@ -126,7 +126,7 @@ namespace GothamCombo
 	}
 }
 
-bool FGothamTrauma::Advance(float DeltaSeconds)
+bool FMvsTrauma::Advance(float DeltaSeconds)
 {
 	Trauma = FMath::Max(0.f, Trauma - DrainPerSecond * FMath::Max(DeltaSeconds, 0.f));
 	return Trauma > 0.f;

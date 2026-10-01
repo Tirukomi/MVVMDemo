@@ -1,9 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Screens/SettingsScreen.h"
 
-#include "UI/Style/GothamMetrics.h"
-#include "Accessibility/GothamSettingsSubsystem.h"
+#include "UI/Style/MvsMetrics.h"
+#include "Accessibility/MvsSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
@@ -14,18 +14,18 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/LocalPlayer.h"
-#include "UI/GothamUISettings.h"
-#include "UI/Layout/GothamUISubsystem.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Widgets/GothamButton.h"
-#include "UI/Widgets/GothamMenuList.h"
-#include "UI/Widgets/GothamOptionRow.h"
-#include "UI/Widgets/GothamPanel.h"
-#include "UI/Widgets/GothamTabList.h"
-#include "ViewModels/GothamMVVM.h"
+#include "UI/MvsUISettings.h"
+#include "UI/Layout/MvsUISubsystem.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Widgets/MvsButton.h"
+#include "UI/Widgets/MvsMenuList.h"
+#include "UI/Widgets/MvsOptionRow.h"
+#include "UI/Widgets/MvsPanel.h"
+#include "UI/Widgets/MvsTabList.h"
+#include "ViewModels/MvsMVVM.h"
 #include "ViewModels/SettingsViewModel.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.SettingsScreen"
+#define LOCTEXT_NAMESPACE "Mvs.SettingsScreen"
 
 TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 {
@@ -33,7 +33,7 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 	{
 		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "Options"), LOCTEXT("Title", "Settings"));
 
-		Tabs = WidgetTree->ConstructWidget<UGothamTabList>();
+		Tabs = WidgetTree->ConstructWidget<UMvsTabList>();
 		Column->AddChildToVerticalBox(Tabs)->SetPadding(FMargin(0.f, 0.f, 0.f, 20.f));
 
 		UHorizontalBox* Split = WidgetTree->ConstructWidget<UHorizontalBox>();
@@ -41,25 +41,25 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 
 		// Left: the pages. Each page scrolls, so large UI scales and long translations never push rows off screen.
 		USizeBox* PageWidth = WidgetTree->ConstructWidget<USizeBox>();
-		PageWidth->SetWidthOverride(GothamMetrics::SettingsPageWidth);
+		PageWidth->SetWidthOverride(MvsMetrics::SettingsPageWidth);
 		Split->AddChildToHorizontalBox(PageWidth);
-		Switcher = WidgetTree->ConstructWidget<UGothamSwitcher>();
+		Switcher = WidgetTree->ConstructWidget<UMvsSwitcher>();
 		PageWidth->SetContent(Switcher);
 		Tabs->SetLinkedSwitcher(Switcher);
 
-		for (const FGothamSettingsTab& Tab : USettingsViewModel::GetTabs())
+		for (const FMvsSettingsTab& Tab : USettingsViewModel::GetTabs())
 		{
 			UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>();
 			// Keep the focused row on screen as gamepad / keyboard focus moves.
 			Scroll->SetScrollWhenFocusChanges(EScrollWhenFocusChanges::AnimatedScroll);
-			UGothamMenuList* List = WidgetTree->ConstructWidget<UGothamMenuList>();
+			UMvsMenuList* List = WidgetTree->ConstructWidget<UMvsMenuList>();
 			Scroll->AddChild(List);
 			List->OnCurrentItemChanged.AddUObject(this, &USettingsScreen::OnCurrentItemChanged);
 			Pages.Add(List);
 
-			for (const EGothamSetting Setting : Tab.Settings)
+			for (const EMvsSetting Setting : Tab.Settings)
 			{
-				UGothamOptionRow* Row = WidgetTree->ConstructWidget<UGothamOptionRow>();
+				UMvsOptionRow* Row = WidgetTree->ConstructWidget<UMvsOptionRow>();
 				List->AddItem(Row);
 				Rows.Add(Row);
 				RowSettings.Add(Setting);
@@ -67,7 +67,7 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 			if (Tab.Id == TEXT("Controls"))
 			{
 				// Rebinding has its own screen; it lives in this tab as one more item.
-				UGothamButton* Bindings = AddMenuItem(List, LOCTEXT("KeyBindings", "Key bindings"));
+				UMvsButton* Bindings = AddMenuItem(List, LOCTEXT("KeyBindings", "Key bindings"));
 				Bindings->OnClicked().AddLambda([this]() { OpenControls(); });
 				KeyBindingsItem = Bindings;
 			}
@@ -83,35 +83,35 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 
 		// Right: what the focused option does.
 		USizeBox* DetailWidth = WidgetTree->ConstructWidget<USizeBox>();
-		DetailWidth->SetWidthOverride(GothamMetrics::SettingsDetailWidth);
+		DetailWidth->SetWidthOverride(MvsMetrics::SettingsDetailWidth);
 		Split->AddChildToHorizontalBox(DetailWidth)->SetVerticalAlignment(VAlign_Top);
-		DetailPanel = WidgetTree->ConstructWidget<UGothamPanel>();
-		DetailPanel->SetPanelPadding(GothamMetrics::SettingsDetailPadding);
-		DetailPanel->SetShape(12.f, EGothamChamfer::Opposite);
+		DetailPanel = WidgetTree->ConstructWidget<UMvsPanel>();
+		DetailPanel->SetPanelPadding(MvsMetrics::SettingsDetailPadding);
+		DetailPanel->SetShape(12.f, EMvsChamfer::Opposite);
 		DetailWidth->SetContent(DetailPanel);
 		UVerticalBox* Detail = WidgetTree->ConstructWidget<UVerticalBox>();
 		DetailPanel->SetContent(Detail);
-		DetailTitle = MakeText(FText::GetEmpty(), EGothamTextStyle::Header, EGothamColorToken::TextPrimary);
+		DetailTitle = MakeText(FText::GetEmpty(), EMvsTextStyle::Header, EMvsColorToken::TextPrimary);
 		DetailTitle->SetAutoWrapText(true);
 		Detail->AddChildToVerticalBox(DetailTitle)->SetPadding(FMargin(0.f, 0.f, 0.f, 8.f));
-		DetailBody = MakeText(FText::GetEmpty(), EGothamTextStyle::Body, EGothamColorToken::TextMuted);
+		DetailBody = MakeText(FText::GetEmpty(), EMvsTextStyle::Body, EMvsColorToken::TextMuted);
 		DetailBody->SetAutoWrapText(true);
 		// Long compounds (German) and unbroken runs (pseudo-locale) wrap by character rather than overflow.
 		DetailBody->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
 		Detail->AddChildToVerticalBox(DetailBody);
 
 		// Bottom-left: unapplied-changes note and the actions.
-		DirtyNote = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::Warning);
-		Column->AddChildToVerticalBox(DirtyNote)->SetPadding(FMargin(GothamMetrics::ItemIndent, 12.f, 0.f, 8.f));
+		DirtyNote = MakeText(FText::GetEmpty(), EMvsTextStyle::Label, EMvsColorToken::Warning);
+		Column->AddChildToVerticalBox(DirtyNote)->SetPadding(FMargin(MvsMetrics::ItemIndent, 12.f, 0.f, 8.f));
 
 		UHorizontalBox* Buttons = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Buttons);
 		auto AddAction = [&](const FText& Label, TFunction<void()> Action)
 		{
-			UGothamButton* Button = WidgetTree->ConstructWidget<UGothamButton>();
+			UMvsButton* Button = WidgetTree->ConstructWidget<UMvsButton>();
 			Button->SetLabel(Label);
 			Button->OnClicked().AddLambda(MoveTemp(Action));
-			Buttons->AddChildToHorizontalBox(Button)->SetPadding(FMargin(0.f, 0.f, GothamMetrics::ButtonGap, 0.f));
+			Buttons->AddChildToHorizontalBox(Button)->SetPadding(FMargin(0.f, 0.f, MvsMetrics::ButtonGap, 0.f));
 		};
 		AddAction(LOCTEXT("Apply", "Apply"), [this]() { if (ViewModel) { ViewModel->Apply(); } });
 		AddAction(LOCTEXT("Revert", "Revert"), [this]() { if (ViewModel) { ViewModel->Revert(); } });
@@ -127,7 +127,7 @@ void USettingsScreen::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
+	if (UMvsSettingsSubsystem* Settings = UMvsSettingsSubsystem::Get(this))
 	{
 		ViewModel = Settings->GetViewModel();
 		for (int32 i = 0; i < Rows.Num(); ++i)
@@ -135,20 +135,20 @@ void USettingsScreen::NativeConstruct()
 			Rows[i]->Setup(RowSettings[i], ViewModel);
 		}
 		using FVM = USettingsViewModel::FFieldNotificationClassDescriptor;
-		GothamMVVM::Bind(ViewModel, this, &USettingsScreen::OnViewModelChanged, { FVM::bIsDirty, FVM::Revision });
+		MvsMVVM::Bind(ViewModel, this, &USettingsScreen::OnViewModelChanged, { FVM::bIsDirty, FVM::Revision });
 	}
 	RefreshDirtyNote();
 	ShowDetail(Rows.IsEmpty() ? nullptr : Rows[0].Get());
 
 #if !UE_BUILD_SHIPPING
-	// Screenshot aid: -GothamSettingsTab=<Id> opens on that tab, focused on its first item (or on item
-	// -GothamSettingsItem=<n>, counted from 0).
+	// Screenshot aid: -MvsSettingsTab=<Id> opens on that tab, focused on its first item (or on item
+	// -MvsSettingsItem=<n>, counted from 0).
 	FString StartTab;
-	if (FParse::Value(FCommandLine::Get(), TEXT("GothamSettingsTab="), StartTab) && Tabs->SelectTabByID(FName(*StartTab)))
+	if (FParse::Value(FCommandLine::Get(), TEXT("MvsSettingsTab="), StartTab) && Tabs->SelectTabByID(FName(*StartTab)))
 	{
-		const int32 Index = USettingsViewModel::GetTabs().IndexOfByPredicate([&StartTab](const FGothamSettingsTab& Tab) { return Tab.Id == FName(*StartTab); });
+		const int32 Index = USettingsViewModel::GetTabs().IndexOfByPredicate([&StartTab](const FMvsSettingsTab& Tab) { return Tab.Id == FName(*StartTab); });
 		int32 Item = 0;
-		FParse::Value(FCommandLine::Get(), TEXT("GothamSettingsItem="), Item);
+		FParse::Value(FCommandLine::Get(), TEXT("MvsSettingsItem="), Item);
 		if (Pages.IsValidIndex(Index) && Pages[Index]->GetItems().IsValidIndex(Item))
 		{
 			DefaultFocus = Pages[Index]->GetItems()[Item];
@@ -160,7 +160,7 @@ void USettingsScreen::NativeConstruct()
 
 void USettingsScreen::NativeDestruct()
 {
-	GothamMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(ViewModel, this);
 	Super::NativeDestruct();
 }
 
@@ -211,7 +211,7 @@ void USettingsScreen::ShowDetail(UWidget* Item)
 	{
 		return;
 	}
-	if (const UGothamOptionRow* Row = Cast<UGothamOptionRow>(Item))
+	if (const UMvsOptionRow* Row = Cast<UMvsOptionRow>(Item))
 	{
 		DetailTitle->SetText(USettingsViewModel::GetLabel(Row->GetSetting()));
 		DetailBody->SetText(USettingsViewModel::GetDescription(Row->GetSetting()));
@@ -235,9 +235,9 @@ void USettingsScreen::ApplyTheme()
 	Super::ApplyTheme();
 	if (DetailPanel)
 	{
-		DetailPanel->SetColors(GothamStyle::Token(this, EGothamColorToken::Panel, GothamStyle::PanelAlpha(this)),
-			GothamStyle::Token(this, EGothamColorToken::PanelEdge, 0.7f));
-		DetailPanel->SetAccent(GothamStyle::Token(this, EGothamColorToken::Accent), 3.f);
+		DetailPanel->SetColors(MvsStyle::Token(this, EMvsColorToken::Panel, MvsStyle::PanelAlpha(this)),
+			MvsStyle::Token(this, EMvsColorToken::PanelEdge, 0.7f));
+		DetailPanel->SetAccent(MvsStyle::Token(this, EMvsColorToken::Accent), 3.f);
 	}
 }
 
@@ -253,9 +253,9 @@ void USettingsScreen::RefreshDirtyNote()
 
 void USettingsScreen::OpenControls()
 {
-	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UGothamUISubsystem>())
+	if (auto* UI = GetOwningLocalPlayer()->GetSubsystem<UMvsUISubsystem>())
 	{
-		UI->PushScreen(EGothamUILayer::Menu, GetDefault<UGothamUISettings>()->ControlsScreenClass);
+		UI->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->ControlsScreenClass);
 	}
 }
 

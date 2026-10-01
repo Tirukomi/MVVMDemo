@@ -1,3 +1,4 @@
+# Copyright IG. All Rights Reserved.
 # Engine and project roots from Scripts/Paths.cfg, then Scripts/Paths.local.cfg if present. Dot-source it:
 #   . (Join-Path $PSScriptRoot "Paths.ps1")
 # and use $EngineDir, $ProjectDir, $ProjectFile, $UnrealEditor, $UnrealEditorCmd.

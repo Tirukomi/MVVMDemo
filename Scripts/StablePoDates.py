@@ -1,3 +1,4 @@
+# Copyright IG. All Rights Reserved.
 """Keeps the .po files byte-identical when a Localize.bat run changes nothing but their header dates.
 
 The .po export stamps POT-Creation-Date and PO-Revision-Date with the current time, so every run would otherwise

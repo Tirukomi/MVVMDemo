@@ -1,19 +1,19 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "ViewModels/SettingsViewModel.h"
 
-#include "Accessibility/GothamSettingsTable.h"
+#include "Accessibility/MvsSettingsTable.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Settings"
+#define LOCTEXT_NAMESPACE "Mvs.Settings"
 
-void USettingsViewModel::Initialize(const FGothamSettingsData& Saved)
+void USettingsViewModel::Initialize(const FMvsSettingsData& Saved)
 {
 	Current = Saved;
 	Baseline = Saved;
 	Recompute();
 }
 
-void USettingsViewModel::Cycle(EGothamSetting Setting, int32 Direction)
+void USettingsViewModel::Cycle(EMvsSetting Setting, int32 Direction)
 {
 	if (Current.Cycle(Setting, Direction))
 	{
@@ -41,7 +41,7 @@ void USettingsViewModel::Revert()
 
 void USettingsViewModel::ResetDefaults()
 {
-	const FGothamSettingsData Defaults;
+	const FMvsSettingsData Defaults;
 	if (Current != Defaults)
 	{
 		Current = Defaults;
@@ -50,34 +50,34 @@ void USettingsViewModel::ResetDefaults()
 	}
 }
 
-FText USettingsViewModel::GetLabel(EGothamSetting Setting)
+FText USettingsViewModel::GetLabel(EMvsSetting Setting)
 {
-	return Setting < EGothamSetting::Count ? GothamSettingsTable::Find(Setting).Label : FText::GetEmpty();
+	return Setting < EMvsSetting::Count ? MvsSettingsTable::Find(Setting).Label : FText::GetEmpty();
 }
 
-FText USettingsViewModel::GetDescription(EGothamSetting Setting)
+FText USettingsViewModel::GetDescription(EMvsSetting Setting)
 {
-	return Setting < EGothamSetting::Count ? GothamSettingsTable::Find(Setting).Description : FText::GetEmpty();
+	return Setting < EMvsSetting::Count ? MvsSettingsTable::Find(Setting).Description : FText::GetEmpty();
 }
 
-const TArray<FGothamSettingsTab>& USettingsViewModel::GetTabs()
+const TArray<FMvsSettingsTab>& USettingsViewModel::GetTabs()
 {
-	static const TArray<FGothamSettingsTab> Tabs = {
+	static const TArray<FMvsSettingsTab> Tabs = {
 		{ TEXT("Display"), LOCTEXT("TabDisplay", "Display"),
-			{ EGothamSetting::UIScale, EGothamSetting::SubtitleSize, EGothamSetting::SubtitleBackground } },
+			{ EMvsSetting::UIScale, EMvsSetting::SubtitleSize, EMvsSetting::SubtitleBackground } },
 		{ TEXT("Accessibility"), LOCTEXT("TabAccessibility", "Accessibility"),
-			{ EGothamSetting::ColorVision, EGothamSetting::HighContrast, EGothamSetting::TextSize, EGothamSetting::ReducedMotion } },
+			{ EMvsSetting::ColorVision, EMvsSetting::HighContrast, EMvsSetting::TextSize, EMvsSetting::ReducedMotion } },
 		{ TEXT("Controls"), LOCTEXT("TabControls", "Controls"),
-			{ EGothamSetting::WheelMode, EGothamSetting::ScanMode } },
+			{ EMvsSetting::WheelMode, EMvsSetting::ScanMode } },
 		{ TEXT("Language"), LOCTEXT("TabLanguage", "Language"),
-			{ EGothamSetting::Language } },
+			{ EMvsSetting::Language } },
 	};
 	return Tabs;
 }
 
-FText USettingsViewModel::GetValueText(EGothamSetting Setting) const
+FText USettingsViewModel::GetValueText(EMvsSetting Setting) const
 {
-	return Setting < EGothamSetting::Count ? GothamSettingsTable::Find(Setting).FormatValue(Current) : FText::GetEmpty();
+	return Setting < EMvsSetting::Count ? MvsSettingsTable::Find(Setting).FormatValue(Current) : FText::GetEmpty();
 }
 
 void USettingsViewModel::Recompute()

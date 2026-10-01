@@ -1,11 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "ViewModels/ClueViewModels.h"
 
 #include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Clues"
+#define LOCTEXT_NAMESPACE "Mvs.Clues"
 
 void UClueEntryViewModel::Initialize(FName InClueId, const FText& InTitle, const FText& InDescription, const TSoftObjectPtr<UTexture2D>& InThumbnail)
 {

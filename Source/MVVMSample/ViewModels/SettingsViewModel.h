@@ -1,20 +1,20 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Accessibility/GothamSettingsTypes.h"
+#include "Accessibility/MvsSettingsTypes.h"
 #include "MVVMViewModelBase.h"
 #include "SettingsViewModel.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSettingsDataEvent, const FGothamSettingsData&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSettingsDataEvent, const FMvsSettingsData&);
 
 /** One settings tab: an id, its label and the options it holds, in display order. */
-struct FGothamSettingsTab
+struct FMvsSettingsTab
 {
 	FName Id;
 	FText Label;
-	TArray<EGothamSetting> Settings;
+	TArray<EMvsSetting> Settings;
 };
 
 /**
@@ -31,10 +31,10 @@ public:
 	FOnSettingsDataEvent OnCommitted;
 
 	/** Sets both the working copy and the committed baseline (used at start-up). */
-	void Initialize(const FGothamSettingsData& Saved);
+	void Initialize(const FMvsSettingsData& Saved);
 
 	/** Steps one option. Previews immediately. */
-	void Cycle(EGothamSetting Setting, int32 Direction);
+	void Cycle(EMvsSetting Setting, int32 Direction);
 
 	void Apply();
 	void Revert();
@@ -43,16 +43,16 @@ public:
 	/** Re-reads every display string, e.g. after the language changed. Broadcasts even if the text object is identical. */
 	void RefreshTexts();
 
-	const FGothamSettingsData& GetCurrent() const { return Current; }
+	const FMvsSettingsData& GetCurrent() const { return Current; }
 	bool GetIsDirty() const { return bIsDirty; }
 	int32 GetRevision() const { return Revision; }
 
-	static FText GetLabel(EGothamSetting Setting);
+	static FText GetLabel(EMvsSetting Setting);
 	/** One or two sentences for the settings screen's detail pane. */
-	static FText GetDescription(EGothamSetting Setting);
+	static FText GetDescription(EMvsSetting Setting);
 	/** How the settings screen groups options. Every setting is in exactly one tab (tested). */
-	static const TArray<FGothamSettingsTab>& GetTabs();
-	FText GetValueText(EGothamSetting Setting) const;
+	static const TArray<FMvsSettingsTab>& GetTabs();
+	FText GetValueText(EMvsSetting Setting) const;
 
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetIsDirty, meta = (AllowPrivateAccess = "true"))
@@ -71,9 +71,9 @@ private:
 	void Recompute();
 	void BumpRevision();
 
-	FGothamSettingsData Current;
-	FGothamSettingsData Baseline;
+	FMvsSettingsData Current;
+	FMvsSettingsData Baseline;
 	/** The values the last Revision described. */
-	FGothamSettingsData Shown;
+	FMvsSettingsData Shown;
 	bool bHasShown = false;
 };

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
@@ -10,7 +10,7 @@
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnComboChanged, int32, float, float);
 
 /** Tracks a hit streak that decays if the player stops hitting. Ticks only while a combo is live. */
-UCLASS(ClassGroup = (Gotham), meta = (BlueprintSpawnableComponent))
+UCLASS(ClassGroup = (Mvs), meta = (BlueprintSpawnableComponent))
 class MVVMSAMPLE_API UComboComponent : public UActorComponent
 {
 	GENERATED_BODY()

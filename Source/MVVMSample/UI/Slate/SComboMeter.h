@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
@@ -9,7 +9,7 @@
  * "Damage ghost" behind a bar: when the value drops, the ghost holds at the old value briefly, then drains to the new
  * one, so the player sees how much was lost. Rises are immediate. Pure, so the timing is unit-tested.
  */
-struct MVVMSAMPLE_API FGothamGhostFill
+struct MVVMSAMPLE_API FMvsGhostFill
 {
 	float Ghost = 0.f;
 	float HoldRemaining = 0.f;
@@ -84,6 +84,6 @@ private:
 
 	float TargetFill = 0.f;
 	float DisplayedFill = 0.f;
-	FGothamGhostFill Ghost;
+	FMvsGhostFill Ghost;
 	TSharedPtr<FActiveTimerHandle> AnimationTimer;
 };

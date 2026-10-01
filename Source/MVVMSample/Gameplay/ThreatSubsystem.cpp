@@ -1,12 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Gameplay/ThreatSubsystem.h"
 
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Gameplay/GothamThug.h"
+#include "Gameplay/MvsThug.h"
 
-void UGothamThreatSubsystem::Register(AGothamThug* Thug)
+void UMvsThreatSubsystem::Register(AMvsThug* Thug)
 {
 	if (Thug)
 	{
@@ -14,7 +14,7 @@ void UGothamThreatSubsystem::Register(AGothamThug* Thug)
 	}
 }
 
-void UGothamThreatSubsystem::Unregister(AGothamThug* Thug)
+void UMvsThreatSubsystem::Unregister(AMvsThug* Thug)
 {
 	Thugs.Remove(Thug);
 	if (Thugs.IsEmpty())
@@ -24,35 +24,35 @@ void UGothamThreatSubsystem::Unregister(AGothamThug* Thug)
 	}
 }
 
-bool UGothamThreatSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
+bool UMvsThreatSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
 {
 	return WorldType == EWorldType::Game || WorldType == EWorldType::PIE;
 }
 
-TStatId UGothamThreatSubsystem::GetStatId() const
+TStatId UMvsThreatSubsystem::GetStatId() const
 {
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UGothamThreatSubsystem, STATGROUP_Tickables);
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UMvsThreatSubsystem, STATGROUP_Tickables);
 }
 
-APawn* UGothamThreatSubsystem::GetPlayerPawn() const
+APawn* UMvsThreatSubsystem::GetPlayerPawn() const
 {
 	const APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
 	return PC ? PC->GetPawn() : nullptr;
 }
 
-void UGothamThreatSubsystem::Tick(float DeltaTime)
+void UMvsThreatSubsystem::Tick(float DeltaTime)
 {
-	Thugs.RemoveAll([](const TWeakObjectPtr<AGothamThug>& Thug) { return !Thug.IsValid(); });
+	Thugs.RemoveAll([](const TWeakObjectPtr<AMvsThug>& Thug) { return !Thug.IsValid(); });
 	APawn* Player = GetPlayerPawn();
 
-	TArray<EGothamThugState> States;
+	TArray<EMvsThugState> States;
 	TArray<float> Distances;
 	States.Reserve(Thugs.Num());
 	Distances.Reserve(Thugs.Num());
-	for (const TWeakObjectPtr<AGothamThug>& Weak : Thugs)
+	for (const TWeakObjectPtr<AMvsThug>& Weak : Thugs)
 	{
-		AGothamThug* Thug = Weak.Get();
-		if (Thug->GetBrain().Advance(DeltaTime) == EGothamThugEvent::Strike)
+		AMvsThug* Thug = Weak.Get();
+		if (Thug->GetBrain().Advance(DeltaTime) == EMvsThugEvent::Strike)
 		{
 			Thug->Strike(Player);
 		}
@@ -71,13 +71,13 @@ void UGothamThreatSubsystem::Tick(float DeltaTime)
 	Publish(Player);
 }
 
-void UGothamThreatSubsystem::Publish(const APawn* Player)
+void UMvsThreatSubsystem::Publish(const APawn* Player)
 {
 	Snapshots.Reset(Thugs.Num());
-	for (const TWeakObjectPtr<AGothamThug>& Weak : Thugs)
+	for (const TWeakObjectPtr<AMvsThug>& Weak : Thugs)
 	{
-		const AGothamThug* Thug = Weak.Get();
-		FGothamThreatSnapshot& Snap = Snapshots.AddDefaulted_GetRef();
+		const AMvsThug* Thug = Weak.Get();
+		FMvsThreatSnapshot& Snap = Snapshots.AddDefaulted_GetRef();
 		Snap.PromptLocation = Thug->GetPromptLocation();
 		Snap.State = Thug->GetBrain().State;
 		Snap.WarningProgress = Thug->GetBrain().GetWarningProgress();
@@ -86,17 +86,17 @@ void UGothamThreatSubsystem::Publish(const APawn* Player)
 	OnThreatsUpdated.Broadcast(Snapshots);
 }
 
-AGothamThug* UGothamThreatSubsystem::TryCounter(APawn* Player)
+AMvsThug* UMvsThreatSubsystem::TryCounter(APawn* Player)
 {
 	if (!Player)
 	{
 		return nullptr;
 	}
-	AGothamThug* Best = nullptr;
+	AMvsThug* Best = nullptr;
 	float BestDistance = CounterRange;
-	for (const TWeakObjectPtr<AGothamThug>& Weak : Thugs)
+	for (const TWeakObjectPtr<AMvsThug>& Weak : Thugs)
 	{
-		AGothamThug* Thug = Weak.Get();
+		AMvsThug* Thug = Weak.Get();
 		if (!Thug || !Thug->GetBrain().IsWarning())
 		{
 			continue;
@@ -116,17 +116,17 @@ AGothamThug* UGothamThreatSubsystem::TryCounter(APawn* Player)
 	return nullptr;
 }
 
-AGothamThug* UGothamThreatSubsystem::ForceWarningOnVisible()
+AMvsThug* UMvsThreatSubsystem::ForceWarningOnVisible()
 {
 	return ForceWarning(true);
 }
 
-AGothamThug* UGothamThreatSubsystem::ForceWarningBehind()
+AMvsThug* UMvsThreatSubsystem::ForceWarningBehind()
 {
 	return ForceWarning(false);
 }
 
-AGothamThug* UGothamThreatSubsystem::ForceWarning(bool bMostInView)
+AMvsThug* UMvsThreatSubsystem::ForceWarning(bool bMostInView)
 {
 	const APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
 	if (!PC)
@@ -136,12 +136,12 @@ AGothamThug* UGothamThreatSubsystem::ForceWarning(bool bMostInView)
 	FVector ViewLocation;
 	FRotator ViewRotation;
 	PC->GetPlayerViewPoint(ViewLocation, ViewRotation);
-	AGothamThug* Best = nullptr;
+	AMvsThug* Best = nullptr;
 	float BestScore = -TNumericLimits<float>::Max();
-	for (const TWeakObjectPtr<AGothamThug>& Weak : Thugs)
+	for (const TWeakObjectPtr<AMvsThug>& Weak : Thugs)
 	{
-		AGothamThug* Thug = Weak.Get();
-		if (!Thug || Thug->GetBrain().State != EGothamThugState::Idle)
+		AMvsThug* Thug = Weak.Get();
+		if (!Thug || Thug->GetBrain().State != EMvsThugState::Idle)
 		{
 			continue;
 		}

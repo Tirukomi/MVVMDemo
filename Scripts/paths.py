@@ -1,3 +1,4 @@
+# Copyright IG. All Rights Reserved.
 """Engine and project roots from Scripts/Paths.cfg, then Scripts/Paths.local.cfg if present.
 
     from paths import ENGINE_DIR, PROJECT_DIR, PROJECT, EDITOR, EDITOR_CMD

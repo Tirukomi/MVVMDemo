@@ -1,21 +1,21 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/GothamWorldOverlayLayer.h"
+#include "UI/MvsWorldOverlayLayer.h"
 #include "ClueMarkerLayer.generated.h"
 
 class UClueListViewModel;
-class UDetectiveViewModel;
+class UForensicViewModel;
 
 /**
- * Detective Mode's world-anchored clue markers. Reads the clue list and detective view models, projects each clue into
- * the HUD with the owning player's view, and hands the markers to SClueMarkerLayer. Active only while Detective Mode is
+ * Forensic Mode's world-anchored clue markers. Reads the clue list and forensic view models, projects each clue into
+ * the HUD with the owning player's view, and hands the markers to SClueMarkerLayer. Active only while Forensic Mode is
  * visible; everything else about the markers (what to show, how far, which is being analysed) comes from view models.
  */
 UCLASS()
-class MVVMSAMPLE_API UClueMarkerLayer : public UGothamWorldOverlayLayer
+class MVVMSAMPLE_API UClueMarkerLayer : public UMvsWorldOverlayLayer
 {
 	GENERATED_BODY()
 
@@ -24,16 +24,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Markers", meta = (ClampMin = "100"))
 	float MaxDistance = 3500.f;
 
-	void SetViewModels(UClueListViewModel* InClues, UDetectiveViewModel* InDetective);
+	void SetViewModels(UClueListViewModel* InClues, UForensicViewModel* InForensic);
 
 protected:
-	virtual TSharedRef<SGothamWorldOverlayBase> MakeOverlay() override;
+	virtual TSharedRef<SMvsWorldOverlayBase> MakeOverlay() override;
 	virtual bool ShouldBeActive() const override;
 	virtual void ApplyTheme() override;
 
 private:
-	void OnDetectiveChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
-	void BuildMarkers(TArray<struct FGothamClueMarker>& Out) const;
+	void OnForensicChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
+	void BuildMarkers(TArray<struct FMvsClueMarker>& Out) const;
 
 	/**
 	 * A marker's text, kept between frames: formatting the distance and upper-casing the label allocate, so they are
@@ -53,5 +53,5 @@ private:
 	TObjectPtr<UClueListViewModel> Clues;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UDetectiveViewModel> Detective;
+	TObjectPtr<UForensicViewModel> Forensic;
 };

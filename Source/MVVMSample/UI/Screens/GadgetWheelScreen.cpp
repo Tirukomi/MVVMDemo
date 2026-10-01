@@ -1,20 +1,20 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Screens/GadgetWheelScreen.h"
 
 #include "Gameplay/TimeScaleSubsystem.h"
-#include "UI/Style/GothamMotion.h"
+#include "UI/Style/MvsMotion.h"
 
-#include "Accessibility/GothamSettingsSubsystem.h"
+#include "Accessibility/MvsSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Engine/LocalPlayer.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Style/MvsStyle.h"
 #include "UI/Widgets/GadgetWheel.h"
 #include "ViewModels/GadgetViewModels.h"
-#include "ViewModels/GothamMVVM.h"
-#include "ViewModels/GothamViewModelSubsystem.h"
+#include "ViewModels/MvsMVVM.h"
+#include "ViewModels/MvsViewModelSubsystem.h"
 
 namespace
 {
@@ -38,7 +38,7 @@ TSharedRef<SWidget> UGadgetWheelScreen::RebuildWidget()
 		WidgetTree->RootWidget = Dim;
 
 		Wheel = WidgetTree->ConstructWidget<UGadgetWheel>();
-		Wheel->WheelStyle.LabelFont = GothamStyle::Font(EGothamTextStyle::Header);
+		Wheel->WheelStyle.LabelFont = MvsStyle::Font(EMvsTextStyle::Header);
 		Wheel->OnItemSelected.AddDynamic(this, &UGadgetWheelScreen::HandleItemSelected);
 		Dim->SetContent(Wheel);
 		DefaultFocus = Wheel;
@@ -52,13 +52,13 @@ void UGadgetWheelScreen::NativeConstruct()
 
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
-		if (auto* ViewModels = LocalPlayer->GetSubsystem<UGothamViewModelSubsystem>())
+		if (auto* ViewModels = LocalPlayer->GetSubsystem<UMvsViewModelSubsystem>())
 		{
 			GadgetBar = ViewModels->GetGadgetBar();
 			using FSlotVM = UGadgetSlotViewModel::FFieldNotificationClassDescriptor;
 			for (UGadgetSlotViewModel* SlotVM : GadgetBar->GetSlots())
 			{
-				GothamMVVM::Bind(SlotVM, this, &UGadgetWheelScreen::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady });
+				MvsMVVM::Bind(SlotVM, this, &UGadgetWheelScreen::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady });
 			}
 		}
 	}
@@ -79,7 +79,7 @@ void UGadgetWheelScreen::NativeDestruct()
 	{
 		for (UGadgetSlotViewModel* SlotVM : GadgetBar->GetSlots())
 		{
-			GothamMVVM::Unbind(SlotVM, this);
+			MvsMVVM::Unbind(SlotVM, this);
 		}
 	}
 	Super::NativeDestruct();
@@ -88,7 +88,7 @@ void UGadgetWheelScreen::NativeDestruct()
 void UGadgetWheelScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
-	if (UGothamTimeScaleSubsystem* TimeScale = UGothamTimeScaleSubsystem::Get(this))
+	if (UMvsTimeScaleSubsystem* TimeScale = UMvsTimeScaleSubsystem::Get(this))
 	{
 		TimeScale->Request(TEXT("GadgetWheel"), WheelTimeDilation);
 	}
@@ -96,7 +96,7 @@ void UGadgetWheelScreen::NativeOnActivated()
 
 void UGadgetWheelScreen::NativeOnClosed()
 {
-	if (UGothamTimeScaleSubsystem* TimeScale = UGothamTimeScaleSubsystem::Get(this))
+	if (UMvsTimeScaleSubsystem* TimeScale = UMvsTimeScaleSubsystem::Get(this))
 	{
 		TimeScale->Clear(TEXT("GadgetWheel"));
 	}
@@ -117,10 +117,10 @@ void UGadgetWheelScreen::RefreshItems()
 	{
 		return;
 	}
-	TArray<FGothamWheelItem> Items;
+	TArray<FMvsWheelItem> Items;
 	for (UGadgetSlotViewModel* SlotVM : GadgetBar->GetSlots())
 	{
-		FGothamWheelItem& Item = Items.AddDefaulted_GetRef();
+		FMvsWheelItem& Item = Items.AddDefaulted_GetRef();
 		Item.Label = SlotVM->GetDisplayName();
 		Item.Tint = SlotVM->GetTint();
 		Item.bReady = SlotVM->GetIsReady();
@@ -135,7 +135,7 @@ void UGadgetWheelScreen::ApplyTheme()
 	// Runs on every settings change, so reduced motion applies to an open wheel too.
 	if (Wheel)
 	{
-		Wheel->bReduceMotion = GothamMotion::IsReduced(this);
+		Wheel->bReduceMotion = MvsMotion::IsReduced(this);
 		Wheel->SynchronizeProperties();
 	}
 }
@@ -143,8 +143,8 @@ void UGadgetWheelScreen::ApplyTheme()
 void UGadgetWheelScreen::HandleOpenKey(EInputEvent Event)
 {
 	// Hold mode commits on release of the key that opened the wheel; toggle mode on the next press.
-	const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this);
-	const bool bHoldMode = !Settings || Settings->GetSettings().WheelMode == EGothamWheelMode::Hold;
+	const UMvsSettingsSubsystem* Settings = UMvsSettingsSubsystem::Get(this);
+	const bool bHoldMode = !Settings || Settings->GetSettings().WheelMode == EMvsWheelMode::Hold;
 	if ((Event == IE_Released) == bHoldMode && !Wheel->CommitHovered())
 	{
 		DeactivateWidget();

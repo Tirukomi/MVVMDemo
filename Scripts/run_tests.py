@@ -1,10 +1,11 @@
-"""Runs the Gotham automation tests and exits non-zero on any failure (CI friendly). Close the editor first.
+# Copyright IG. All Rights Reserved.
+"""Runs the Mvs automation tests and exits non-zero on any failure (CI friendly). Close the editor first.
 
-    python Scripts/run_tests.py [filter]        # default filter: Gotham (both passes)
+    python Scripts/run_tests.py [filter]        # default filter: Mvs (both passes)
 
 Two passes:
 - editor: every test with the editor context, headless (-nullrhi). Pure logic, view models, widgets.
-- game:   Gotham.Functional.*, which need the running game (a world, a player, painted widgets for hit-testing), in a
+- game:   Mvs.Functional.*, which need the running game (a world, a player, painted widgets for hit-testing), in a
           small window. Skipped when the filter names something else.
 Writes the engine's JSON reports to Saved/AutomationReports/ (game pass: Saved/AutomationReports/Functional/).
 """
@@ -15,7 +16,7 @@ import sys
 
 from paths import BINARIES, PROJECT_DIR as ROOT  # engine and project roots (Scripts/Paths.cfg)
 REPORTS = ROOT / "Saved" / "AutomationReports"
-FUNCTIONAL = "Gotham.Functional"
+FUNCTIONAL = "Mvs.Functional"
 
 
 def read_report(folder):
@@ -73,7 +74,7 @@ def game_pass(test_filter):
 
 
 def main():
-    test_filter = sys.argv[1] if len(sys.argv) > 1 else "Gotham"
+    test_filter = sys.argv[1] if len(sys.argv) > 1 else "Mvs"
     passes = []
     if not test_filter.startswith(FUNCTIONAL):
         passes.append(("editor", editor_pass(test_filter)))

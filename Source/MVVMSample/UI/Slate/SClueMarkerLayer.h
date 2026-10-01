@@ -1,12 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Slate/SGothamWorldOverlay.h"
+#include "UI/Slate/SMvsWorldOverlay.h"
 
 /** One world-anchored clue marker, already projected into the layer's local space. */
-struct FGothamClueMarker
+struct FMvsClueMarker
 {
 	enum class EState : uint8 { Unknown, Known, Analysing };
 
@@ -20,7 +20,7 @@ struct FGothamClueMarker
 };
 
 /** Marker sizing and fading by distance. Pure, so the rules are testable. */
-namespace GothamMarkers
+namespace MvsMarkers
 {
 	/** Bracket scale: larger up close, clamped so far markers stay readable and near ones never swamp the screen. */
 	MVVMSAMPLE_API float ScaleForDistance(float DistanceCm);
@@ -30,9 +30,9 @@ namespace GothamMarkers
 
 /**
  * Draws every clue marker in one paint pass: corner brackets, a label and distance, and an analysis arc on the clue being
- * analysed. A world overlay: active (refreshing every frame) only while Detective Mode is visible.
+ * analysed. A world overlay: active (refreshing every frame) only while Forensic Mode is visible.
  */
-class MVVMSAMPLE_API SClueMarkerLayer : public SGothamWorldOverlay<FGothamClueMarker>
+class MVVMSAMPLE_API SClueMarkerLayer : public SMvsWorldOverlay<FMvsClueMarker>
 {
 public:
 	SLATE_BEGIN_ARGS(SClueMarkerLayer) {}

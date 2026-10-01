@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 // Characterization tests (refactoring pass P0). They pin today's observable behaviour and on-disk formats so the
 // refactoring passes (see Docs/RefactoringPlan.md) can change structure without changing results. If one of these
@@ -6,36 +6,36 @@
 
 #include "Misc/AutomationTest.h"
 
-#include "Accessibility/GothamSettingsTypes.h"
-#include "Core/GothamPlayerController.h"
+#include "Accessibility/MvsSettingsTypes.h"
+#include "Core/MvsPlayerController.h"
 #include "EnhancedActionKeyMapping.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
-#include "Input/GothamBindings.h"
+#include "Input/MvsBindings.h"
 #include "Misc/ConfigCacheIni.h"
 #include "ViewModels/SettingsViewModel.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-/** Friend of AGothamPlayerController: builds its input assets without a world or local player. */
-struct FGothamInputTestAccess
+/** Friend of AMvsPlayerController: builds its input assets without a world or local player. */
+struct FMvsInputTestAccess
 {
-	static UInputMappingContext* Build(AGothamPlayerController* PC)
+	static UInputMappingContext* Build(AMvsPlayerController* PC)
 	{
 		PC->BuildInputAssets();
 		return PC->GameplayContext;
 	}
 };
 
-namespace GothamCharacterizationTests
+namespace MvsCharacterizationTests
 {
 	constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter;
-	const TCHAR* Section = TEXT("/Script/MVVMSample.GothamSettingsTest");
+	const TCHAR* Section = TEXT("/Script/MVVMSample.MvsSettingsTest");
 
 	/** Every reachable value of every setting: start from defaults and cycle forward through all choices. */
-	TArray<FGothamSettingsData> AllChoices(EGothamSetting Setting)
+	TArray<FMvsSettingsData> AllChoices(EMvsSetting Setting)
 	{
-		FGothamSettingsData Data;
+		FMvsSettingsData Data;
 		int32 Index = 0, Count = 0;
 		Data.GetOptionPosition(Setting, Index, Count);
 		// Walk to the first choice, then collect each one (UI scale clamps, so step back to its start first).
@@ -43,7 +43,7 @@ namespace GothamCharacterizationTests
 		{
 			Data.Cycle(Setting, -1);
 		}
-		TArray<FGothamSettingsData> Out;
+		TArray<FMvsSettingsData> Out;
 		for (int32 i = 0; i < Count; ++i)
 		{
 			Out.Add(Data);
@@ -53,20 +53,20 @@ namespace GothamCharacterizationTests
 	}
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamSettingsEveryChoiceRoundTripTest, "Gotham.Characterization.SettingsEveryChoiceRoundTrips", GothamCharacterizationTests::Flags)
-bool FGothamSettingsEveryChoiceRoundTripTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsSettingsEveryChoiceRoundTripTest, "Mvs.Characterization.SettingsEveryChoiceRoundTrips", MvsCharacterizationTests::Flags)
+bool FMvsSettingsEveryChoiceRoundTripTest::RunTest(const FString& Parameters)
 {
-	using namespace GothamCharacterizationTests;
-	for (int32 s = 0; s < static_cast<int32>(EGothamSetting::Count); ++s)
+	using namespace MvsCharacterizationTests;
+	for (int32 s = 0; s < static_cast<int32>(EMvsSetting::Count); ++s)
 	{
-		const EGothamSetting Setting = static_cast<EGothamSetting>(s);
-		const TArray<FGothamSettingsData> Choices = AllChoices(Setting);
+		const EMvsSetting Setting = static_cast<EMvsSetting>(s);
+		const TArray<FMvsSettingsData> Choices = AllChoices(Setting);
 		TestTrue(FString::Printf(TEXT("setting %d has at least two choices"), s), Choices.Num() >= 2);
 		for (int32 c = 0; c < Choices.Num(); ++c)
 		{
 			FConfigFile File;
 			Choices[c].SaveToConfig(File, Section);
-			FGothamSettingsData Read;
+			FMvsSettingsData Read;
 			Read.LoadFromConfig(File, Section);
 			TestTrue(FString::Printf(TEXT("setting %d, choice %d survives save and load"), s, c), Read == Choices[c]);
 		}
@@ -74,21 +74,21 @@ bool FGothamSettingsEveryChoiceRoundTripTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamSettingsConfigFormatTest, "Gotham.Characterization.SettingsConfigFormat", GothamCharacterizationTests::Flags)
-bool FGothamSettingsConfigFormatTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsSettingsConfigFormatTest, "Mvs.Characterization.SettingsConfigFormat", MvsCharacterizationTests::Flags)
+bool FMvsSettingsConfigFormatTest::RunTest(const FString& Parameters)
 {
-	using namespace GothamCharacterizationTests;
+	using namespace MvsCharacterizationTests;
 
 	// 1. What SaveToConfig writes today, key by key. Players' saved settings are in this format.
-	FGothamSettingsData Data;
+	FMvsSettingsData Data;
 	Data.Language = TEXT("de");
-	Data.ColorMode = EGothamColorMode::Deuteranopia;
+	Data.ColorMode = EMvsColorMode::Deuteranopia;
 	Data.UIScaleIndex = 3;
 	Data.bHighContrast = true;
 	Data.bReducedMotion = false;
-	Data.WheelMode = EGothamWheelMode::Toggle;
-	Data.ScanMode = EGothamScanMode::Tap;
-	Data.SubtitleSize = EGothamSubtitleSize::Large;
+	Data.WheelMode = EMvsWheelMode::Toggle;
+	Data.ScanMode = EMvsScanMode::Tap;
+	Data.SubtitleSize = EMvsSubtitleSize::Large;
 	Data.bSubtitleBackground = true;
 	FConfigFile File;
 	Data.SaveToConfig(File, Section);
@@ -125,32 +125,32 @@ bool FGothamSettingsConfigFormatTest::RunTest(const FString& Parameters)
 		"SubtitleBackground=False\n"), Section);
 	FConfigFile FromText;
 	FromText.ProcessInputFileContents(Fixture, TEXT("CharacterizationFixture"));
-	FGothamSettingsData Loaded;
+	FMvsSettingsData Loaded;
 	Loaded.LoadFromConfig(FromText, Section);
 	TestEqual("fixture: language", Loaded.Language, FString(TEXT("ja")));
-	TestTrue("fixture: colour mode", Loaded.ColorMode == EGothamColorMode::Tritanopia);
+	TestTrue("fixture: colour mode", Loaded.ColorMode == EMvsColorMode::Tritanopia);
 	TestEqual("fixture: UI scale", Loaded.UIScaleIndex, 4);
 	TestTrue("fixture: high contrast", Loaded.bHighContrast);
 	TestTrue("fixture: reduced motion", Loaded.bReducedMotion);
-	TestTrue("fixture: wheel mode", Loaded.WheelMode == EGothamWheelMode::Toggle);
-	TestTrue("fixture: scan mode", Loaded.ScanMode == EGothamScanMode::Tap);
-	TestTrue("fixture: subtitle size", Loaded.SubtitleSize == EGothamSubtitleSize::Small);
+	TestTrue("fixture: wheel mode", Loaded.WheelMode == EMvsWheelMode::Toggle);
+	TestTrue("fixture: scan mode", Loaded.ScanMode == EMvsScanMode::Tap);
+	TestTrue("fixture: subtitle size", Loaded.SubtitleSize == EMvsSubtitleSize::Small);
 	TestFalse("fixture: subtitle background", Loaded.bSubtitleBackground);
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamSettingsTextTest, "Gotham.Characterization.SettingsText", GothamCharacterizationTests::Flags)
-bool FGothamSettingsTextTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsSettingsTextTest, "Mvs.Characterization.SettingsText", MvsCharacterizationTests::Flags)
+bool FMvsSettingsTextTest::RunTest(const FString& Parameters)
 {
-	using namespace GothamCharacterizationTests;
-	for (int32 s = 0; s < static_cast<int32>(EGothamSetting::Count); ++s)
+	using namespace MvsCharacterizationTests;
+	for (int32 s = 0; s < static_cast<int32>(EMvsSetting::Count); ++s)
 	{
-		const EGothamSetting Setting = static_cast<EGothamSetting>(s);
+		const EMvsSetting Setting = static_cast<EMvsSetting>(s);
 		TestFalse(FString::Printf(TEXT("setting %d has a label"), s), USettingsViewModel::GetLabel(Setting).IsEmpty());
 		TestFalse(FString::Printf(TEXT("setting %d has a description"), s), USettingsViewModel::GetDescription(Setting).IsEmpty());
 
 		TSet<FString> Seen;
-		for (const FGothamSettingsData& Choice : AllChoices(Setting))
+		for (const FMvsSettingsData& Choice : AllChoices(Setting))
 		{
 			USettingsViewModel* VM = NewObject<USettingsViewModel>();
 			VM->Initialize(Choice);
@@ -163,30 +163,30 @@ bool FGothamSettingsTextTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamInputBindingsTest, "Gotham.Characterization.InputBindings", GothamCharacterizationTests::Flags)
-bool FGothamInputBindingsTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsInputBindingsTest, "Mvs.Characterization.InputBindings", MvsCharacterizationTests::Flags)
+bool FMvsInputBindingsTest::RunTest(const FString& Parameters)
 {
 	// Saved rebinds refer to these mappable names, in this order on the Controls screen. Renaming one loses players'
 	// rebinds for it, so this list only changes on purpose.
 	const TArray<FName> ExpectedNames = {
 		TEXT("MoveForward"), TEXT("MoveBack"), TEXT("MoveLeft"), TEXT("MoveRight"), TEXT("Attack"), TEXT("Counter"),
-		TEXT("Gadget1"), TEXT("Gadget2"), TEXT("Gadget3"), TEXT("GadgetWheel"), TEXT("Detective"), TEXT("Scan"),
+		TEXT("Gadget1"), TEXT("Gadget2"), TEXT("Gadget3"), TEXT("GadgetWheel"), TEXT("Forensic"), TEXT("Scan"),
 		TEXT("ClueLog"), TEXT("Pause") };
 	TArray<FName> Names;
-	for (const FGothamBindingDef& Def : GothamBindings::GetDefinitions())
+	for (const FMvsBindingDef& Def : MvsBindings::GetDefinitions())
 	{
 		Names.Add(Def.Name);
 	}
 	TestEqual("binding list (names and order) is unchanged", Names, ExpectedNames);
 
-	AGothamPlayerController* PC = NewObject<AGothamPlayerController>(GetTransientPackage());
-	const UInputMappingContext* Context = FGothamInputTestAccess::Build(PC);
+	AMvsPlayerController* PC = NewObject<AMvsPlayerController>(GetTransientPackage());
+	const UInputMappingContext* Context = FMvsInputTestAccess::Build(PC);
 	if (!TestNotNull("the gameplay mapping context is built", Context))
 	{
 		return false;
 	}
 
-	for (const FGothamBindingDef& Def : GothamBindings::GetDefinitions())
+	for (const FMvsBindingDef& Def : MvsBindings::GetDefinitions())
 	{
 		bool bKeyboard = false;
 		bool bGamepad = false;
@@ -244,7 +244,7 @@ bool FGothamInputBindingsTest::RunTest(const FString& Parameters)
 		{ TEXT("IA_Counter"), TEXT("0: RightMouseButton[Counter|Counter] Gamepad_RightShoulder[Counter|Counter]") },
 		{ TEXT("IA_DebugDamage"), TEXT("0: F1") },
 		{ TEXT("IA_DebugHeal"), TEXT("0: F2") },
-		{ TEXT("IA_Detective"), TEXT("0: V[Detective|Detective mode] Gamepad_DPad_Up[Detective|Detective mode]") },
+		{ TEXT("IA_Forensic"), TEXT("0: V[Forensic|Forensic mode] Gamepad_DPad_Up[Forensic|Forensic mode]") },
 		{ TEXT("IA_Gadget1"), TEXT("0: One[Gadget1|Gadget 1] Gamepad_FaceButton_Left[Gadget1|Gadget 1]") },
 		{ TEXT("IA_Gadget2"), TEXT("0: Two[Gadget2|Gadget 2] Gamepad_FaceButton_Top[Gadget2|Gadget 2]") },
 		{ TEXT("IA_Gadget3"), TEXT("0: Three[Gadget3|Gadget 3] Gamepad_FaceButton_Right[Gadget3|Gadget 3]") },

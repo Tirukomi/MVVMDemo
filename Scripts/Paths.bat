@@ -1,4 +1,5 @@
 @echo off
+rem Copyright IG. All Rights Reserved.
 rem Sets ENGINE_DIR, PROJECT_DIR, PROJECT (the .uproject), UE_CMD (UnrealEditor-Cmd.exe) and UE_EDITOR from
 rem Scripts\Paths.cfg, then Scripts\Paths.local.cfg if present. Use with: call "%~dp0Paths.bat"
 set "ENGINE_DIR=D:\UnrealEngine\UE_5.8\Engine"

@@ -1,7 +1,7 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Slate/SThreatIndicatorLayer.h"
-#include "UI/GothamAccessibility.h"
+#include "UI/MvsAccessibility.h"
 
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
@@ -9,8 +9,8 @@
 #include "Rendering/DrawElements.h"
 #include "Rendering/SlateRenderer.h"
 #include "Styling/CoreStyle.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Style/MvsStyle.h"
 
 namespace
 {
@@ -21,19 +21,19 @@ namespace
 void SThreatIndicatorLayer::Construct(const FArguments& InArgs)
 {
 	ConstructOverlay();
-	GothamAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SThreatIndicatorLayer::GetAccessibleSummary));
+	MvsAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SThreatIndicatorLayer::GetAccessibleSummary));
 }
 
 FText SThreatIndicatorLayer::GetAccessibleSummary() const
 {
 	int32 Warnings = 0;
-	for (const FGothamThreatIndicator& Indicator : GetItems())
+	for (const FMvsThreatIndicator& Indicator : GetItems())
 	{
 		Warnings += Indicator.bWarning ? 1 : 0;
 	}
 	return Warnings > 0
-		? FText::Format(NSLOCTEXT("Gotham.Accessibility", "ThreatWarning", "{0} {0}|plural(one=attack,other=attacks) incoming: counter now"), Warnings)
-		: FText::Format(NSLOCTEXT("Gotham.Accessibility", "Threats", "{0} {0}|plural(one=enemy,other=enemies) nearby"), GetItems().Num());
+		? FText::Format(NSLOCTEXT("Mvs.Accessibility", "ThreatWarning", "{0} {0}|plural(one=attack,other=attacks) incoming: counter now"), Warnings)
+		: FText::Format(NSLOCTEXT("Mvs.Accessibility", "Threats", "{0} {0}|plural(one=enemy,other=enemies) nearby"), GetItems().Num());
 }
 
 void SThreatIndicatorLayer::SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText)
@@ -50,9 +50,9 @@ int32 SThreatIndicatorLayer::OnPaint(const FPaintArgs& Args, const FGeometry& Al
 {
 	const FVector2D Size = AllottedGeometry.GetLocalSize();
 	const float Opacity = InWidgetStyle.GetColorAndOpacityTint().A;
-	for (const FGothamThreatIndicator& Threat : GetItems())
+	for (const FMvsThreatIndicator& Threat : GetItems())
 	{
-		const bool bOnScreen = Threat.bProjected && GothamThreat::IsOnScreen(Threat.Screen, Size, OnScreenMargin);
+		const bool bOnScreen = Threat.bProjected && MvsThreat::IsOnScreen(Threat.Screen, Size, OnScreenMargin);
 		if (bOnScreen)
 		{
 			if (Threat.bWarning)
@@ -68,7 +68,7 @@ int32 SThreatIndicatorLayer::OnPaint(const FPaintArgs& Args, const FGeometry& Al
 	return LayerId + 2;
 }
 
-void SThreatIndicatorLayer::PaintPrompt(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FGothamThreatIndicator& Threat, float Opacity) const
+void SThreatIndicatorLayer::PaintPrompt(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FMvsThreatIndicator& Threat, float Opacity) const
 {
 	auto Faded = [Opacity](FLinearColor C, float Scale = 1.f) { C.A *= Opacity * Scale; return C; };
 	const FVector2f Anchor = FVector2f(Threat.Screen);
@@ -87,19 +87,19 @@ void SThreatIndicatorLayer::PaintPrompt(FSlateWindowElementList& Out, int32 Laye
 	}
 
 	// Key cap with the Counter binding, and a bar under it that empties as the window closes.
-	const FSlateFontInfo Font = GothamStyle::Font(EGothamTextStyle::Numeric);
+	const FSlateFontInfo Font = MvsStyle::Font(EMvsTextStyle::Numeric);
 	const FVector2f TextSize = FVector2f(FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(KeyLabel, Font));
 	const FVector2f CapSize(FMath::Max(TextSize.X + 22.f, 44.f), TextSize.Y + 6.f);
 	const FVector2f CapPos = Anchor + FVector2f(-CapSize.X * 0.5f, -22.f);
-	FGothamPanelLook Cap;
+	FMvsPanelLook Cap;
 	Cap.Corner = 6.f;
-	Cap.ChamferMask = EGothamChamfer::Opposite;
+	Cap.ChamferMask = EMvsChamfer::Opposite;
 	Cap.Fill = Faded(Panel, 0.9f);
 	Cap.Edge = Faded(Danger);
 	Cap.EdgeThickness = 1.5f;
 	Cap.Glow = Faded(Danger, 0.35f);
 	Cap.GlowSize = 5.f;
-	GothamPaintPanel(Out, LayerId, Geometry, CapPos, CapSize, Cap, 1.f);
+	MvsPaintPanel(Out, LayerId, Geometry, CapPos, CapSize, Cap, 1.f);
 	FSlateDrawElement::MakeText(Out, LayerId + 1,
 		Geometry.ToPaintGeometry(TextSize, FSlateLayoutTransform(CapPos + (CapSize - TextSize) * 0.5f)), KeyLabel, Font, ESlateDrawEffect::None, Faded(Text));
 
@@ -112,11 +112,11 @@ void SThreatIndicatorLayer::PaintPrompt(FSlateWindowElementList& Out, int32 Laye
 		White, ESlateDrawEffect::None, Faded(Danger));
 }
 
-void SThreatIndicatorLayer::PaintArrow(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FGothamThreatIndicator& Threat, float Opacity) const
+void SThreatIndicatorLayer::PaintArrow(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FMvsThreatIndicator& Threat, float Opacity) const
 {
 	FVector2D Position;
 	float Angle = 0.f;
-	GothamThreat::EdgeArrow(Threat.ViewDirection, Geometry.GetLocalSize(), EdgeInset, Position, Angle);
+	MvsThreat::EdgeArrow(Threat.ViewDirection, Geometry.GetLocalSize(), EdgeInset, Position, Angle);
 
 	const float Pulse = (!Threat.bWarning || bReducedMotion) ? 1.f : 1.f + 0.2f * FMath::Sin(static_cast<float>(GetRefreshTime()) * 16.f);
 	const float Size = (Threat.bWarning ? 28.f : 14.f) * Pulse;

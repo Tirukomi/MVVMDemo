@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/GadgetSelectorWidget.h"
 
@@ -8,14 +8,14 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
-#include "UI/Style/GothamMotion.h"
-#include "UI/Style/GothamStyle.h"
-#include "UI/Widgets/GothamHudPrimitives.h"
-#include "UI/Widgets/GothamText.h"
+#include "UI/Style/MvsMotion.h"
+#include "UI/Style/MvsStyle.h"
+#include "UI/Widgets/MvsHudPrimitives.h"
+#include "UI/Widgets/MvsText.h"
 #include "ViewModels/GadgetViewModels.h"
-#include "ViewModels/GothamMVVM.h"
+#include "ViewModels/MvsMVVM.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.GadgetSelector"
+#define LOCTEXT_NAMESPACE "Mvs.GadgetSelector"
 
 TSharedRef<SWidget> UGadgetSelectorWidget::RebuildWidget()
 {
@@ -33,11 +33,11 @@ TSharedRef<SWidget> UGadgetSelectorWidget::RebuildWidget()
 		TextSlot->SetVerticalAlignment(VAlign_Center);
 		TextSlot->SetPadding(FMargin(0.f, 0.f, 12.f, 0.f));
 
-		SelectedName = WidgetTree->ConstructWidget<UGothamText>();
+		SelectedName = WidgetTree->ConstructWidget<UMvsText>();
 		SelectedName->SetJustification(ETextJustify::Right);
 		Text->AddChildToVerticalBox(SelectedName)->SetHorizontalAlignment(HAlign_Right);
 
-		SelectedState = WidgetTree->ConstructWidget<UGothamText>();
+		SelectedState = WidgetTree->ConstructWidget<UMvsText>();
 		SelectedState->SetJustification(ETextJustify::Right);
 		Text->AddChildToVerticalBox(SelectedState)->SetHorizontalAlignment(HAlign_Right);
 
@@ -55,9 +55,9 @@ void UGadgetSelectorWidget::SetViewModel(UGadgetBarViewModel* InViewModel)
 {
 	UnbindSlots();
 	using FVM = UGadgetBarViewModel::FFieldNotificationClassDescriptor;
-	GothamMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	GothamMVVM::Bind(ViewModel, this, &UGadgetSelectorWidget::OnBarChanged, { FVM::Slots, FVM::SelectedIndex });
+	MvsMVVM::Bind(ViewModel, this, &UGadgetSelectorWidget::OnBarChanged, { FVM::Slots, FVM::SelectedIndex });
 	RebuildEntries();
 }
 
@@ -121,7 +121,7 @@ void UGadgetSelectorWidget::UnbindSlots()
 	{
 		for (UGadgetSlotViewModel* SlotVM : ViewModel->GetSlots())
 		{
-			GothamMVVM::Unbind(SlotVM, this);
+			MvsMVVM::Unbind(SlotVM, this);
 		}
 	}
 }
@@ -144,12 +144,12 @@ void UGadgetSelectorWidget::RebuildEntries()
 	using FSlotVM = UGadgetSlotViewModel::FFieldNotificationClassDescriptor;
 	for (UGadgetSlotViewModel* SlotVM : ViewModel->GetSlots())
 	{
-		GothamMVVM::Bind(SlotVM, this, &UGadgetSelectorWidget::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady, FSlotVM::DisplayName, FSlotVM::Hotkey });
+		MvsMVVM::Bind(SlotVM, this, &UGadgetSelectorWidget::OnSlotChanged, { FSlotVM::CooldownPercent, FSlotVM::bIsReady, FSlotVM::DisplayName, FSlotVM::Hotkey });
 
 		// Small entry: key above the icon.
 		UVerticalBox* Entry = WidgetTree->ConstructWidget<UVerticalBox>();
 		OthersRow->AddChildToHorizontalBox(Entry)->SetPadding(FMargin(8.f, 6.f, 0.f, 0.f));
-		UTextBlock* Key = WidgetTree->ConstructWidget<UGothamText>();
+		UTextBlock* Key = WidgetTree->ConstructWidget<UMvsText>();
 		Key->SetJustification(ETextJustify::Center);
 		Entry->AddChildToVerticalBox(Key)->SetHorizontalAlignment(HAlign_Center);
 		UGadgetIcon* Icon = WidgetTree->ConstructWidget<UGadgetIcon>();
@@ -175,18 +175,18 @@ void UGadgetSelectorWidget::Refresh()
 		return;
 	}
 
-	const FLinearColor Primary = GetToken(EGothamColorToken::TextPrimary);
-	const FLinearColor Muted = GetToken(EGothamColorToken::TextMuted);
-	FLinearColor Ring = GetToken(EGothamColorToken::PanelEdge);
+	const FLinearColor Primary = GetToken(EMvsColorToken::TextPrimary);
+	const FLinearColor Muted = GetToken(EMvsColorToken::TextMuted);
+	FLinearColor Ring = GetToken(EMvsColorToken::PanelEdge);
 	Ring.A = 0.5f;
 
 	SelectedIcon->SetIconIndex(Current->GetIconIndex());
-	SelectedIcon->SetColors(Current->GetIsReady() ? GetToken(EGothamColorToken::Accent) : Primary, Ring);
+	SelectedIcon->SetColors(Current->GetIsReady() ? GetToken(EMvsColorToken::Accent) : Primary, Ring);
 	SelectedIcon->SetCooldown(Current->GetCooldownPercent());
 
-	GothamStyle::ApplyText(SelectedName, EGothamTextStyle::Header, Primary);
+	MvsStyle::ApplyText(SelectedName, EMvsTextStyle::Header, Primary);
 	SelectedName->SetText(Current->GetDisplayName());
-	GothamStyle::ApplyText(SelectedState, EGothamTextStyle::Label, Current->GetIsReady() ? GetToken(EGothamColorToken::Accent) : Muted);
+	MvsStyle::ApplyText(SelectedState, EMvsTextStyle::Label, Current->GetIsReady() ? GetToken(EMvsColorToken::Accent) : Muted);
 	SelectedState->SetText(Current->GetIsReady()
 		? LOCTEXT("Ready", "Ready")
 		: FText::Format(LOCTEXT("Recharging", "{0}s"), FText::AsNumber(FMath::CeilToInt(Current->GetCooldownRemaining()))));
@@ -200,15 +200,15 @@ void UGadgetSelectorWidget::Refresh()
 		}
 		const bool bIsSelected = i == Selected;
 		SmallIcons[i]->SetIconIndex(SlotVM->GetIconIndex());
-		SmallIcons[i]->SetColors(bIsSelected ? GetToken(EGothamColorToken::Accent) : (SlotVM->GetIsReady() ? Primary : Muted), Ring);
+		SmallIcons[i]->SetColors(bIsSelected ? GetToken(EMvsColorToken::Accent) : (SlotVM->GetIsReady() ? Primary : Muted), Ring);
 		SmallIcons[i]->SetCooldown(SlotVM->GetCooldownPercent());
-		GothamStyle::ApplyText(SmallKeys[i], EGothamTextStyle::Key, bIsSelected ? GetToken(EGothamColorToken::Accent) : Muted);
+		MvsStyle::ApplyText(SmallKeys[i], EMvsTextStyle::Key, bIsSelected ? GetToken(EMvsColorToken::Accent) : Muted);
 		SmallKeys[i]->SetText(SlotVM->GetHotkey());
 	}
 
 	if (Selected != LastSelected && LastSelected != INDEX_NONE)
 	{
-		GothamMotion::Pop(SelectedIcon, 1.15f);
+		MvsMotion::Pop(SelectedIcon, 1.15f);
 	}
 	LastSelected = Selected;
 }

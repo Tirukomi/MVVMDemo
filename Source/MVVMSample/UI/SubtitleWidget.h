@@ -1,18 +1,18 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/GothamSettingsAwareWidget.h"
+#include "UI/MvsSettingsAwareWidget.h"
 #include "SubtitleWidget.generated.h"
 
-class UGothamPanel;
+class UMvsPanel;
 class USubtitleViewModel;
 class UTextBlock;
 
 /** Bottom-of-screen subtitle line. Size and backing panel follow accessibility settings via the view model. */
 UCLASS()
-class MVVMSAMPLE_API USubtitleWidget : public UGothamSettingsAwareWidget
+class MVVMSAMPLE_API USubtitleWidget : public UMvsSettingsAwareWidget
 {
 	GENERATED_BODY()
 
@@ -32,7 +32,7 @@ private:
 	TObjectPtr<USubtitleViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> Panel;
+	TObjectPtr<UMvsPanel> Panel;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> SpeakerText;

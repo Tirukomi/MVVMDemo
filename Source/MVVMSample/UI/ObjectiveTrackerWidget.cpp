@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/ObjectiveTrackerWidget.h"
 
@@ -9,16 +9,16 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Style/GothamMotion.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Style/MvsMotion.h"
+#include "UI/Style/MvsStyle.h"
 #include "UI/Widgets/ComboMeter.h"
-#include "UI/Widgets/GothamPanel.h"
-#include "UI/Widgets/GothamText.h"
-#include "ViewModels/GothamMVVM.h"
+#include "UI/Widgets/MvsPanel.h"
+#include "UI/Widgets/MvsText.h"
+#include "ViewModels/MvsMVVM.h"
 #include "ViewModels/ObjectivesViewModel.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.Objectives"
+#define LOCTEXT_NAMESPACE "Mvs.Objectives"
 
 TSharedRef<SWidget> UObjectiveTrackerWidget::RebuildWidget()
 {
@@ -29,25 +29,25 @@ TSharedRef<SWidget> UObjectiveTrackerWidget::RebuildWidget()
 		Width->SetMaxDesiredWidth(360.f);
 		WidgetTree->RootWidget = Width;
 
-		Panel = WidgetTree->ConstructWidget<UGothamPanel>();
-		Panel->SetShape(8.f, EGothamChamfer::TopRight | EGothamChamfer::BottomLeft);
+		Panel = WidgetTree->ConstructWidget<UMvsPanel>();
+		Panel->SetShape(8.f, EMvsChamfer::TopRight | EMvsChamfer::BottomLeft);
 		Panel->SetPanelPadding(FMargin(16.f, 8.f, 14.f, 10.f));
 		Width->SetContent(Panel);
 
 		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
 		Panel->SetContent(Column);
 
-		HeaderText = WidgetTree->ConstructWidget<UGothamText>();
+		HeaderText = WidgetTree->ConstructWidget<UMvsText>();
 		HeaderText->SetText(LOCTEXT("Objective", "Objective"));
 		Column->AddChildToVerticalBox(HeaderText);
 
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Row)->SetPadding(FMargin(0.f, 2.f, 0.f, 6.f));
-		TitleText = WidgetTree->ConstructWidget<UGothamText>();
+		TitleText = WidgetTree->ConstructWidget<UMvsText>();
 		UHorizontalBoxSlot* TitleSlot = Row->AddChildToHorizontalBox(TitleText);
 		TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 		TitleSlot->SetVerticalAlignment(VAlign_Bottom);
-		ProgressText = WidgetTree->ConstructWidget<UGothamText>();
+		ProgressText = WidgetTree->ConstructWidget<UMvsText>();
 		UHorizontalBoxSlot* ProgressSlot = Row->AddChildToHorizontalBox(ProgressText);
 		ProgressSlot->SetVerticalAlignment(VAlign_Bottom);
 		ProgressSlot->SetPadding(FMargin(12.f, 0.f, 0.f, 0.f));
@@ -64,9 +64,9 @@ TSharedRef<SWidget> UObjectiveTrackerWidget::RebuildWidget()
 void UObjectiveTrackerWidget::SetViewModel(UObjectivesViewModel* InViewModel)
 {
 	using FVM = UObjectivesViewModel::FFieldNotificationClassDescriptor;
-	GothamMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	GothamMVVM::Bind(ViewModel, this, &UObjectiveTrackerWidget::OnFieldChanged,
+	MvsMVVM::Bind(ViewModel, this, &UObjectiveTrackerWidget::OnFieldChanged,
 		{ FVM::ObjectiveTitle, FVM::ProgressText, FVM::ProgressPercent, FVM::bIsComplete });
 	if (ViewModel)
 	{
@@ -91,34 +91,34 @@ void UObjectiveTrackerWidget::Refresh()
 	SetVisibility(ViewModel->GetTotalCount() > 0 ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
 	const bool bComplete = ViewModel->GetIsComplete();
-	const FLinearColor Progress = bComplete ? GetToken(EGothamColorToken::Good) : GetToken(EGothamColorToken::Accent);
-	FLinearColor Fill = GetToken(EGothamColorToken::Panel);
+	const FLinearColor Progress = bComplete ? GetToken(EMvsColorToken::Good) : GetToken(EMvsColorToken::Accent);
+	FLinearColor Fill = GetToken(EMvsColorToken::Panel);
 	Fill.A = GetPanelAlpha() * 0.85f;
-	FLinearColor Edge = GetToken(EGothamColorToken::PanelEdge);
+	FLinearColor Edge = GetToken(EMvsColorToken::PanelEdge);
 	Edge.A = 0.6f;
 	Panel->SetColors(Fill, Edge);
 	Panel->SetAccent(Progress, 3.f);
 
-	GothamStyle::ApplyText(HeaderText, EGothamTextStyle::Label, GetToken(EGothamColorToken::TextMuted));
-	GothamStyle::ApplyText(TitleText, EGothamTextStyle::Header, GetToken(EGothamColorToken::TextPrimary));
-	GothamStyle::ApplyText(ProgressText, EGothamTextStyle::Numeric, Progress);
+	MvsStyle::ApplyText(HeaderText, EMvsTextStyle::Label, GetToken(EMvsColorToken::TextMuted));
+	MvsStyle::ApplyText(TitleText, EMvsTextStyle::Header, GetToken(EMvsColorToken::TextPrimary));
+	MvsStyle::ApplyText(ProgressText, EMvsTextStyle::Numeric, Progress);
 	TitleText->SetText(ViewModel->GetObjectiveTitle());
 	ProgressText->SetText(ViewModel->GetProgressText());
 
 	// One segment per clue while that stays readable; a continuous bar beyond that.
 	const int32 Total = ViewModel->GetTotalCount();
-	FLinearColor Track = GetToken(EGothamColorToken::PanelEdge);
+	FLinearColor Track = GetToken(EMvsColorToken::PanelEdge);
 	Track.A = 0.35f;
 	Bar->SegmentCount = Total > 0 && Total <= 12 ? Total : 1;
 	Bar->FilledColor = Progress;
 	Bar->EmptyColor = Track;
-	Bar->bReduceMotion = GetGothamSettings().bReducedMotion;
+	Bar->bReduceMotion = GetMvsSettings().bReducedMotion;
 	Bar->SynchronizeProperties();
 	Bar->SetPercent(ViewModel->GetProgressPercent());
 
 	if (LastFound >= 0 && ViewModel->GetFoundCount() > LastFound)
 	{
-		GothamMotion::Pop(ProgressText, 1.3f, 0.2f);
+		MvsMotion::Pop(ProgressText, 1.3f, 0.2f);
 	}
 	LastFound = ViewModel->GetFoundCount();
 }

@@ -1,16 +1,16 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/ThreatIndicatorLayer.h"
 
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/Slate/SThreatIndicatorLayer.h"
-#include "UI/Style/GothamStyle.h"
-#include "UI/Widgets/GothamInputGlyph.h"
-#include "ViewModels/GothamMVVM.h"
+#include "UI/Style/MvsStyle.h"
+#include "UI/Widgets/MvsInputGlyph.h"
+#include "ViewModels/MvsMVVM.h"
 #include "ViewModels/ThreatViewModel.h"
 
-TSharedRef<SGothamWorldOverlayBase> UThreatIndicatorLayer::MakeOverlay()
+TSharedRef<SMvsWorldOverlayBase> UThreatIndicatorLayer::MakeOverlay()
 {
 	TSharedRef<SThreatIndicatorLayer> Layer = SNew(SThreatIndicatorLayer);
 	Layer->SetProvider(MakeProvider(&UThreatIndicatorLayer::BuildIndicators));
@@ -19,9 +19,9 @@ TSharedRef<SGothamWorldOverlayBase> UThreatIndicatorLayer::MakeOverlay()
 
 void UThreatIndicatorLayer::SetViewModel(UThreatViewModel* InViewModel)
 {
-	GothamMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
-	GothamMVVM::Bind(ViewModel, this, &UThreatIndicatorLayer::OnThreatsChanged,
+	MvsMVVM::Bind(ViewModel, this, &UThreatIndicatorLayer::OnThreatsChanged,
 		{ UThreatViewModel::FFieldNotificationClassDescriptor::ThreatCount });
 	UpdateActive();
 }
@@ -30,9 +30,9 @@ void UThreatIndicatorLayer::ApplyTheme()
 {
 	if (SThreatIndicatorLayer* Layer = GetOverlay<SThreatIndicatorLayer>())
 	{
-		const FGothamTheme Theme = GothamStyle::Theme(this);
-		Layer->SetColors(Theme.Color(EGothamColorToken::Danger), Theme.Color(EGothamColorToken::TextMuted),
-			Theme.Color(EGothamColorToken::Panel), Theme.Color(EGothamColorToken::TextPrimary));
+		const FMvsTheme Theme = MvsStyle::Theme(this);
+		Layer->SetColors(Theme.Color(EMvsColorToken::Danger), Theme.Color(EMvsColorToken::TextMuted),
+			Theme.Color(EMvsColorToken::Panel), Theme.Color(EMvsColorToken::TextPrimary));
 		Layer->SetReducedMotion(Theme.bReducedMotion);
 	}
 }
@@ -47,7 +47,7 @@ void UThreatIndicatorLayer::OnThreatsChanged(UObject* Source, UE::FieldNotificat
 	UpdateActive();
 }
 
-void UThreatIndicatorLayer::BuildIndicators(TArray<FGothamThreatIndicator>& Out) const
+void UThreatIndicatorLayer::BuildIndicators(TArray<FMvsThreatIndicator>& Out) const
 {
 	APlayerController* PC = GetOwningPlayer();
 	if (!ViewModel || !PC || !PC->PlayerCameraManager)
@@ -57,18 +57,18 @@ void UThreatIndicatorLayer::BuildIndicators(TArray<FGothamThreatIndicator>& Out)
 	const FVector CameraLocation = PC->PlayerCameraManager->GetCameraLocation();
 	const FRotator CameraRotation = PC->PlayerCameraManager->GetCameraRotation();
 	bool bAnyWarning = false;
-	for (const FGothamThreatSnapshot& Threat : ViewModel->GetThreats())
+	for (const FMvsThreatSnapshot& Threat : ViewModel->GetThreats())
 	{
-		const bool bWarning = Threat.State == EGothamThugState::Warning;
+		const bool bWarning = Threat.State == EMvsThugState::Warning;
 		if (!bWarning && Threat.Distance > ArrowRange)
 		{
 			continue;
 		}
-		FGothamThreatIndicator& Indicator = Out.AddDefaulted_GetRef();
+		FMvsThreatIndicator& Indicator = Out.AddDefaulted_GetRef();
 		Indicator.bWarning = bWarning;
 		Indicator.Progress = Threat.WarningProgress;
 		// Stunned thugs are no threat for now: their arrow dims.
-		Indicator.Opacity = Threat.State == EGothamThugState::Stunned ? 0.35f : 1.f;
+		Indicator.Opacity = Threat.State == EMvsThugState::Stunned ? 0.35f : 1.f;
 		Indicator.ViewDirection = CameraRotation.UnrotateVector(Threat.PromptLocation - CameraLocation);
 		Indicator.bProjected = Indicator.ViewDirection.X > 0.f && ProjectToLayer(Threat.PromptLocation, Indicator.Screen);
 		bAnyWarning |= bWarning;
@@ -77,7 +77,7 @@ void UThreatIndicatorLayer::BuildIndicators(TArray<FGothamThreatIndicator>& Out)
 	if (bAnyWarning && Layer)
 	{
 		// Follows rebinding and device switches: the prompt always names the key that counters right now.
-		const FKey Key = UGothamInputGlyph::FindKeyForAction(PC, TEXT("Counter"));
-		Layer->SetKeyLabel(Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key, PC->GetLocalPlayer()) : FText::GetEmpty());
+		const FKey Key = UMvsInputGlyph::FindKeyForAction(PC, TEXT("Counter"));
+		Layer->SetKeyLabel(Key.IsValid() ? UMvsInputGlyph::GetKeyLabel(Key, PC->GetLocalPlayer()) : FText::GetEmpty());
 	}
 }

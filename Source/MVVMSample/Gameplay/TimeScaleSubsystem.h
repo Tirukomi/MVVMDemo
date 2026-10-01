@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
@@ -14,12 +14,12 @@
  * lands back on the wheel's slow motion, not on normal speed.
  */
 UCLASS()
-class MVVMSAMPLE_API UGothamTimeScaleSubsystem : public UWorldSubsystem
+class MVVMSAMPLE_API UMvsTimeScaleSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	static UGothamTimeScaleSubsystem* Get(const UObject* WorldContext);
+	static UMvsTimeScaleSubsystem* Get(const UObject* WorldContext);
 
 	/** Asks for Scale until Clear(Source). A second request from the same source replaces the first. */
 	void Request(FName Source, float Scale);

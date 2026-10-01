@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
@@ -9,7 +9,7 @@
 #include "ClueEntryWidget.generated.h"
 
 class UClueEntryViewModel;
-class UGothamPanel;
+class UMvsPanel;
 class UImage;
 class UTextBlock;
 
@@ -48,7 +48,7 @@ private:
 	TObjectPtr<UClueEntryViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> Frame;
+	TObjectPtr<UMvsPanel> Frame;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UImage> Thumbnail;
@@ -65,7 +65,7 @@ private:
 
 /** Tile view whose entry class is set from code (no designer asset to point at it). */
 UCLASS()
-class MVVMSAMPLE_API UGothamClueTileView : public UTileView
+class MVVMSAMPLE_API UMvsClueTileView : public UTileView
 {
 	GENERATED_BODY()
 
@@ -74,4 +74,4 @@ public:
 };
 
 /** Case number shown on tiles and in the detail pane: "No. 007". Pure, for tests. */
-MVVMSAMPLE_API FText GothamCaseNumber(int32 Index);
+MVVMSAMPLE_API FText MvsCaseNumber(int32 Index);

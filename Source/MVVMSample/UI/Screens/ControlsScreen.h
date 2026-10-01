@@ -1,14 +1,14 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Input/GothamBindings.h"
-#include "UI/Screens/GothamScreen.h"
+#include "Input/MvsBindings.h"
+#include "UI/Screens/MvsScreen.h"
 #include "ControlsScreen.generated.h"
 
 class UControlsViewModel;
-class UGothamButton;
+class UMvsButton;
 class UTextBlock;
 
 /**
@@ -17,7 +17,7 @@ class UTextBlock;
  * view model validates and applies it (to Enhanced Input's user settings, through a binding store).
  */
 UCLASS()
-class MVVMSAMPLE_API UControlsScreen : public UGothamScreen
+class MVVMSAMPLE_API UControlsScreen : public UMvsScreen
 {
 	GENERATED_BODY()
 
@@ -38,7 +38,7 @@ private:
 	{
 		FName Name;
 		int32 Slot = 0;
-		TObjectPtr<UGothamButton> Button;
+		TObjectPtr<UMvsButton> Button;
 	};
 
 	void BeginCapture(FName Name, int32 Slot);

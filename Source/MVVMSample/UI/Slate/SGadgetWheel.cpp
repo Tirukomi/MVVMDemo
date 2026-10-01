@@ -1,7 +1,7 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Slate/SGadgetWheel.h"
-#include "UI/GothamAccessibility.h"
+#include "UI/MvsAccessibility.h"
 
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
@@ -28,23 +28,23 @@ void SGadgetWheel::Construct(const FArguments& InArgs)
 	OnItemSelected = InArgs._OnItemSelected;
 	OnItemHovered = InArgs._OnItemHovered;
 	SetCanTick(false);
-	GothamAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SGadgetWheel::GetAccessibleSummary));
+	MvsAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SGadgetWheel::GetAccessibleSummary));
 }
 
 FText SGadgetWheel::GetAccessibleSummary() const
 {
 	return Items.IsValidIndex(HoveredIndex)
-		? FText::Format(NSLOCTEXT("Gotham.Accessibility", "WheelSelected", "Gadget wheel: {0}"), Items[HoveredIndex].Label)
-		: NSLOCTEXT("Gotham.Accessibility", "WheelNone", "Gadget wheel: nothing selected");
+		? FText::Format(NSLOCTEXT("Mvs.Accessibility", "WheelSelected", "Gadget wheel: {0}"), Items[HoveredIndex].Label)
+		: NSLOCTEXT("Mvs.Accessibility", "WheelNone", "Gadget wheel: nothing selected");
 }
 
-void SGadgetWheel::SetStyle(const FGothamGadgetWheelStyle& InStyle)
+void SGadgetWheel::SetStyle(const FMvsGadgetWheelStyle& InStyle)
 {
 	Style = InStyle;
 	Invalidate(EInvalidateWidgetReason::LayoutAndVolatility);
 }
 
-void SGadgetWheel::SetItems(const TArray<FGothamWheelItem>& InItems)
+void SGadgetWheel::SetItems(const TArray<FMvsWheelItem>& InItems)
 {
 	const bool bCountChanged = InItems.Num() != Items.Num();
 	Items = InItems;
@@ -122,7 +122,7 @@ EActiveTimerReturnType SGadgetWheel::TickAnimation(double, float InDeltaTime)
 FReply SGadgetWheel::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	const FVector2D Offset = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition()) - MyGeometry.GetLocalSize() * 0.5f;
-	SetHovered(GothamWheel::IndexFromOffset(Offset, Items.Num(), Style.InnerRadius));
+	SetHovered(MvsWheel::IndexFromOffset(Offset, Items.Num(), Style.InnerRadius));
 	return FReply::Unhandled();
 }
 
@@ -175,7 +175,7 @@ void SGadgetWheel::SetStickInput(const FVector2D& Stick)
 	// releasing the wheel button still commits it.
 	if (Stick.Size() >= StickDeadZone)
 	{
-		SetHovered(GothamWheel::IndexFromOffset(FVector2D(Stick.X, -Stick.Y), Items.Num(), 0.f));
+		SetHovered(MvsWheel::IndexFromOffset(FVector2D(Stick.X, -Stick.Y), Items.Num(), 0.f));
 	}
 }
 
@@ -242,9 +242,9 @@ int32 SGadgetWheel::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeo
 	// Segment bodies, cooldown wedges and outlines each get their own layer so ordering never depends on segment order.
 	for (int32 i = 0; i < Count; ++i)
 	{
-		const FGothamWheelItem& Item = Items[i];
+		const FMvsWheelItem& Item = Items[i];
 		const float Hover = Alpha(i);
-		const float Mid = GothamWheel::SegmentCenterDeg(i, Count);
+		const float Mid = MvsWheel::SegmentCenterDeg(i, Count);
 		const float A0 = Mid - HalfSpan;
 		const float A1 = Mid + HalfSpan;
 		const float R1 = Style.OuterRadius + Style.HoverExpand * Hover;
@@ -291,7 +291,7 @@ int32 SGadgetWheel::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeo
 		const float Radius = (Style.InnerRadius + Style.OuterRadius) * 0.5f + Style.HoverExpand * Alpha(i) * 0.5f;
 		FLinearColor TextColor = Items[i].bReady ? FLinearColor::White : FLinearColor(0.7f, 0.7f, 0.7f);
 		TextColor.A *= Opacity;
-		DrawCentered(Items[i].Label, Style.LabelFont, PointOnCircle(Center, Radius, GothamWheel::SegmentCenterDeg(i, Count)), TextColor);
+		DrawCentered(Items[i].Label, Style.LabelFont, PointOnCircle(Center, Radius, MvsWheel::SegmentCenterDeg(i, Count)), TextColor);
 	}
 
 	if (Items.IsValidIndex(HoveredIndex))

@@ -1,8 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Screens/ClueLogScreen.h"
 
-#include "UI/Style/GothamMetrics.h"
+#include "UI/Style/MvsMetrics.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
@@ -15,14 +15,14 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/Texture2D.h"
 #include "UI/ClueEntryWidget.h"
-#include "UI/GothamUISettings.h"
-#include "UI/Slate/SGothamPanel.h"
-#include "UI/Widgets/GothamPanel.h"
+#include "UI/MvsUISettings.h"
+#include "UI/Slate/SMvsPanel.h"
+#include "UI/Widgets/MvsPanel.h"
 #include "ViewModels/ClueViewModels.h"
-#include "ViewModels/GothamMVVM.h"
-#include "ViewModels/GothamViewModelSubsystem.h"
+#include "ViewModels/MvsMVVM.h"
+#include "ViewModels/MvsViewModelSubsystem.h"
 
-#define LOCTEXT_NAMESPACE "Gotham.ClueLog"
+#define LOCTEXT_NAMESPACE "Mvs.ClueLog"
 
 namespace
 {
@@ -37,7 +37,7 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 		ToggleActionName = TEXT("ClueLog");
 		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "Investigation"), LOCTEXT("Title", "Case file"));
 
-		Summary = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::TextMuted);
+		Summary = MakeText(FText::GetEmpty(), EMvsTextStyle::Label, EMvsColorToken::TextMuted);
 		Column->AddChildToVerticalBox(Summary)->SetPadding(FMargin(0.f, 0.f, 0.f, 12.f));
 
 		UHorizontalBox* Split = WidgetTree->ConstructWidget<UHorizontalBox>();
@@ -48,8 +48,8 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 		BoardWidth->SetWidthOverride(UClueEntryWidget::TileWidth * TilesPerRow + 16.f);
 		Split->AddChildToHorizontalBox(BoardWidth);
 
-		TileView = WidgetTree->ConstructWidget<UGothamClueTileView>();
-		TSubclassOf<UUserWidget> EntryClass = UGothamUISettings::Resolve(GetDefault<UGothamUISettings>()->ClueEntryClass);
+		TileView = WidgetTree->ConstructWidget<UMvsClueTileView>();
+		TSubclassOf<UUserWidget> EntryClass = UMvsUISettings::Resolve(GetDefault<UMvsUISettings>()->ClueEntryClass);
 		TileView->SetEntryClass(EntryClass ? EntryClass : TSubclassOf<UUserWidget>(UClueEntryWidget::StaticClass()));
 		TileView->SetEntryWidth(UClueEntryWidget::TileWidth);
 		TileView->SetEntryHeight(UClueEntryWidget::TileHeight);
@@ -62,11 +62,11 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 
 		// Right: the selected clue.
 		USizeBox* DetailWidth = WidgetTree->ConstructWidget<USizeBox>();
-		DetailWidth->SetWidthOverride(GothamMetrics::CaseFileDetailWidth);
+		DetailWidth->SetWidthOverride(MvsMetrics::CaseFileDetailWidth);
 		Split->AddChildToHorizontalBox(DetailWidth)->SetVerticalAlignment(VAlign_Top);
-		DetailPanel = WidgetTree->ConstructWidget<UGothamPanel>();
-		DetailPanel->SetPanelPadding(GothamMetrics::CaseFileDetailPadding);
-		DetailPanel->SetShape(14.f, EGothamChamfer::Opposite);
+		DetailPanel = WidgetTree->ConstructWidget<UMvsPanel>();
+		DetailPanel->SetPanelPadding(MvsMetrics::CaseFileDetailPadding);
+		DetailPanel->SetShape(14.f, EMvsChamfer::Opposite);
 		DetailWidth->SetContent(DetailPanel);
 
 		UVerticalBox* Detail = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -79,15 +79,15 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 
 		UHorizontalBox* Meta = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Detail->AddChildToVerticalBox(Meta);
-		DetailNumber = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::Accent);
+		DetailNumber = MakeText(FText::GetEmpty(), EMvsTextStyle::Label, EMvsColorToken::Accent);
 		Meta->AddChildToHorizontalBox(DetailNumber)->SetPadding(FMargin(0.f, 0.f, 14.f, 0.f));
-		DetailStatus = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::TextMuted);
+		DetailStatus = MakeText(FText::GetEmpty(), EMvsTextStyle::Label, EMvsColorToken::TextMuted);
 		Meta->AddChildToHorizontalBox(DetailStatus);
 
-		DetailTitle = MakeText(FText::GetEmpty(), EGothamTextStyle::Header, EGothamColorToken::TextPrimary);
+		DetailTitle = MakeText(FText::GetEmpty(), EMvsTextStyle::Header, EMvsColorToken::TextPrimary);
 		DetailTitle->SetAutoWrapText(true);
 		Detail->AddChildToVerticalBox(DetailTitle)->SetPadding(FMargin(0.f, 4.f, 0.f, 8.f));
-		DetailBody = MakeText(FText::GetEmpty(), EGothamTextStyle::Body, EGothamColorToken::TextMuted);
+		DetailBody = MakeText(FText::GetEmpty(), EMvsTextStyle::Body, EMvsColorToken::TextMuted);
 		DetailBody->SetAutoWrapText(true);
 		// Long compounds (German) and unbroken runs (pseudo-locale) wrap by character rather than overflow.
 		DetailBody->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
@@ -104,11 +104,11 @@ void UClueLogScreen::NativeConstruct()
 
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
-		if (auto* ViewModels = LocalPlayer->GetSubsystem<UGothamViewModelSubsystem>())
+		if (auto* ViewModels = LocalPlayer->GetSubsystem<UMvsViewModelSubsystem>())
 		{
 			Clues = ViewModels->GetClues();
 			using FVM = UClueListViewModel::FFieldNotificationClassDescriptor;
-			GothamMVVM::Bind(Clues, this, &UClueLogScreen::OnClueListChanged, { FVM::Entries, FVM::DiscoveredCount });
+			MvsMVVM::Bind(Clues, this, &UClueLogScreen::OnClueListChanged, { FVM::Entries, FVM::DiscoveredCount });
 		}
 	}
 	RefreshList();
@@ -116,7 +116,7 @@ void UClueLogScreen::NativeConstruct()
 
 void UClueLogScreen::NativeDestruct()
 {
-	GothamMVVM::Unbind(Clues, this);
+	MvsMVVM::Unbind(Clues, this);
 	BindDetail(nullptr);
 	Super::NativeDestruct();
 }
@@ -126,9 +126,9 @@ void UClueLogScreen::ApplyTheme()
 	Super::ApplyTheme();
 	if (DetailPanel)
 	{
-		DetailPanel->SetColors(GothamStyle::Token(this, EGothamColorToken::Panel, GothamStyle::PanelAlpha(this)),
-			GothamStyle::Token(this, EGothamColorToken::PanelEdge, 0.7f));
-		DetailPanel->SetAccent(GothamStyle::Token(this, EGothamColorToken::Accent), 3.f);
+		DetailPanel->SetColors(MvsStyle::Token(this, EMvsColorToken::Panel, MvsStyle::PanelAlpha(this)),
+			MvsStyle::Token(this, EMvsColorToken::PanelEdge, 0.7f));
+		DetailPanel->SetAccent(MvsStyle::Token(this, EMvsColorToken::Accent), 3.f);
 	}
 	RefreshDetail();
 }
@@ -167,12 +167,12 @@ void UClueLogScreen::OnSelectionChanged(UObject* Item)
 
 void UClueLogScreen::BindDetail(UClueEntryViewModel* Entry)
 {
-	GothamMVVM::Unbind(DetailEntry, this);
+	MvsMVVM::Unbind(DetailEntry, this);
 	DetailEntry = Entry;
 	if (DetailEntry)
 	{
 		using FVM = UClueEntryViewModel::FFieldNotificationClassDescriptor;
-		GothamMVVM::Bind(DetailEntry, this, &UClueLogScreen::OnDetailChanged,
+		MvsMVVM::Bind(DetailEntry, this, &UClueLogScreen::OnDetailChanged,
 			{ FVM::DisplayTitle, FVM::DisplayDescription, FVM::bIsDiscovered, FVM::Thumbnail });
 		if (DetailEntry->GetIsDiscovered())
 		{
@@ -195,9 +195,9 @@ void UClueLogScreen::RefreshDetail()
 	}
 	DetailPanel->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	const bool bDiscovered = DetailEntry->GetIsDiscovered();
-	DetailNumber->SetText(GothamCaseNumber(Clues ? Clues->GetEntries().IndexOfByKey(DetailEntry) : 0));
+	DetailNumber->SetText(MvsCaseNumber(Clues ? Clues->GetEntries().IndexOfByKey(DetailEntry) : 0));
 	DetailStatus->SetText(bDiscovered ? LOCTEXT("Analysed", "Analysed") : LOCTEXT("Unknown", "Not yet found"));
-	DetailStatus->SetColorAndOpacity(GothamStyle::Token(this, bDiscovered ? EGothamColorToken::Scanned : EGothamColorToken::TextMuted));
+	DetailStatus->SetColorAndOpacity(MvsStyle::Token(this, bDiscovered ? EMvsColorToken::Scanned : EMvsColorToken::TextMuted));
 	DetailTitle->SetText(DetailEntry->GetDisplayTitle());
 	DetailBody->SetText(DetailEntry->GetDisplayDescription());
 
@@ -209,7 +209,7 @@ void UClueLogScreen::RefreshDetail()
 	else
 	{
 		DetailImage->SetBrush(FSlateBrush());
-		DetailImage->SetColorAndOpacity(GothamStyle::Token(this, EGothamColorToken::PanelEdge, 0.12f));
+		DetailImage->SetColorAndOpacity(MvsStyle::Token(this, EMvsColorToken::PanelEdge, 0.12f));
 	}
 }
 

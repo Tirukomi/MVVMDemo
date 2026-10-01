@@ -1,10 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Widgets/SLeafWidget.h"
-#include "UI/Slate/GothamWheelTypes.h"
+#include "UI/Slate/MvsWheelTypes.h"
 
 DECLARE_DELEGATE_OneParam(FOnWheelIndex, int32 /*ItemIndex*/);
 
@@ -19,7 +19,7 @@ public:
 	SLATE_BEGIN_ARGS(SGadgetWheel)
 		: _Style()
 	{}
-		SLATE_ARGUMENT(FGothamGadgetWheelStyle, Style)
+		SLATE_ARGUMENT(FMvsGadgetWheelStyle, Style)
 		/** Fired when an item is chosen by click or number key, or by CommitHovered(). */
 		SLATE_EVENT(FOnWheelIndex, OnItemSelected)
 		SLATE_EVENT(FOnWheelIndex, OnItemHovered)
@@ -27,8 +27,8 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
-	void SetItems(const TArray<FGothamWheelItem>& InItems);
-	void SetStyle(const FGothamGadgetWheelStyle& InStyle);
+	void SetItems(const TArray<FMvsWheelItem>& InItems);
+	void SetStyle(const FMvsGadgetWheelStyle& InStyle);
 	/** Snap hover changes instead of easing when reduced motion is on. */
 	void SetReduceMotion(bool bInReduce) { bReduceMotion = bInReduce; }
 
@@ -58,8 +58,8 @@ private:
 	EActiveTimerReturnType TickAnimation(double InCurrentTime, float InDeltaTime);
 	void EnsureAnimating();
 
-	FGothamGadgetWheelStyle Style;
-	TArray<FGothamWheelItem> Items;
+	FMvsGadgetWheelStyle Style;
+	TArray<FMvsWheelItem> Items;
 
 	bool bReduceMotion = false;
 	int32 HoveredIndex = INDEX_NONE;

@@ -1,18 +1,18 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Input/GothamBindings.h"
+#include "Input/MvsBindings.h"
 #include "MVVMViewModelBase.h"
 #include "ControlsViewModel.generated.h"
 
-class IGothamBindingStore;
+class IMvsBindingStore;
 
 /**
  * Presentation state and commands for the controls screen. Holds a snapshot of the current bindings, validates rebind
  * requests (allowed key for the slot, swap on conflict) and applies them through a binding store
- * (IGothamBindingStore: Enhanced Input in the game, memory in tests). The screen only shows the result.
+ * (IMvsBindingStore: Enhanced Input in the game, memory in tests). The screen only shows the result.
  */
 UCLASS(BlueprintType)
 class MVVMSAMPLE_API UControlsViewModel : public UMVVMViewModelBase
@@ -21,7 +21,7 @@ class MVVMSAMPLE_API UControlsViewModel : public UMVVMViewModelBase
 
 public:
 	/** Where the bindings are read from and written to. Reads the current bindings. */
-	void SetStore(TSharedPtr<IGothamBindingStore> InStore);
+	void SetStore(TSharedPtr<IMvsBindingStore> InStore);
 
 	/** Re-reads the bindings from the store (after something else changed them). */
 	void Refresh();
@@ -38,7 +38,7 @@ public:
 	void SetStatus(const FText& InStatus);
 
 	FKey GetKey(FName Name, int32 Slot) const;
-	const TArray<FGothamBindingSlot>& GetSnapshot() const { return Snapshot; }
+	const TArray<FMvsBindingSlot>& GetSnapshot() const { return Snapshot; }
 	int32 GetRevision() const { return Revision; }
 	const FText& GetStatusText() const { return StatusText; }
 
@@ -51,8 +51,8 @@ protected:
 	FText StatusText;
 
 private:
-	void SetSnapshot(TArray<FGothamBindingSlot> InSnapshot);
+	void SetSnapshot(TArray<FMvsBindingSlot> InSnapshot);
 
-	TSharedPtr<IGothamBindingStore> Store;
-	TArray<FGothamBindingSlot> Snapshot;
+	TSharedPtr<IMvsBindingStore> Store;
+	TArray<FMvsBindingSlot> Snapshot;
 };

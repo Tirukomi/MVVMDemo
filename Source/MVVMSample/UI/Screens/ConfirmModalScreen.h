@@ -1,13 +1,13 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Screens/GothamScreen.h"
+#include "UI/Screens/MvsScreen.h"
 #include "ConfirmModalScreen.generated.h"
 
-class UGothamButton;
-class UGothamPanel;
+class UMvsButton;
+class UMvsPanel;
 class UTextBlock;
 
 DECLARE_DELEGATE_OneParam(FOnConfirmResult, bool /*bConfirmed*/);
@@ -17,7 +17,7 @@ DECLARE_DELEGATE_OneParam(FOnConfirmResult, bool /*bConfirmed*/);
  * action. Destructive confirmations get the danger accent and a "Caution" label, so the warning is never colour alone.
  */
 UCLASS()
-class MVVMSAMPLE_API UConfirmModalScreen : public UGothamScreen
+class MVVMSAMPLE_API UConfirmModalScreen : public UMvsScreen
 {
 	GENERATED_BODY()
 
@@ -37,13 +37,13 @@ private:
 	bool bDestructive = false;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> Panel;
+	TObjectPtr<UMvsPanel> Panel;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> CautionText;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamButton> YesButton;
+	TObjectPtr<UMvsButton> YesButton;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> TitleText;

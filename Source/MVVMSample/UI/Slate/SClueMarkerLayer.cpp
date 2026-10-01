@@ -1,15 +1,15 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Slate/SClueMarkerLayer.h"
-#include "UI/GothamAccessibility.h"
+#include "UI/MvsAccessibility.h"
 
 #include "Framework/Application/SlateApplication.h"
 #include "Fonts/FontMeasure.h"
 #include "Rendering/DrawElements.h"
 #include "Rendering/SlateRenderer.h"
-#include "UI/Style/GothamStyle.h"
+#include "UI/Style/MvsStyle.h"
 
-namespace GothamMarkers
+namespace MvsMarkers
 {
 	float ScaleForDistance(float DistanceCm)
 	{
@@ -30,17 +30,17 @@ namespace GothamMarkers
 void SClueMarkerLayer::Construct(const FArguments& InArgs)
 {
 	ConstructOverlay();
-	GothamAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SClueMarkerLayer::GetAccessibleSummary));
+	MvsAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SClueMarkerLayer::GetAccessibleSummary));
 }
 
 FText SClueMarkerLayer::GetAccessibleSummary() const
 {
 	int32 Unknown = 0;
-	for (const FGothamClueMarker& Marker : GetItems())
+	for (const FMvsClueMarker& Marker : GetItems())
 	{
-		Unknown += Marker.State == FGothamClueMarker::EState::Unknown ? 1 : 0;
+		Unknown += Marker.State == FMvsClueMarker::EState::Unknown ? 1 : 0;
 	}
-	return FText::Format(NSLOCTEXT("Gotham.Accessibility", "Markers", "{0} {0}|plural(one=clue,other=clues) in view, {1} not yet scanned"),
+	return FText::Format(NSLOCTEXT("Mvs.Accessibility", "Markers", "{0} {0}|plural(one=clue,other=clues) in view, {1} not yet scanned"),
 		GetItems().Num(), Unknown);
 }
 
@@ -56,14 +56,14 @@ void SClueMarkerLayer::SetColors(const FLinearColor& InUnknown, const FLinearCol
 int32 SClueMarkerLayer::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
 	FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {
-	const TArray<FGothamClueMarker>& Markers = GetItems();
+	const TArray<FMvsClueMarker>& Markers = GetItems();
 	if (Markers.IsEmpty())
 	{
 		return LayerId;
 	}
 	const TSharedRef<FSlateFontMeasure> Measure = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
-	const FSlateFontInfo LabelFont = GothamStyle::Font(EGothamTextStyle::Label);
-	const FSlateFontInfo DistanceFont = GothamStyle::Font(EGothamTextStyle::Key);
+	const FSlateFontInfo LabelFont = MvsStyle::Font(EMvsTextStyle::Label);
+	const FSlateFontInfo DistanceFont = MvsStyle::Font(EMvsTextStyle::Key);
 	const float Opacity = InWidgetStyle.GetColorAndOpacityTint().A;
 
 	auto Lines = [&](TArray<FVector2f> Points, const FLinearColor& Color, float Thickness)
@@ -78,10 +78,10 @@ int32 SClueMarkerLayer::OnPaint(const FPaintArgs& Args, const FGeometry& Allotte
 		return FVector2f(Size);
 	};
 
-	for (const FGothamClueMarker& M : Markers)
+	for (const FMvsClueMarker& M : Markers)
 	{
-		FLinearColor Color = M.State == FGothamClueMarker::EState::Analysing ? AnalysingColor
-			: M.State == FGothamClueMarker::EState::Known ? KnownColor : UnknownColor;
+		FLinearColor Color = M.State == FMvsClueMarker::EState::Analysing ? AnalysingColor
+			: M.State == FMvsClueMarker::EState::Known ? KnownColor : UnknownColor;
 		Color.A *= M.Opacity * Opacity;
 		FLinearColor Muted = MutedColor;
 		Muted.A *= M.Opacity * Opacity;
@@ -100,7 +100,7 @@ int32 SClueMarkerLayer::OnPaint(const FPaintArgs& Args, const FGeometry& Allotte
 		// Centre tick.
 		Lines({ C - FVector2f(3.f, 0.f), C + FVector2f(3.f, 0.f) }, Color, T);
 
-		if (M.State == FGothamClueMarker::EState::Analysing && M.Progress > 0.f)
+		if (M.State == FMvsClueMarker::EState::Analysing && M.Progress > 0.f)
 		{
 			// Progress arc just outside the brackets, clockwise from the top.
 			const float R = H * 1.55f;

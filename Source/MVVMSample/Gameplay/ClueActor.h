@@ -1,17 +1,17 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Gameplay/DetectiveTypes.h"
+#include "Gameplay/ForensicTypes.h"
 #include "ClueActor.generated.h"
 
 class UClueDataAsset;
 class UStaticMeshComponent;
 
 /**
- * A clue placed in the world. Invisible to normal vision; Detective Mode turns on custom depth so the
+ * A clue placed in the world. Invisible to normal vision; Forensic Mode turns on custom depth so the
  * post-process pass can draw it (through walls) in "unscanned" or "scanned" colours via the stencil value.
  */
 UCLASS()
@@ -22,14 +22,14 @@ class MVVMSAMPLE_API AClueActor : public AActor
 public:
 	AClueActor();
 
-	/** Stencil values the Detective Mode post-process material keys off. */
-	static constexpr int32 StencilUnscanned = EGothamStencil::ClueUnscanned;
-	static constexpr int32 StencilScanned = EGothamStencil::ClueScanned;
+	/** Stencil values the Forensic Mode post-process material keys off. */
+	static constexpr int32 StencilUnscanned = EMvsStencil::ClueUnscanned;
+	static constexpr int32 StencilScanned = EMvsStencil::ClueScanned;
 
 	const UClueDataAsset* GetClue() const { return Clue; }
 	bool IsScanned() const { return bScanned; }
 
-	void SetDetectiveHighlight(bool bEnabled);
+	void SetForensicHighlight(bool bEnabled);
 	void MarkScanned();
 
 private:

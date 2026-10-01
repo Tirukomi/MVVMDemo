@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
 
@@ -8,42 +8,42 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace GothamV5Tests
+namespace MvsV5Tests
 {
 	constexpr EAutomationTestFlags Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamThugBrainTest, "Gotham.Combat.ThugBrain", GothamV5Tests::Flags)
-bool FGothamThugBrainTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsThugBrainTest, "Mvs.Combat.ThugBrain", MvsV5Tests::Flags)
+bool FMvsThugBrainTest::RunTest(const FString& Parameters)
 {
-	FGothamThugBrain Brain;
+	FMvsThugBrain Brain;
 	TestFalse("cannot counter an idle thug", Brain.Counter());
 	TestTrue("idle thugs can start a warning", Brain.BeginWarning());
 	TestFalse("but not twice", Brain.BeginWarning());
 
-	TestEqual("no event mid-warning", Brain.Advance(FGothamThugBrain::WarningSeconds * 0.5f), EGothamThugEvent::None);
+	TestEqual("no event mid-warning", Brain.Advance(FMvsThugBrain::WarningSeconds * 0.5f), EMvsThugEvent::None);
 	TestNearlyEqual("progress runs 0..1 across the warning", Brain.GetWarningProgress(), 0.5f, 0.01f);
-	TestEqual("an uncountered warning strikes", Brain.Advance(FGothamThugBrain::WarningSeconds), EGothamThugEvent::Strike);
-	TestEqual("then recovers", Brain.State, EGothamThugState::Recover);
+	TestEqual("an uncountered warning strikes", Brain.Advance(FMvsThugBrain::WarningSeconds), EMvsThugEvent::Strike);
+	TestEqual("then recovers", Brain.State, EMvsThugState::Recover);
 	TestFalse("no counter after the strike", Brain.Counter());
-	TestEqual("and is ready again", Brain.Advance(FGothamThugBrain::RecoverSeconds + 0.01f), EGothamThugEvent::Ready);
+	TestEqual("and is ready again", Brain.Advance(FMvsThugBrain::RecoverSeconds + 0.01f), EMvsThugEvent::Ready);
 
 	Brain.BeginWarning();
 	Brain.Advance(0.3f);
 	TestTrue("a counter lands during the warning", Brain.Counter());
-	TestEqual("and stuns", Brain.State, EGothamThugState::Stunned);
-	TestEqual("a stunned thug never strikes", Brain.Advance(FGothamThugBrain::WarningSeconds + 0.1f), EGothamThugEvent::None);
-	TestEqual("stun wears off", Brain.Advance(FGothamThugBrain::StunSeconds), EGothamThugEvent::Ready);
+	TestEqual("and stuns", Brain.State, EMvsThugState::Stunned);
+	TestEqual("a stunned thug never strikes", Brain.Advance(FMvsThugBrain::WarningSeconds + 0.1f), EMvsThugEvent::None);
+	TestEqual("stun wears off", Brain.Advance(FMvsThugBrain::StunSeconds), EMvsThugEvent::Ready);
 	TestEqual("no progress outside a warning", Brain.GetWarningProgress(), 0.f);
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamAttackDirectorTest, "Gotham.Combat.AttackDirector", GothamV5Tests::Flags)
-bool FGothamAttackDirectorTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsAttackDirectorTest, "Mvs.Combat.AttackDirector", MvsV5Tests::Flags)
+bool FMvsAttackDirectorTest::RunTest(const FString& Parameters)
 {
-	FGothamAttackDirector Director(1234);
+	FMvsAttackDirector Director(1234);
 	const TArray<float> Near = { 400.f, 600.f, 5000.f };
-	TArray<EGothamThugState> States = { EGothamThugState::Idle, EGothamThugState::Idle, EGothamThugState::Idle };
+	TArray<EMvsThugState> States = { EMvsThugState::Idle, EMvsThugState::Idle, EMvsThugState::Idle };
 
 	TestEqual("waits out the first breather", Director.Advance(Director.MinGapSeconds * 0.5f, States, Near), INDEX_NONE);
 	const int32 First = Director.Advance(Director.MinGapSeconds, States, Near);
@@ -52,7 +52,7 @@ bool FGothamAttackDirectorTest::RunTest(const FString& Parameters)
 		Director.GetCooldown() >= Director.MinGapSeconds && Director.GetCooldown() <= Director.MaxGapSeconds);
 
 	// While someone warns, nobody else is picked, however long it takes.
-	States[First] = EGothamThugState::Warning;
+	States[First] = EMvsThugState::Warning;
 	for (int32 i = 0; i < 20; ++i)
 	{
 		TestEqual("one telegraph at a time", Director.Advance(1.f, States, Near), INDEX_NONE);
@@ -60,55 +60,55 @@ bool FGothamAttackDirectorTest::RunTest(const FString& Parameters)
 	TestTrue("the breather restarts after a warning", Director.GetCooldown() >= Director.MinGapSeconds);
 
 	// Out of range thugs never attack.
-	FGothamAttackDirector Far(99);
-	const TArray<EGothamThugState> OneIdle = { EGothamThugState::Idle };
+	FMvsAttackDirector Far(99);
+	const TArray<EMvsThugState> OneIdle = { EMvsThugState::Idle };
 	for (int32 i = 0; i < 20; ++i)
 	{
 		TestEqual("thugs out of reach stay put", Far.Advance(1.f, OneIdle, TArray<float>{ Far.EngageRange + 1.f }), INDEX_NONE);
 	}
 	// Stunned or recovering thugs are not candidates.
-	const TArray<EGothamThugState> Busy = { EGothamThugState::Stunned, EGothamThugState::Recover };
+	const TArray<EMvsThugState> Busy = { EMvsThugState::Stunned, EMvsThugState::Recover };
 	TestEqual("busy thugs are skipped", Far.Advance(10.f, Busy, TArray<float>{ 100.f, 100.f }), INDEX_NONE);
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamEdgeArrowTest, "Gotham.Combat.EdgeArrow", GothamV5Tests::Flags)
-bool FGothamEdgeArrowTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsEdgeArrowTest, "Mvs.Combat.EdgeArrow", MvsV5Tests::Flags)
+bool FMvsEdgeArrowTest::RunTest(const FString& Parameters)
 {
 	const FVector2D Viewport(1920.f, 1080.f);
 	constexpr float Inset = 40.f;
 	FVector2D Pos;
 	float Angle = 0.f;
 
-	GothamThreat::EdgeArrow(FVector(1.f, 1.f, 0.f), Viewport, Inset, Pos, Angle);
+	MvsThreat::EdgeArrow(FVector(1.f, 1.f, 0.f), Viewport, Inset, Pos, Angle);
 	TestTrue("to the right: middle of the right edge", Pos.Equals(FVector2D(1920.f - Inset, 540.f), 0.5f));
 	TestNearlyEqual("pointing right", Angle, 0.f, 0.001f);
 
-	GothamThreat::EdgeArrow(FVector(1.f, 0.f, 1.f), Viewport, Inset, Pos, Angle);
+	MvsThreat::EdgeArrow(FVector(1.f, 0.f, 1.f), Viewport, Inset, Pos, Angle);
 	TestTrue("above: middle of the top edge", Pos.Equals(FVector2D(960.f, Inset), 0.5f));
 	TestNearlyEqual("pointing up", Angle, -HALF_PI, 0.001f);
 
-	GothamThreat::EdgeArrow(FVector(-1.f, 0.f, 0.f), Viewport, Inset, Pos, Angle);
+	MvsThreat::EdgeArrow(FVector(-1.f, 0.f, 0.f), Viewport, Inset, Pos, Angle);
 	TestTrue("straight behind: bottom edge ('behind you')", Pos.Equals(FVector2D(960.f, 1080.f - Inset), 0.5f));
 
-	GothamThreat::EdgeArrow(FVector(-1.f, -3.f, -3.f), Viewport, Inset, Pos, Angle);
+	MvsThreat::EdgeArrow(FVector(-1.f, -3.f, -3.f), Viewport, Inset, Pos, Angle);
 	const bool bOnEdge = FMath::IsNearlyEqual(Pos.X, Inset, 0.5f) || FMath::IsNearlyEqual(Pos.Y, 1080.f - Inset, 0.5f);
 	TestTrue("diagonal: on the inset rectangle, never past it", bOnEdge && Pos.X >= Inset - 0.5f && Pos.Y <= 1080.f - Inset + 0.5f);
 	TestTrue("down-left points down-left", Angle > HALF_PI && Angle < PI);
 
-	TestTrue("centre is on screen", GothamThreat::IsOnScreen(FVector2D(960.f, 540.f), Viewport, 24.f));
-	TestFalse("inside the margin is not", GothamThreat::IsOnScreen(FVector2D(10.f, 540.f), Viewport, 24.f));
+	TestTrue("centre is on screen", MvsThreat::IsOnScreen(FVector2D(960.f, 540.f), Viewport, 24.f));
+	TestFalse("inside the margin is not", MvsThreat::IsOnScreen(FVector2D(10.f, 540.f), Viewport, 24.f));
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamComboMilestoneTest, "Gotham.Combat.ComboMilestone", GothamV5Tests::Flags)
-bool FGothamComboMilestoneTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsComboMilestoneTest, "Mvs.Combat.ComboMilestone", MvsV5Tests::Flags)
+bool FMvsComboMilestoneTest::RunTest(const FString& Parameters)
 {
-	TestEqual("9 -> 10 reaches 10", GothamCombo::MilestoneReached(9, 10), 10);
-	TestEqual("10 -> 11 reaches nothing new", GothamCombo::MilestoneReached(10, 11), 0);
-	TestEqual("a jump 8 -> 21 reports the latest", GothamCombo::MilestoneReached(8, 21), 20);
-	TestEqual("dropping never counts", GothamCombo::MilestoneReached(15, 0), 0);
-	TestEqual("0 is not a milestone", GothamCombo::MilestoneReached(0, 3), 0);
+	TestEqual("9 -> 10 reaches 10", MvsCombo::MilestoneReached(9, 10), 10);
+	TestEqual("10 -> 11 reaches nothing new", MvsCombo::MilestoneReached(10, 11), 0);
+	TestEqual("a jump 8 -> 21 reports the latest", MvsCombo::MilestoneReached(8, 21), 20);
+	TestEqual("dropping never counts", MvsCombo::MilestoneReached(15, 0), 0);
+	TestEqual("0 is not a milestone", MvsCombo::MilestoneReached(0, 3), 0);
 
 	UComboViewModel* VM = NewObject<UComboViewModel>();
 	for (int32 Hits = 1; Hits <= 25; ++Hits)
@@ -123,10 +123,10 @@ bool FGothamComboMilestoneTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamTraumaTest, "Gotham.Combat.CameraTrauma", GothamV5Tests::Flags)
-bool FGothamTraumaTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsTraumaTest, "Mvs.Combat.CameraTrauma", MvsV5Tests::Flags)
+bool FMvsTraumaTest::RunTest(const FString& Parameters)
 {
-	FGothamTrauma Trauma;
+	FMvsTrauma Trauma;
 	Trauma.Add(0.5f);
 	TestNearlyEqual("shake is trauma squared (small hits barely move the camera)", Trauma.GetShake(), 0.25f, 0.001f);
 	Trauma.Add(5.f);
@@ -137,17 +137,17 @@ bool FGothamTraumaTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamThreatViewModelTest, "Gotham.Combat.ThreatViewModel", GothamV5Tests::Flags)
-bool FGothamThreatViewModelTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsThreatViewModelTest, "Mvs.Combat.ThreatViewModel", MvsV5Tests::Flags)
+bool FMvsThreatViewModelTest::RunTest(const FString& Parameters)
 {
 	UThreatViewModel* VM = NewObject<UThreatViewModel>();
 	int32 Notifications = 0;
 	VM->AddFieldValueChangedDelegate(UThreatViewModel::FFieldNotificationClassDescriptor::WarningCount,
 		INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateLambda([&Notifications](UObject*, UE::FieldNotification::FFieldId) { ++Notifications; }));
 
-	TArray<FGothamThreatSnapshot> Snaps;
+	TArray<FMvsThreatSnapshot> Snaps;
 	Snaps.AddDefaulted(3);
-	Snaps[1].State = EGothamThugState::Warning;
+	Snaps[1].State = EMvsThugState::Warning;
 	VM->SetThreats(Snaps);
 	TestEqual("counts threats", VM->GetThreatCount(), 3);
 	TestEqual("counts warnings", VM->GetWarningCount(), 1);

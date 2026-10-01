@@ -1,4 +1,5 @@
 @echo off
+rem Copyright IG. All Rights Reserved.
 rem Localization round trip. Close the editor first.
 rem   1. gather text from source and content (manifest + archives)
 rem   2. import the translations from Content/Localization/Game/<culture>/Game.po (edit those, not the archives)

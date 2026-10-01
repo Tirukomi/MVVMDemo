@@ -14,7 +14,7 @@ and mouse first, gamepad second. Registration must happen in `BeginPlay`, becaus
 exist yet in `SetupInputComponent`.
 
 ## Consequences
-- Persistence, profiles and apply/save come from the engine. Conflict handling is ours (`GothamBindings::PlanRebind`,
+- Persistence, profiles and apply/save come from the engine. Conflict handling is ours (`MvsBindings::PlanRebind`,
   pure and tested): a conflicting key swaps between the two actions.
 - If the engine ever makes the property public, `MakeActionMappable` shrinks to two lines.
 - Authoring the input actions as assets would remove the hack entirely; code-built assets were chosen to keep the

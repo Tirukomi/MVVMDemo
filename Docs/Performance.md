@@ -4,24 +4,24 @@ What was measured, how, what changed, and what was **not** measured.
 
 ## Method
 
-A dev-only harness (`Source/MVVMSample/Core/GothamPerfHarness.cpp`) steps through fixed UI scenarios and samples each
+A dev-only harness (`Source/MVVMSample/Core/MvsPerfHarness.cpp`) steps through fixed UI scenarios and samples each
 for 8 seconds after a 2 second warm-up. It runs the game at 1280x720 with the frame rate uncapped and VSync off, so
 frame time reflects work done rather than a display refresh.
 
 ```bash
 # one run; writes Saved/Perf/<label>.md and exits
-UnrealEditor.exe MVVMSample.uproject /Game/Maps/L_Arena -game -windowed -ResX=1280 -ResY=720 -GothamPerf=<label>
+UnrealEditor.exe MVVMSample.uproject /Game/Maps/L_Arena -game -windowed -ResX=1280 -ResY=720 -MvsPerf=<label>
 ```
 
 A/B switches in the same binary keep the comparison fair:
 
 | Flag | Effect |
 |---|---|
-| `-GothamKeepTick` | Skip `GothamUI::DisableTick`, i.e. the engine default where every C++ widget ticks |
-| `-GothamInvalidation` | Turn on `Slate.EnableGlobalInvalidation` for the run |
+| `-MvsKeepTick` | Skip `MvsUI::DisableTick`, i.e. the engine default where every C++ widget ticks |
+| `-MvsInvalidation` | Turn on `Slate.EnableGlobalInvalidation` for the run |
 
 Scenarios: `no-ui` (the whole UI layer hidden, the reference), `hud-idle`, `hud-animating` (combo meter and gadget
-cooldowns updating every frame), `detective` (post-process, overlay material, tracker), `gadget-wheel` (stick sweeping
+cooldowns updating every frame), `forensic` (post-process, overlay material, tracker), `gadget-wheel` (stick sweeping
 around), `case-file-505` (505 clues, scrolled continuously), `settings`, `pause-quit` (the quit confirmation over
 pause: a modal over a menu), `combat`.
 
@@ -41,7 +41,7 @@ Average game-thread milliseconds, then UI overhead (the same scenario minus `no-
 | no-ui (reference) | 0.712 | 0.753 | 0.746 | 0.741 |
 | hud-idle | 0.857 (+0.145) | 0.904 (+0.151) | 0.896 (+0.150) | 0.829 (**+0.088**) |
 | hud-animating | 0.811 (+0.099) | 0.867 (+0.114) | 0.865 (+0.119) | 0.814 (**+0.073**) |
-| detective | 0.837 (+0.125) | 0.902 (+0.149) | 0.895 (+0.149) | 0.779 (**+0.038**) |
+| forensic | 0.837 (+0.125) | 0.902 (+0.149) | 0.895 (+0.149) | 0.779 (**+0.038**) |
 | gadget-wheel | 0.892 (+0.180) | 0.892 (+0.139) | 0.941 (+0.195) | 0.829 (**+0.088**) |
 | case-file-505 | 0.781 (+0.069) | 0.825 (+0.072) | 0.845 (+0.099) | 0.761 (**+0.020**) |
 | settings | 1.011 (+0.299) | 1.016 (+0.263) | 1.024 (+0.278) | 0.782 (**+0.041**) |
@@ -51,7 +51,7 @@ Run-to-run noise is about 0.05 ms (compare the two "before" runs), so difference
 
 ### What the changes did
 
-1. **Stop widgets ticking (`GothamUI::DisableTick`).** UUserWidget's default `Auto` tick treats any class without a
+1. **Stop widgets ticking (`MvsUI::DisableTick`).** UUserWidget's default `Auto` tick treats any class without a
    Blueprint asset as needing a native tick every frame; every C++-only widget here was ticking (44 with the settings
    screen open) although all of them are driven by view-model delegates. Now 0 tick. **Measured effect: none beyond
    noise.** It is still the right default (it removes per-frame work that scales with widget count, and it avoids
@@ -59,10 +59,10 @@ Run-to-run noise is about 0.05 ms (compare the two "before" runs), so difference
    summary is "correct, cheap, unmeasurable here".
 2. **Slate global invalidation (`Slate.EnableGlobalInvalidation=1`).** Slate caches painted widgets and repaints only
    what a view-model change invalidates. **Measured effect: real and well outside noise**: UI overhead falls from
-   ~0.28 to ~0.04 ms with the settings screen open, ~0.14 to ~0.04 ms in Detective Mode, ~0.15 to ~0.09 ms for the
+   ~0.28 to ~0.04 ms with the settings screen open, ~0.14 to ~0.04 ms in Forensic Mode, ~0.15 to ~0.09 ms for the
    idle HUD, ~0.08 to ~0.02 ms for the 505-clue case file. It is enabled in `Config/DefaultEngine.ini`.
    All custom Slate widgets (`SGadgetWheel`, `SComboMeter`) already call `Invalidate(...)` when their state changes,
-   which is what makes this safe; screenshots of the wheel, Detective Mode, case file and a live language switch were
+   which is what makes this safe; screenshots of the wheel, Forensic Mode, case file and a live language switch were
    checked after enabling it and render correctly.
 
 ### Already in the design (not a change, but measured to hold)
@@ -71,7 +71,7 @@ Run-to-run noise is about 0.05 ms (compare the two "before" runs), so difference
   in-flight thumbnail loads when recycled). Since V4 it is a tile view: 20 tiles for 505 clues. `case-file-505` costs about as much as the empty HUD.
 - **Idle custom Slate widgets are free.** `SGadgetWheel` and `SComboMeter` register an active timer only while
   animating and unregister once settled; they never tick.
-- **Detective overlay collapses when off**, so it costs nothing outside the mode.
+- **Forensic overlay collapses when off**, so it costs nothing outside the mode.
 
 ## V1 night scene
 
@@ -83,10 +83,10 @@ animated mannequin raise the baseline. Lumen stays off by project decision.
 | Avg frame, no UI | 2.35 ms | 5.15 ms | 6.01 ms |
 | Avg game thread, no UI | 0.74 ms | 1.53 ms | 1.45 ms |
 | Worst UI game-thread overhead (any screen) | 0.09 ms | 0.09 ms (hud-animating) | 0.16 ms (hud-animating) |
-| Detective Mode extra frame cost | ~0.1 ms | ~0.47 ms | ~0.44 ms |
+| Forensic Mode extra frame cost | ~0.1 ms | ~0.47 ms | ~0.44 ms |
 
 1080p stays near 166 fps on the dev machine. The game-thread rise is the skeletal mesh and animation Blueprint, not
-the UI. The Detective Mode cost grew because its post-process now runs over a heavier scene; V3 rewrites that pass.
+the UI. The Forensic Mode cost grew because its post-process now runs over a heavier scene; V3 rewrites that pass.
 
 ## V2 HUD
 
@@ -113,7 +113,7 @@ ticking).
 
 The frame-time cost is the background blur. The highlight bar's active timer runs only while its list holds focus
 and invalidates paint only when the bar moves. The evidence board keeps 20 tile widgets alive for 205 clues (the
-viewport's worth), logged by `-GothamClueLog=200`.
+viewport's worth), logged by `-MvsClueLog=200`.
 
 ## V5 combat
 
@@ -145,7 +145,7 @@ same set of runs. GPU is `RHIGetGPUFrameCycles` (whole frame), the baseline R0 a
 | no-ui (reference) | 1.644 | 1.633 | | | 5.569 | 5.588 |
 | hud-idle | 1.846 | 1.818 | +0.202 | +0.185 | 5.577 | 5.609 |
 | hud-animating | 1.879 | 1.865 | +0.235 | +0.232 | 5.582 | 5.615 |
-| detective | 1.876 | 1.834 | +0.232 | +0.201 | 6.084 | 6.084 |
+| forensic | 1.876 | 1.834 | +0.232 | +0.201 | 6.084 | 6.084 |
 | gadget-wheel | 1.824 | 1.799 | +0.180 | +0.166 | 5.740 | 5.742 |
 | case-file-505 | 2.289 | 2.264 | +0.645 | +0.631 | 5.714 | 5.718 |
 | settings | 1.692 | 1.655 | +0.048 | +0.022 | 5.703 | 5.707 |
@@ -154,9 +154,9 @@ same set of runs. GPU is `RHIGetGPUFrameCycles` (whole frame), the baseline R0 a
 
 What changed, and what it did:
 
-1. **Detective overlay fade [24].** The fade now sets only visibility, opacity and the material's progress; fonts,
+1. **Forensic overlay fade [24].** The fade now sets only visibility, opacity and the material's progress; fonts,
    colours, the prompt text and the material's tint are applied on settings changes and when the overlay appears.
-   UI cost in `detective` went from +0.232 to +0.201 ms: in the right direction, inside run-to-run noise (~0.05 ms).
+   UI cost in `forensic` went from +0.232 to +0.201 ms: in the right direction, inside run-to-run noise (~0.05 ms).
 2. **Paint allocations [25].** Clue-marker text is formatted only when the rounded distance, the marker state or the
    language changes (it was formatted and upper-cased per marker per frame); gadget icon strokes are a table built
    once (they were rebuilt every paint); panel outlines are built once per paint in inline storage, the fill uses
@@ -165,7 +165,7 @@ What changed, and what it did:
    beyond noise on this machine.
 3. **One background blur on screen [26].** The premise in the review plan was off: Settings opened from Pause does not
    stack two blurs, because a layer stack shows only its top screen. The case that does is a modal over a menu (the
-   quit confirmation over Pause), now measured as `pause-quit`. `UGothamUISubsystem` keeps the blur only on the
+   quit confirmation over Pause), now measured as `pause-quit`. `UMvsUISubsystem` keeps the blur only on the
    topmost blurring screen. GPU over `no-ui`: +0.047 before, +0.012 ms after, so the second blur cost about 0.035 ms
    at 1080p here: real, and small. The confirmation's own blur now covers the world on its own (the world behind is
    less blurred than with both).
@@ -176,8 +176,8 @@ What changed, and what it did:
    Not a performance change, and none measured.
 
 The gate's A/B check (G5: five alternating rounds against the previous master, median of paired UI-cost
-differences) agrees and is slightly more favourable: combat -0.070 ms, detective -0.048 ms, the rest within
-+-0.03 ms (hud-idle +0.006). Combat and Detective Mode are where markers and panels paint every frame.
+differences) agrees and is slightly more favourable: combat -0.070 ms, forensic -0.048 ms, the rest within
++-0.03 ms (hud-idle +0.006). Combat and Forensic Mode are where markers and panels paint every frame.
 
 Summary: R5 is mostly hygiene that a reviewer would expect, not a big speed-up. On this machine the UI's game-thread cost was
 already small and dominated by the 505-clue list and the HUD; none of these changes moves it outside noise, and the
@@ -187,7 +187,7 @@ GPU frame is the scene's.
 
 | Budget | Target | Status |
 |---|---|---|
-| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met: worst case +0.25 ms (Detective Mode markers, V3); menus up to +0.12 ms |
+| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met: worst case +0.25 ms (Forensic Mode markers, V3); menus up to +0.12 ms |
 | Ticking widgets while idle | 0 | Met (0) |
 | Row widgets for any list | bounded by viewport, not item count | Met (case-file tile view: 20 tiles for 205 clues) |
 | Widget objects, all screens | no unbounded growth | Steady: 9 (HUD) to 38 (tabbed settings) |
@@ -197,7 +197,7 @@ GPU frame is the scene's.
 Be sceptical of anything not in the table above:
 
 - **Per-pass GPU cost** (`stat gpu`, RenderDoc). Since R0 the harness records whole-frame GPU time
-  (`RHIGetGPUFrameCycles`): Detective Mode adds about 0.5 ms to the GPU frame at 1080p, a second background blur about
+  (`RHIGetGPUFrameCycles`): Forensic Mode adds about 0.5 ms to the GPU frame at 1080p, a second background blur about
   0.035 ms. Which pass costs what inside a frame is still not measured.
 - **Slate Insights / Unreal Insights captures.** The harness gives before/after totals; it does not attribute cost
   to individual widgets. That is the next step for anything that regresses.

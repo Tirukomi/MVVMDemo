@@ -1,24 +1,24 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "Gameplay/TimeScaleSubsystem.h"
 
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
-UGothamTimeScaleSubsystem* UGothamTimeScaleSubsystem::Get(const UObject* WorldContext)
+UMvsTimeScaleSubsystem* UMvsTimeScaleSubsystem::Get(const UObject* WorldContext)
 {
 	const UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr;
-	return World ? World->GetSubsystem<UGothamTimeScaleSubsystem>() : nullptr;
+	return World ? World->GetSubsystem<UMvsTimeScaleSubsystem>() : nullptr;
 }
 
-void UGothamTimeScaleSubsystem::Request(FName Source, float Scale)
+void UMvsTimeScaleSubsystem::Request(FName Source, float Scale)
 {
 	Requests.Add(Source, Scale);
 	Expiry.Remove(Source);
 	Apply();
 }
 
-void UGothamTimeScaleSubsystem::RequestFor(FName Source, float Scale, float RealSeconds)
+void UMvsTimeScaleSubsystem::RequestFor(FName Source, float Scale, float RealSeconds)
 {
 	const double Until = FPlatformTime::Seconds() + RealSeconds;
 	const double* Current = Expiry.Find(Source);
@@ -26,12 +26,12 @@ void UGothamTimeScaleSubsystem::RequestFor(FName Source, float Scale, float Real
 	Requests.Add(Source, Scale);
 	if (!TimedHandle.IsValid())
 	{
-		TimedHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UGothamTimeScaleSubsystem::TickTimed));
+		TimedHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UMvsTimeScaleSubsystem::TickTimed));
 	}
 	Apply();
 }
 
-void UGothamTimeScaleSubsystem::Clear(FName Source)
+void UMvsTimeScaleSubsystem::Clear(FName Source)
 {
 	Expiry.Remove(Source);
 	if (Requests.Remove(Source) > 0)
@@ -40,7 +40,7 @@ void UGothamTimeScaleSubsystem::Clear(FName Source)
 	}
 }
 
-float UGothamTimeScaleSubsystem::GetScale() const
+float UMvsTimeScaleSubsystem::GetScale() const
 {
 	float Scale = 1.f;
 	for (const TPair<FName, float>& Pair : Requests)
@@ -50,14 +50,14 @@ float UGothamTimeScaleSubsystem::GetScale() const
 	return Scale;
 }
 
-void UGothamTimeScaleSubsystem::Deinitialize()
+void UMvsTimeScaleSubsystem::Deinitialize()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(TimedHandle);
 	TimedHandle.Reset();
 	Super::Deinitialize();
 }
 
-void UGothamTimeScaleSubsystem::Apply()
+void UMvsTimeScaleSubsystem::Apply()
 {
 	if (UWorld* World = GetWorld())
 	{
@@ -65,7 +65,7 @@ void UGothamTimeScaleSubsystem::Apply()
 	}
 }
 
-bool UGothamTimeScaleSubsystem::TickTimed(float DeltaTime)
+bool UMvsTimeScaleSubsystem::TickTimed(float DeltaTime)
 {
 	const double Now = FPlatformTime::Seconds();
 	TArray<FName> Expired;

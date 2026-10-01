@@ -1,31 +1,31 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 // Functional tests: they need the running game (a world, a player, painted widgets), so they carry only the client
 // context and run in Scripts/run_tests.py's game pass, never in the editor pass.
 
 #include "Misc/AutomationTest.h"
 
-#include "Core/GothamMenuInputTest.h"
-#include "Core/GothamPlayerController.h"
+#include "Core/MvsMenuInputTest.h"
+#include "Core/MvsPlayerController.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-DEFINE_LOG_CATEGORY_STATIC(LogGothamFunctional, Log, All);
+DEFINE_LOG_CATEGORY_STATIC(LogMvsFunctional, Log, All);
 
-namespace GothamFunctionalTests
+namespace MvsFunctionalTests
 {
 	constexpr EAutomationTestFlags Flags = EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter;
 
-	AGothamPlayerController* FindPlayer()
+	AMvsPlayerController* FindPlayer()
 	{
 		for (const FWorldContext& Context : GEngine->GetWorldContexts())
 		{
 			UWorld* World = Context.World();
 			if (World && World->IsGameWorld())
 			{
-				if (AGothamPlayerController* PC = Cast<AGothamPlayerController>(GEngine->GetFirstLocalPlayerController(World)))
+				if (AMvsPlayerController* PC = Cast<AMvsPlayerController>(GEngine->GetFirstLocalPlayerController(World)))
 				{
 					return PC->GetPawn() ? PC : nullptr;
 				}
@@ -41,7 +41,7 @@ namespace GothamFunctionalTests
 	class FRunScript : public IAutomationLatentCommand
 	{
 	public:
-		using FBuild = TFunction<TSharedPtr<FGothamScript>(AGothamPlayerController*, FGothamScript::FReporter)>;
+		using FBuild = TFunction<TSharedPtr<FMvsScript>(AMvsPlayerController*, FMvsScript::FReporter)>;
 
 		FRunScript(FAutomationTestBase* InTest, FBuild InBuild, double InTimeoutSeconds)
 			: Test(InTest), Build(MoveTemp(InBuild)), Deadline(FPlatformTime::Seconds() + InTimeoutSeconds) {}
@@ -50,12 +50,12 @@ namespace GothamFunctionalTests
 		{
 			if (FPlatformTime::Seconds() > Deadline)
 			{
-				Test->AddError(Script ? TEXT("the script did not finish in time") : TEXT("no game world with a Gotham player (run in -game)"));
+				Test->AddError(Script ? TEXT("the script did not finish in time") : TEXT("no game world with a Mvs player (run in -game)"));
 				return true;
 			}
 			if (!Script)
 			{
-				AGothamPlayerController* PC = FindPlayer();
+				AMvsPlayerController* PC = FindPlayer();
 				if (!PC)
 				{
 					return false;
@@ -69,13 +69,13 @@ namespace GothamFunctionalTests
 					return false;
 				}
 				FAutomationTestBase* T = Test;
-				Script = Build(PC, [T](EGothamCheck Result, const FString& Rule)
+				Script = Build(PC, [T](EMvsCheck Result, const FString& Rule)
 				{
 					// A known bug is recorded, not failed; a known bug that now passes fails, so it gets promoted.
-					const FString Line = FString::Printf(TEXT("%s: %s"), FGothamScript::ResultLabel(Result), *Rule);
+					const FString Line = FString::Printf(TEXT("%s: %s"), FMvsScript::ResultLabel(Result), *Rule);
 					// Also in the log: if the game hangs, the report is never written, but the log shows how far it got.
-					UE_LOG(LogGothamFunctional, Display, TEXT("%s"), *Line);
-					if (Result == EGothamCheck::Passed || Result == EGothamCheck::KnownBug) { T->AddInfo(Line); }
+					UE_LOG(LogMvsFunctional, Display, TEXT("%s"), *Line);
+					if (Result == EMvsCheck::Passed || Result == EMvsCheck::KnownBug) { T->AddInfo(Line); }
 					else { T->AddError(Line); }
 				});
 				if (!Script)
@@ -103,15 +103,15 @@ namespace GothamFunctionalTests
 		FBuild Build;
 		double Deadline;
 		double ReadyAt = 0.0;
-		TSharedPtr<FGothamScript> Script;
+		TSharedPtr<FMvsScript> Script;
 	};
 }
 
 // The key that opens a screen closes it, every prompt does what its key does, and an open screen restyles live.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGothamFunctionalMenuInputTest, "Gotham.Functional.MenuInput", GothamFunctionalTests::Flags)
-bool FGothamFunctionalMenuInputTest::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsFunctionalMenuInputTest, "Mvs.Functional.MenuInput", MvsFunctionalTests::Flags)
+bool FMvsFunctionalMenuInputTest::RunTest(const FString& Parameters)
 {
-	ADD_LATENT_AUTOMATION_COMMAND(GothamFunctionalTests::FRunScript(this, &FGothamMenuInputTest::Build, 90.0));
+	ADD_LATENT_AUTOMATION_COMMAND(MvsFunctionalTests::FRunScript(this, &FMvsMenuInputTest::Build, 90.0));
 	return true;
 }
 

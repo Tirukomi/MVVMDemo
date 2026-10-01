@@ -1,3 +1,4 @@
+# Copyright IG. All Rights Reserved.
 # The refactoring gate (Docs/RefactoringPlan.md). Runs every check, prints one PASS / FAIL line per check, writes a
 # report to Saved/Verify/<timestamp>.md and exits non-zero if anything failed. Close the editor first.
 #
@@ -20,7 +21,7 @@ param(
     [int]$PerfRounds = 5,
     # A scenario fails when the median, over rounds, of (current UI cost - reference UI cost) exceeds this.
     [double]$PerfToleranceMs = 0.05,
-    # Passed to the current build only as -GothamPerfInject=<scenario>:<ms>, to prove G5 catches a known cost.
+    # Passed to the current build only as -MvsPerfInject=<scenario>:<ms>, to prove G5 catches a known cost.
     [string]$PerfInject = "",
     # Sampled seconds per perf scenario. 5 was tried and measured noisier (an injected 0.1 ms read as +0.054), so 8.
     [int]$PerfSampleSeconds = 8,
@@ -74,11 +75,23 @@ function UI-Cost($Table) {
     foreach ($k in $Table.Keys) { if ($k -ne "no-ui") { $cost[$k] = $Table[$k] - $Table["no-ui"] } }
     return $cost
 }
+# A reference from before R8 (review 36, 37) takes the old flag prefix and calls the forensic scenario "detective".
+function Get-FlagPrefix([string]$ProjectDir) {
+    if (Test-Path (Join-Path $ProjectDir "Source\MVVMSample\Core\GothamPerfHarness.cpp")) { return "Gotham" } else { return "Mvs" }
+}
+$scenarioRenames = @{ "detective" = "forensic" }
 # One harness run of a project (one of the two perf worktrees) -> UI cost table, or $null.
 function Run-Perf([string]$Label, [string]$ProjectDir, [string]$Extra = "") {
-    Run-Game "-GothamPerf=$Label -GothamPerfSeconds=$PerfSampleSeconds $Extra" 300 (Join-Path $ProjectDir "MVVMSample.uproject") | Out-Null
+    $prefix = Get-FlagPrefix $ProjectDir
+    Run-Game "-${prefix}Perf=$Label -${prefix}PerfSeconds=$PerfSampleSeconds $Extra" 300 (Join-Path $ProjectDir "MVVMSample.uproject") | Out-Null
     $path = Join-Path $ProjectDir "Saved\Perf\$Label.md"
-    if (Test-Path $path) { return UI-Cost (Read-Perf $path) } else { return $null }
+    if (-not (Test-Path $path)) { return $null }
+    $cost = @{}
+    foreach ($entry in (UI-Cost (Read-Perf $path)).GetEnumerator()) {
+        $name = if ($scenarioRenames.ContainsKey($entry.Key)) { $scenarioRenames[$entry.Key] } else { $entry.Key }
+        $cost[$name] = $entry.Value
+    }
+    return $cost
 }
 
 # Prepares one perf worktree: checks out $Sha, optionally mirrors this checkout's Source and Config over it (so the
@@ -106,7 +119,7 @@ function Prepare-PerfTree([string]$Sha, [string]$Dir, [bool]$MirrorWorkingTree, 
     $text = Get-Content $log
     if (-not ($text | Select-String -SimpleMatch "Result: Succeeded")) { return "$Name build failed (see $log)" }
     # A freshly built project's first launch does one-off work (asset registry, shader lookups); keep it out of the numbers.
-    if (-not ($text | Select-String -SimpleMatch "Target is up to date")) { Run-Game "-GothamQuitAfterLoad" 60 (Join-Path $Dir "MVVMSample.uproject") | Out-Null }
+    if (-not ($text | Select-String -SimpleMatch "Target is up to date")) { Run-Game "-MvsQuitAfterLoad" 60 (Join-Path $Dir "MVVMSample.uproject") | Out-Null }
     return ""
 }
 
@@ -163,7 +176,7 @@ if (-not $Quick -and (Should-Run "G5")) {
     if ($problem) {
         Record "G5" $false $problem
     } else {
-        $extra = if ($PerfInject) { "-GothamPerfInject=$PerfInject" } else { "" }
+        $extra = if ($PerfInject) { "-MvsPerfInject=$PerfInject" } else { "" }
         $diffs = @{}; $missing = 0
         for ($r = 1; $r -le $PerfRounds; $r++) {
             $order = if ($r % 2 -eq 1) { @("ref", "cur") } else { @("cur", "ref") }
@@ -199,13 +212,13 @@ if (-not $Quick -and (Should-Run "G5")) {
 }
 
 # G6: every game and editor log written during this run.
-$g6Pattern = 'Ensure condition failed|LogGotham\w*: (Error|Warning)|LogMaterial: (Error|Warning)|LogSkeletalMesh: (Error|Warning)|missing usage flag|Default Material will be used|LogLinker: (Error|Warning)|LogStreaming: (Error|Warning)|Failed to load (package|asset|object)'
+$g6Pattern = 'Ensure condition failed|LogMvs\w*: (Error|Warning)|LogMaterial: (Error|Warning)|LogSkeletalMesh: (Error|Warning)|missing usage flag|Default Material will be used|LogLinker: (Error|Warning)|LogStreaming: (Error|Warning)|Failed to load (package|asset|object)'
 if (Should-Run "G6") {
     $logs = Get-ChildItem (Join-Path $root "Saved\Logs\*.log") | Where-Object { $_.LastWriteTime -ge $started }
     $hits = @()
     foreach ($l in $logs) {
         # Project errors and warnings, ensures, and content-integrity warnings (a material without a usage flag
-        # silently renders as the engine default, which slipped through V5 because only LogGotham was scanned).
+        # silently renders as the engine default, which slipped through V5 because only LogMvs was scanned).
         $hits += Select-String -Path $l.FullName -Pattern $g6Pattern |
             ForEach-Object { "$($l.Name): $($_.Line)" }
     }

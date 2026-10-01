@@ -1,13 +1,12 @@
-# Visual iteration plan: an Arkham-inspired look
+# Visual iteration plan: a dark action-game look
 
 Goal: make the showcase read like a AAA dark-action game at first glance, while keeping the architecture, tests,
-accessibility and performance budgets from v1.0. The target is the **visual language** of the Arkham games:
-night, rain and cold light; restrained, angular, high-contrast HUD; Detective Mode as a tactical scan. It must not
-copy their assets.
+accessibility and performance budgets from v1.0. The target is the **visual language** of the dark-action genre:
+night, rain and cold light; restrained, angular, high-contrast HUD; Forensic Mode as a tactical scan. It copies no
+one's assets.
 
-> **IP line.** Nothing from WB, DC or Rocksteady: no bat symbol, no game fonts, logos, icons, audio or screenshots
-> used as textures. Every shape, icon and material here is made from scratch. See decision 5 about the existing
-> names ("Gotham", "Batarang"). **Done:** on-screen and doc names are now "Blackwater Ops" and "Wing-Blade".
+> **IP line.** No third-party assets or trademarks: no game fonts, logos, icons, audio or screenshots used as
+> textures. Every shape, icon and material here is made from scratch, and every name is original (decision 5).
 
 ## Why it looks wrong today
 
@@ -18,25 +17,25 @@ the scene, the UI uses:
 - flat translucent rectangles and default-looking progress bars
 - text in boxes where there should be glyphs
 - no motion language beyond easing
-- a Detective Mode that is a blue tint plus flat blobs
+- a Forensic Mode that is a blue tint plus flat blobs
 
 ## Target visual language
 
-| Trait | Arkham-like reading | How we get it (original) |
+| Trait | Genre reading | How we get it (original) |
 |---|---|---|
 | World | Night, wet, foggy, cold key light with warm practical lights | Moonlight, height fog, sodium and neon point lights, wet-surface materials, rain |
 | Palette | Near-black steel, cold off-white text, one warm accent, red only for danger | New colour tokens: `Panel`, `PanelEdge`, `TextPrimary`, `TextMuted`, `Accent`, plus the existing ones |
 | Shape | Chamfered corners, thin rules, brackets, no rounded blobs | One SDF UI material for chamfered panels, borders and glow |
 | Type | Condensed, uppercase headers; clean body text | OFL condensed font plus a CJK fallback (decision 1) |
 | HUD layout | Health and combo top-left, gadget top-right, minimal otherwise | Re-layout, segmented health bar, big combo numerals |
-| Motion | Short, sharp: pop, flash, slide; nothing floaty | A shared `GothamMotion` helper for curves and durations; all of it off under reduced motion |
-| Detective Mode | Cold x-ray blue, edges and silhouettes, warm highlights for points of interest, a scan pulse | Edge detection, depth-based pulse ring, fresnel silhouettes, world-anchored analysis callouts |
+| Motion | Short, sharp: pop, flash, slide; nothing floaty | A shared `MvsMotion` helper for curves and durations; all of it off under reduced motion |
+| Forensic Mode | Cold x-ray blue, edges and silhouettes, warm highlights for points of interest, a scan pulse | Edge detection, depth-based pulse ring, fresnel silhouettes, world-anchored analysis callouts |
 | Menus | Dark, blurred world behind, left-aligned lists, a highlight bar, tabbed sections | Background blur, Common UI tab list, restyled rows and hint bar |
 
 ## Milestones
 
 Each one ends with a regenerated `Scripts/CaptureScreens.ps1` set, a before-and-after pair in `Docs/img`,
-a re-run of `-GothamPerf`, and green tests.
+a re-run of `-MvsPerf`, and green tests.
 
 ### V1: Night scene (2 to 3 days)
 
@@ -85,7 +84,7 @@ This is the biggest visual change for the least work.
 - **UI toolkit:** (built as Slate panels instead; see "V2 as built")
   - `M_UI_Panel`: an SDF material for chamfered rectangles, with parameters for corner size, border width, fill,
     border colour, inner glow and a scanline amount.
-  - `UGothamPanel`: a UMG border wrapper that exposes those parameters as properties, so designers restyle panels
+  - `UMvsPanel`: a UMG border wrapper that exposes those parameters as properties, so designers restyle panels
     without touching the material.
 - **Typography:** a composite font asset with the condensed OFL face, a body face and a CJK fallback. Heading, body
   and numeric styles become text-style classes instead of per-widget `Font.Size` edits.
@@ -99,21 +98,21 @@ This is the biggest visual change for the least work.
   canister), so there are no texture assets and no copied iconography.
 - **Hit feedback:** a screen-edge damage vignette in a UI material, driven by a new `DamageFlash` field on the vitals
   view model.
-- **Prompts:** a restyled `UGothamInputGlyph`, with key-cap and face-button shapes drawn in Slate instead of text in
+- **Prompts:** a restyled `UMvsInputGlyph`, with key-cap and face-button shapes drawn in Slate instead of text in
   a box.
 
 **V2 as built:**
-- **Type:** composite fonts built in code from the OFL TTFs in `Content/UI/Fonts` (`UI/Style/GothamStyle`). Barlow
+- **Type:** composite fonts built in code from the OFL TTFs in `Content/UI/Fonts` (`UI/Style/MvsStyle`). Barlow
   Condensed covers display and labels, Barlow covers body text, and Noto Sans JP is a sub-font for the CJK ranges. An
-  8-style type scale (`EGothamTextStyle`) replaces per-widget font sizes. Titles, headers and labels are upper-cased
+  8-style type scale (`EMvsTextStyle`) replaces per-widget font sizes. Titles, headers and labels are upper-cased
   and letter-spaced. Font files are staged as raw files, not imported assets.
 - **Tokens:** `Panel`, `PanelEdge`, `TextPrimary`, `TextMuted` and `Accent` join the palette. They're the same in
   every colour-vision preset and tighter in high contrast. A test checks text contrast at 7:1 or better (primary) and
   4.5:1 or better (muted) on panels.
-- **Panel shape:** `SGothamPanel` / `UGothamPanel` draw a chamfered panel (corner mask, edge, left accent bar) with
+- **Panel shape:** `SMvsPanel` / `UMvsPanel` draw a chamfered panel (corner mask, edge, left accent bar) with
   custom vertices. This replaces the planned SDF material: it's crisp at any UI scale, needs no size parameters and
   works with invalidation.
-- **HUD, top-left:** a 10-segment slanted health bar with a damage ghost (`FGothamGhostFill`, tested). Below it, a
+- **HUD, top-left:** a 10-segment slanted health bar with a damage ghost (`FMvsGhostFill`, tested). Below it, a
   "LOW" label (never colour alone) and a readout, then the combo: big numerals, a "HITS" label, an accent multiplier
   tag that pops on each step, and a thin decay rule.
 - **HUD, top-right:** a gadget selector. The last-used gadget shows large, with original line-art icons
@@ -122,7 +121,7 @@ This is the biggest visual change for the least work.
 - **Hits and subtitles:** a danger vignette (`SDamageVignette`) flashes on each hit and holds at low health. It's a
   colour cue, so it stays on under reduced motion. Subtitles and key glyphs use the panel shape (face buttons as
   octagons).
-- **Motion:** `GothamMotion::Pop` / `Fade` run on real time, one animation per widget, and all are skipped under
+- **Motion:** `MvsMotion::Pop` / `Fade` run on real time, one animation per widget, and all are skipped under
   reduced motion.
 - **Performance** (`Saved/Perf/V2_hud_1080p_fixed*.md`): the first pass re-applied fonts every frame during combo decay
   and cooldowns, costing 0.41 ms and breaking the budget. After splitting styling from per-frame values, the animating
@@ -130,9 +129,9 @@ This is the biggest visual change for the least work.
 - **Not yet:** menu restyle (V4); the pause and settings screens only picked up the new fonts. Noto Sans JP is a
   variable font rendered at its default weight, so Japanese reads lighter than the Latin type.
 
-### V3: Detective Mode 2.0 (4 days)
+### V3: Forensic Mode 2.0 (4 days)
 
-- **Post-process** (a rewrite of `M_DetectiveVision`):
+- **Post-process** (a rewrite of `M_ForensicVision`):
   - Sobel edges on depth and normals, giving a tactical wireframe feel
   - dark cold-blue scene fill
   - fresnel-lit silhouettes via custom depth
@@ -143,7 +142,7 @@ This is the biggest visual change for the least work.
   - clue scanned: muted cold
   - hostile: red
   - interactable: cold white
-  - All of them keep routing through `GothamPalette`, so the colour-blind presets still apply.
+  - All of them keep routing through `MvsPalette`, so the colour-blind presets still apply.
 - **Analysis callouts:** screen-projected widgets anchored to world points. Each has corner brackets, a clue label, a
   distance readout and an "ANALYSING" progress arc while E is held. Scanning becomes hold-to-analyse, with a quick-tap
   option under accessibility.
@@ -151,26 +150,26 @@ This is the biggest visual change for the least work.
   crossfade.
 
 **V3 as built:**
-- **Post-process** (`M_DetectiveVision`, generated by `Scripts/CreateDetectiveAssets.py`):
+- **Post-process** (`M_ForensicVision`, generated by `Scripts/CreateForensicAssets.py`):
   - A tactical wireframe from 4-tap depth and world-normal edges, faded with distance.
   - The scene's luminance in a dark cold fill.
   - Stencil classes 1–4 (clue, scanned clue, hostile, interactable) filled and haloed in palette colours.
   - A radial reveal from `RevealCenter` / `RevealRadius`, and a glowing scan ring at `PulseRadius`.
-- **Pulse logic:** `FGothamScanPulse` (pure, tested). One pulse fires from the player on opening, and the reveal
-  follows it. Another fires from a clue when its analysis completes. `UDetectiveVisionComponent` ticks only while a
+- **Pulse logic:** `FMvsScanPulse` (pure, tested). One pulse fires from the player on opening, and the reveal
+  follows it. Another fires from a clue when its analysis completes. `UForensicVisionComponent` ticks only while a
   pulse runs.
-- **Hold-to-analyse:** `FGothamAnalysis` (pure, tested) runs 1.1 s on the nearest unscanned clue. Releasing early
-  cancels. A new accessibility option, **Clue analysis: Hold / Tap**, makes it a single press, and the Detective prompt
+- **Hold-to-analyse:** `FMvsAnalysis` (pure, tested) runs 1.1 s on the nearest unscanned clue. Releasing early
+  cancels. A new accessibility option, **Clue analysis: Hold / Tap**, makes it a single press, and the Forensic prompt
   names the action the player actually has to do.
 - **Clue markers:** `SClueMarkerLayer` / `UClueMarkerLayer` draw world-anchored markers in one pass. Each has corner
   brackets that scale with distance and always frame the clue, a label ("UNKNOWN EVIDENCE", the clue title, or
-  "ANALYSING") with its distance, and an analysis arc. Markers are projected per frame only while Detective Mode is
+  "ANALYSING") with its distance, and an analysis arc. Markers are projected per frame only while Forensic Mode is
   visible, and the active timer unregisters otherwise.
 - **Level:** the stairwell and water tank are tagged interactable (stencil 4). They draw as a faint fill, so they
   never out-shout clues.
 - **Fix:** generated surface materials now set the Nanite usage flag. `SM_ChamferCube` is Nanite and had been
   silently using the default material.
-- **Performance** (`Saved/Perf/V3_detective_1080p*`): Detective Mode costs +0.5 ms of frame time at 1080p (the
+- **Performance** (`Saved/Perf/V3_forensic_1080p*`): Forensic Mode costs +0.5 ms of frame time at 1080p (the
   post-process) and +0.23–0.25 ms of game thread over no UI (markers plus HUD), within budget. A first run read
   +0.43 ms; two clean repeats did not.
 - **Not yet:** the glitch offset on the transition (the radial reveal replaced the wipe), and hostile highlighting,
@@ -188,28 +187,28 @@ This is the biggest visual change for the least work.
 - **Confirm modal:** the chamfered panel style, with a danger accent on destructive actions.
 
 **V4 as built:**
-- **Shared frame** (`UGothamScreen::BuildMenuFrame`):
-  - a background blur of the world, with a left-heavy scrim (`UGothamScrim`, a vertex gradient)
+- **Shared frame** (`UMvsScreen::BuildMenuFrame`):
+  - a background blur of the world, with a left-heavy scrim (`UMvsScrim`, a vertex gradient)
   - a section label, a title and an accent rule, over a left-aligned column
   - the hint bar at the bottom right
   - colours re-applied from palette tokens whenever settings change
-- **Transitions:** the layer stacks (`UGothamScreenStack`) fade 0.15 s on push and pop, which is Common UI's own
+- **Transitions:** the layer stacks (`UMvsScreenStack`) fade 0.15 s on push and pop, which is Common UI's own
   intro and outro. Each screen's frame also slides 36 px in on activation (the modal rises instead). Both are off under
   reduced motion.
 - **Sliding highlight:**
-  - `UGothamMenuList` watches focus changes inside itself (`NativeOnFocusChanging`), and `SGothamHighlight` eases a
-    chamfered accent bar with a glow to the current item (`FGothamSlideRect`, tested for no overshoot and frame-rate
+  - `UMvsMenuList` watches focus changes inside itself (`NativeOnFocusChanging`), and `SMvsHighlight` eases a
+    chamfered accent bar with a glow to the current item (`FMvsSlideRect`, tested for no overshoot and frame-rate
     independence).
   - Buttons and rows move focus on hover, so mouse and gamepad agree on the current item.
   - When focus leaves the list, the bar dims in place.
-- **Buttons:** `UGothamButton` draws its own chamfered panel from tokens. Its kinds are `Standard` (focus adds an
+- **Buttons:** `UMvsButton` draws its own chamfered panel from tokens. Its kinds are `Standard` (focus adds an
   accent edge, accent bar and glow), `MenuItem` (big uppercase label; the list highlight shows focus), `Tab` (a filled
   block when selected, never colour alone) and `Danger`.
 - **Value selectors:** each option row is one focus stop. Left and right change the value (`NativeOnNavigation`, so
   the d-pad, stick and arrow keys all work) while up and down move between rows. Chevrons dim at a clamped end, and
   pips show the position among the choices (`GetOptionPosition`, tested).
 - **Settings:**
-  - Common UI tabs (`UGothamTabList` over `UCommonTabListWidgetBase`, with a `UCommonAnimatedSwitcher`): Display,
+  - Common UI tabs (`UMvsTabList` over `UCommonTabListWidgetBase`, with a `UCommonAnimatedSwitcher`): Display,
     Accessibility, Controls, Language. Q / E or LB / RB switch tabs, and focus lands on the page's first item.
   - The grouping is data (`USettingsViewModel::GetTabs`, and a test checks every setting appears exactly once).
   - A detail pane describes the focused option; every option has a description, gathered and translated.
@@ -242,19 +241,19 @@ This is the biggest visual change for the least work.
 - **Dummy enemies:** capsule "thugs" that idle and occasionally raise a warning. They exist to drive the UI:
   - counter-prompt indicators above their heads (world-space, pooled)
   - off-screen threat arrows
-  - Detective Mode "hostile" highlighting
+  - Forensic Mode "hostile" highlighting
 - **Juice:** a hit-stop of a few frames, camera shake on big hits, and a combo-milestone callout ("x10"). All of it
   follows the reduced-motion setting.
 - **Pass on everything:** German and pseudo-locale widths, 150% UI scale, colour-blind presets and high contrast on
   every new element. The new tokens also need high-contrast variants.
 
 **V5 as built:**
-- **Thugs** (`AGothamThug`): four training dummies (the mannequin in its own textured materials, apart from the hero's dark suit) spawned by `AGothamGameMode` around the
+- **Thugs** (`AMvsThug`): four training dummies (the mannequin in its own textured materials, apart from the hero's dark suit) spawned by `AMvsGameMode` around the
   start. Each spot has fallbacks, and a trace skips any that landed on a prop. They turn to face the player and are
-  drawn as hostiles in Detective Mode (custom-depth stencil 3). There's no AI controller.
-- **Attack logic** (pure, tested): `FGothamThugBrain` runs Idle -> Warning (1.1 s counter window) -> Strike -> Recover,
-  or Warning -> Counter -> Stunned. `FGothamAttackDirector` allows one telegraph at a time, a 1.6 to 3 s breather,
-  and only thugs within reach. `UGothamThreatSubsystem` (a world subsystem that ticks only while thugs exist) runs
+  drawn as hostiles in Forensic Mode (custom-depth stencil 3). There's no AI controller.
+- **Attack logic** (pure, tested): `FMvsThugBrain` runs Idle -> Warning (1.1 s counter window) -> Strike -> Recover,
+  or Warning -> Counter -> Stunned. `FMvsAttackDirector` allows one telegraph at a time, a 1.6 to 3 s breather,
+  and only thugs within reach. `UMvsThreatSubsystem` (a world subsystem that ticks only while thugs exist) runs
   them and publishes one snapshot list per frame.
 - **Counter:** a new rebindable action (RMB / RB) that shows up on the Controls screen automatically. It counters the
   nearest warning thug within reach, knocking it back, stunning it and adding a combo hit. Strikes that land cost 10
@@ -264,19 +263,19 @@ This is the biggest visual change for the least work.
   - a counter prompt above each warning thug: alert strokes, the current Counter key (it follows rebinding and device
     switches), and a timer bar that empties as the window closes
   - an arrow on the screen edge for nearby off-screen thugs, big, red and double-chevroned while warning, small and
-    muted otherwise (`GothamThreat::EdgeArrow`, tested). Dead-behind points down.
+    muted otherwise (`MvsThreat::EdgeArrow`, tested). Dead-behind points down.
   - The layer's active timer runs only while hostiles exist.
 - **Juice**, all off under reduced motion:
-  - hit-stop (`GothamFeel::HitStop`, 70 ms real time), which never fights the gadget wheel's slow-mo
-  - camera shake from trauma (`FGothamTrauma`, trauma squared, tested) on hits, counters and debug damage
+  - hit-stop (`MvsFeel::HitStop`, 70 ms real time), which never fights the gadget wheel's slow-mo
+  - camera shake from trauma (`FMvsTrauma`, trauma squared, tested) on hits, counters and debug damage
   - a combo milestone callout ("10-HIT COMBO"), which `UComboViewModel` flags each time the streak crosses 10, 20
-    and so on (`GothamCombo::MilestoneReached`, tested)
+    and so on (`MvsCombo::MilestoneReached`, tested)
 - **Accessibility and localization:**
   - Colours come from tokens. Under the red-green presets, danger reads as orange or yellow, so the prompt is also
     told apart by shape (strokes, key cap, bar) and the arrow by its second chevron.
   - "Counter" and "{0}-hit combo" are translated.
   - Checked in German at 150% UI scale with deuteranopia and high contrast (`Docs/img/combat-access.png`).
-- **Dev aid:** `-GothamCombatDemo` forces a warning on the thug in view and on the one most behind the camera, and
+- **Dev aid:** `-MvsCombatDemo` forces a warning on the thug in view and on the one most behind the camera, and
   builds a 10-hit combo, timed for the screenshot. Every other dev-flag run turns the attack director off, so no
   random attack flashes the vignette mid-shot.
 - **Not yet:** thugs have no attack animation (the strike is a lunge), and the whole loop still needs a hand-played
@@ -312,7 +311,7 @@ This is the biggest visual change for the least work.
    and iteration speed, and we turned it off in M0. My recommendation is to try it in V1 and keep it only if the
    1080p/60 budget holds.
 4. **Dummy enemies (V5).** This adds a little gameplay, but counter prompts and hostile highlighting are the most
-   recognisable part of the Arkham HUD. Include them?
-5. **Names.** "Gotham" and "Batarang" are DC trademarks. That's fine for a private demo, but for a public portfolio
-   I'd rename them to original ones (for example *Blackwater Ops*, *wing-blade*, *grapple*, *smoke canister*). This
-   only touches strings, the string table and the README.
+   recognisable part of the genre's HUDs. Include them?
+5. **Names.** The early placeholder names borrowed from an existing franchise. For a public portfolio every name is
+   original: the product is *MVVM Sample*, the code prefix `Mvs`, the gadgets *glaive*, *grapnel* and *smoke pellet*,
+   and the scan is *Forensic Mode* (review fix R8).

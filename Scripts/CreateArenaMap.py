@@ -1,8 +1,9 @@
+# Copyright IG. All Rights Reserved.
 """Builds /Game/Maps/L_Arena: a wet night rooftop with a lit skyline (V1 visual pass).
 
 Everything is generated: geometry from engine / LevelPrototyping meshes, materials from expressions, no textures.
 Lumen stays off (project decision), so the look relies on direct lights, SSR on wet surfaces, volumetric fog and
-grading. Re-running rebuilds the map from scratch; run CreateDetectiveAssets afterwards to place the clues again
+grading. Re-running rebuilds the map from scratch; run CreateForensicAssets afterwards to place the clues again
 (Scripts/BuildLevel.bat does both).
 """
 import math
@@ -23,9 +24,9 @@ CUBE = EAL.load_asset("/Engine/BasicShapes/Cube")
 CYLINDER = EAL.load_asset("/Engine/BasicShapes/Cylinder")
 CHAMFER = EAL.load_asset("/Game/LevelPrototyping/Meshes/SM_ChamferCube") if EAL.does_asset_exist("/Game/LevelPrototyping/Meshes/SM_ChamferCube") else CUBE
 
-INTERACTABLE = 4  # EGothamStencil::Interactable
+INTERACTABLE = 4  # EMvsStencil::Interactable
 
-# Clue positions (see CreateDetectiveAssets.py); props keep clear of them so clues stay visible.
+# Clue positions (see CreateForensicAssets.py); props keep clear of them so clues stay visible.
 CLUE_SPOTS = [(750, 420), (-600, 800), (350, -1000), (-1100, -300), (0, 1400)]
 
 
@@ -302,7 +303,7 @@ def mesh_actor(mesh, loc, scale, mat, label, rot=None, shadows=True, stencil=0):
     smc.set_material(0, mat)
     smc.set_editor_property("cast_shadow", shadows)
     if stencil:
-        # Detective Mode colours custom-depth objects by stencil class (see Gameplay/DetectiveTypes.h).
+        # Forensic Mode colours custom-depth objects by stencil class (see Gameplay/ForensicTypes.h).
         smc.set_editor_property("render_custom_depth", True)
         smc.set_editor_property("custom_depth_stencil_value", stencil)
     a.set_actor_scale3d(unreal.Vector(*scale))

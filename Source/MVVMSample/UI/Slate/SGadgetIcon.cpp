@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Slate/SGadgetIcon.h"
 
@@ -21,18 +21,18 @@ namespace
 
 namespace
 {
-	TArray<TArray<FVector2f>> BuildIconStrokes(EGothamGadgetIcon Icon)
+	TArray<TArray<FVector2f>> BuildIconStrokes(EMvsGadgetIcon Icon)
 	{
 		TArray<TArray<FVector2f>> S;
 		switch (Icon)
 		{
-		case EGothamGadgetIcon::WingBlade:
-			// A plain chevron throwing blade with a centre rivet. Deliberately generic: no wings or scallops, so it
-			// never reads as anyone's emblem.
+		case EMvsGadgetIcon::Glaive:
+			// A plain chevron throwing blade with a centre rivet, drawn from scratch: no wings or scallops, nothing
+			// that resembles an existing logo.
 			S.Add({ { -0.85f, 0.45f }, { 0.f, -0.55f }, { 0.85f, 0.45f }, { 0.5f, 0.5f }, { 0.f, -0.02f }, { -0.5f, 0.5f }, { -0.85f, 0.45f } });
 			S.Add({ { 0.f, 0.16f }, { 0.1f, 0.26f }, { 0.f, 0.36f }, { -0.1f, 0.26f }, { 0.f, 0.16f } });
 			break;
-		case EGothamGadgetIcon::Grapple:
+		case EMvsGadgetIcon::Grapple:
 			// A launcher body with a line running to a three-pronged hook.
 			S.Add({ { -0.8f, 0.75f }, { -0.45f, 0.4f }, { -0.3f, 0.55f }, { -0.65f, 0.9f }, { -0.8f, 0.75f } });
 			S.Add({ { -0.38f, 0.48f }, { 0.35f, -0.25f } });
@@ -40,7 +40,7 @@ namespace
 			S.Add({ { 0.35f, -0.25f }, { 0.3f, -0.75f }, { 0.45f, -0.85f } });
 			S.Add({ { 0.35f, -0.25f }, { 0.85f, -0.3f }, { 0.95f, -0.15f } });
 			break;
-		case EGothamGadgetIcon::Smoke:
+		case EMvsGadgetIcon::Smoke:
 			// A canister with a cloud rising from it.
 			S.Add({ { -0.25f, 0.85f }, { -0.25f, 0.25f }, { 0.25f, 0.25f }, { 0.25f, 0.85f }, { -0.25f, 0.85f } });
 			S.Add({ { -0.3f, 0.25f }, { 0.3f, 0.25f } });
@@ -55,15 +55,15 @@ namespace
 	}
 }
 
-const TArray<TArray<FVector2f>>& GothamGadgetIconStrokes(EGothamGadgetIcon Icon)
+const TArray<TArray<FVector2f>>& MvsGadgetIconStrokes(EMvsGadgetIcon Icon)
 {
 	// Built once: the strokes are fixed shapes in unit space, scaled when painted.
 	static const TArray<TArray<TArray<FVector2f>>> Table = []()
 	{
 		TArray<TArray<TArray<FVector2f>>> All;
-		for (int32 i = 0; i < static_cast<int32>(EGothamGadgetIcon::Count); ++i)
+		for (int32 i = 0; i < static_cast<int32>(EMvsGadgetIcon::Count); ++i)
 		{
-			All.Add(BuildIconStrokes(static_cast<EGothamGadgetIcon>(i)));
+			All.Add(BuildIconStrokes(static_cast<EMvsGadgetIcon>(i)));
 		}
 		return All;
 	}();
@@ -80,7 +80,7 @@ void SGadgetIcon::Construct(const FArguments& InArgs)
 	SetCanTick(false);
 }
 
-void SGadgetIcon::SetIcon(EGothamGadgetIcon InIcon)
+void SGadgetIcon::SetIcon(EMvsGadgetIcon InIcon)
 {
 	Icon = InIcon;
 	Invalidate(EInvalidateWidgetReason::Paint);
@@ -137,7 +137,7 @@ int32 SGadgetIcon::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeom
 
 	// Icon strokes, dimmed while recharging.
 	const float IconScale = Extent * 0.55f;
-	for (const TArray<FVector2f>& Line : GothamGadgetIconStrokes(Icon))
+	for (const TArray<FVector2f>& Line : MvsGadgetIconStrokes(Icon))
 	{
 		TArray<FVector2f> Points;
 		Points.Reserve(Line.Num());

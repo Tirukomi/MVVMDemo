@@ -1,9 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/GothamSettingsAwareWidget.h"
+#include "UI/MvsSettingsAwareWidget.h"
 #include "GadgetSelectorWidget.generated.h"
 
 class UGadgetBarViewModel;
@@ -16,7 +16,7 @@ class UTextBlock;
  * the loadout small underneath with their keys. Rebuilds entries only when the loadout changes.
  */
 UCLASS()
-class MVVMSAMPLE_API UGadgetSelectorWidget : public UGothamSettingsAwareWidget
+class MVVMSAMPLE_API UGadgetSelectorWidget : public UMvsSettingsAwareWidget
 {
 	GENERATED_BODY()
 

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
@@ -9,7 +9,7 @@
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float /*Health*/, float /*MaxHealth*/);
 
 /** Owns an actor's health. Knows nothing about UI; observers subscribe to OnHealthChanged. */
-UCLASS(ClassGroup = (Gotham), meta = (BlueprintSpawnableComponent))
+UCLASS(ClassGroup = (Mvs), meta = (BlueprintSpawnableComponent))
 class MVVMSAMPLE_API UHealthComponent : public UActorComponent
 {
 	GENERATED_BODY()

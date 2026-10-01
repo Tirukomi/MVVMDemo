@@ -1,11 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "UI/Slate/SComboMeter.h"
 
 #include "Rendering/DrawElements.h"
 #include "Styling/CoreStyle.h"
 
-void FGothamGhostFill::SetTarget(float Target)
+void FMvsGhostFill::SetTarget(float Target)
 {
 	if (Target >= Ghost)
 	{
@@ -19,7 +19,7 @@ void FGothamGhostFill::SetTarget(float Target)
 	}
 }
 
-bool FGothamGhostFill::Advance(float Target, float DeltaTime)
+bool FMvsGhostFill::Advance(float Target, float DeltaTime)
 {
 	if (Ghost <= Target)
 	{

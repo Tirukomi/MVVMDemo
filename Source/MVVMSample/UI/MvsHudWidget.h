@@ -1,0 +1,93 @@
+// Copyright IG. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Accessibility/MvsSettingsListener.h"
+#include "Containers/Ticker.h"
+#include "CommonActivatableWidget.h"
+#include "MvsHudWidget.generated.h"
+
+class UClueMarkerLayer;
+class UComboWidget;
+class UDamageVignette;
+class UForensicOverlayWidget;
+class UGadgetSelectorWidget;
+class UHealthBarWidget;
+class UObjectiveTrackerWidget;
+class UPlayerVitalsViewModel;
+class USubtitleWidget;
+class UThreatIndicatorLayer;
+
+/**
+ * Combat HUD root. Layout: health and combo top-left, gadget selector top-right with the objective under it,
+ * subtitles bottom-centre; Forensic overlay, clue markers, threat indicators and the danger vignette full-screen behind
+ * everything.
+ *
+ * A plain activatable widget on the Game layer: it shares nothing with the menu screens (no back handling, no focus,
+ * no menu frame) beyond keeping the game in control while it is the top widget.
+ */
+UCLASS()
+class MVVMSAMPLE_API UMvsHudWidget : public UCommonActivatableWidget
+{
+	GENERATED_BODY()
+
+public:
+	UMvsHudWidget(const FObjectInitializer& ObjectInitializer);
+
+	/** The HUD keeps the game in control: mouse captured, no cursor. */
+	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
+
+	/** The area the edge-anchored elements are laid out in (the safe zone). */
+	UWidget* GetSafeArea() const { return SafeArea; }
+
+protected:
+	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
+private:
+	void OnVitalsChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
+	/** Flash to full, then settle at the low-health level (or zero) over half a second. */
+	void FlashVignette();
+	void UpdateVignetteRest();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UDamageVignette> Vignette;
+
+	/** The canvas inside the safe zone that the edge-anchored HUD elements are placed on. */
+	UPROPERTY(Transient)
+	TObjectPtr<UWidget> SafeArea;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UForensicOverlayWidget> ForensicOverlay;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UClueMarkerLayer> ClueMarkers;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UThreatIndicatorLayer> ThreatIndicators;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UHealthBarWidget> HealthBar;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UComboWidget> ComboCounter;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGadgetSelectorWidget> GadgetSelector;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UObjectiveTrackerWidget> ObjectiveTracker;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USubtitleWidget> Subtitles;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UPlayerVitalsViewModel> VitalsVM;
+
+	FTSTicker::FDelegateHandle FlashHandle;
+	FMvsSettingsListener SettingsListener;
+	float FlashElapsed = 0.f;
+	int32 LastDamageCount = 0;
+};

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
@@ -17,9 +17,9 @@ class MVVMSAMPLE_API UThreatViewModel : public UMVVMViewModelBase
 	GENERATED_BODY()
 
 public:
-	void SetThreats(const TArray<FGothamThreatSnapshot>& InThreats);
+	void SetThreats(const TArray<FMvsThreatSnapshot>& InThreats);
 
-	const TArray<FGothamThreatSnapshot>& GetThreats() const { return Threats; }
+	const TArray<FMvsThreatSnapshot>& GetThreats() const { return Threats; }
 	int32 GetThreatCount() const { return ThreatCount; }
 	int32 GetWarningCount() const { return WarningCount; }
 
@@ -32,5 +32,5 @@ protected:
 	int32 WarningCount = 0;
 
 private:
-	TArray<FGothamThreatSnapshot> Threats;
+	TArray<FMvsThreatSnapshot> Threats;
 };

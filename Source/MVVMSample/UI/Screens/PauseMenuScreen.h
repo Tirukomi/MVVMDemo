@@ -1,13 +1,13 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Screens/GothamScreen.h"
+#include "UI/Screens/MvsScreen.h"
 #include "PauseMenuScreen.generated.h"
 
 class UClueListViewModel;
-class UGothamPanel;
+class UMvsPanel;
 class UObjectivesViewModel;
 class UTextBlock;
 
@@ -16,7 +16,7 @@ class UTextBlock;
  * highlight, and a status panel (objective, evidence found) on the right. Pauses the game while open.
  */
 UCLASS()
-class MVVMSAMPLE_API UPauseMenuScreen : public UGothamScreen
+class MVVMSAMPLE_API UPauseMenuScreen : public UMvsScreen
 {
 	GENERATED_BODY()
 
@@ -48,7 +48,7 @@ private:
 	TObjectPtr<UClueListViewModel> Clues;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> StatusPanel;
+	TObjectPtr<UMvsPanel> StatusPanel;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> ObjectiveText;

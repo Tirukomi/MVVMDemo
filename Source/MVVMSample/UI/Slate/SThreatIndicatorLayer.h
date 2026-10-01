@@ -1,12 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Slate/SGothamWorldOverlay.h"
+#include "UI/Slate/SMvsWorldOverlay.h"
 
 /** One hostile, as the threat layer needs it for one frame. */
-struct FGothamThreatIndicator
+struct FMvsThreatIndicator
 {
 	/** Projected position in layer space; valid only if bProjected (false when behind the camera). */
 	FVector2D Screen = FVector2D::ZeroVector;
@@ -24,7 +24,7 @@ struct FGothamThreatIndicator
  * timer bar) above every thug that is telegraphing an attack, and an arrow on the screen edge for every nearby
  * thug that is off screen (bright and pulsing while it warns). A world overlay: active only while hostiles exist.
  */
-class MVVMSAMPLE_API SThreatIndicatorLayer : public SGothamWorldOverlay<FGothamThreatIndicator>
+class MVVMSAMPLE_API SThreatIndicatorLayer : public SMvsWorldOverlay<FMvsThreatIndicator>
 {
 public:
 	SLATE_BEGIN_ARGS(SThreatIndicatorLayer) {}
@@ -42,8 +42,8 @@ public:
 		FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;
 
 private:
-	void PaintPrompt(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FGothamThreatIndicator& Threat, float Opacity) const;
-	void PaintArrow(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FGothamThreatIndicator& Threat, float Opacity) const;
+	void PaintPrompt(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FMvsThreatIndicator& Threat, float Opacity) const;
+	void PaintArrow(FSlateWindowElementList& Out, int32 LayerId, const FGeometry& Geometry, const FMvsThreatIndicator& Threat, float Opacity) const;
 
 	FText KeyLabel;
 	FLinearColor Danger = FLinearColor::Red;

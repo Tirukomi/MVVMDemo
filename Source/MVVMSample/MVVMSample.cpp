@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #include "MVVMSample.h"
 
@@ -11,7 +11,7 @@ public:
 	virtual void StartupModule() override
 	{
 		// String tables must exist before any asset that references them loads.
-		GothamClueStrings::Register();
+		MvsClueStrings::Register();
 	}
 };
 

@@ -1,15 +1,15 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright IG. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
-#include "UI/GothamSettingsAwareWidget.h"
+#include "UI/MvsSettingsAwareWidget.h"
 #include "ComboWidget.generated.h"
 
 class UComboMeter;
 class UComboViewModel;
-class UGothamPanel;
+class UMvsPanel;
 class UTextBlock;
 
 /**
@@ -17,7 +17,7 @@ class UTextBlock;
  * decay rule. The count pops on every hit and the tag on every multiplier step (both skipped under reduced motion).
  */
 UCLASS()
-class MVVMSAMPLE_API UComboWidget : public UGothamSettingsAwareWidget
+class MVVMSAMPLE_API UComboWidget : public UMvsSettingsAwareWidget
 {
 	GENERATED_BODY()
 
@@ -48,7 +48,7 @@ private:
 	TObjectPtr<UTextBlock> HitsLabel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UGothamPanel> MultiplierTag;
+	TObjectPtr<UMvsPanel> MultiplierTag;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> MultiplierText;

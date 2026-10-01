@@ -14,7 +14,7 @@ editor builds) and the generated materials.
 ## Consequences
 - Layout is reviewable text; behaviour and layout cannot drift apart.
 - Designers cannot restyle in the designer without a Blueprint subclass. Styling is therefore pushed into data
-  (colour tokens, `UGothamButton` kinds, `FGothamGadgetWheelStyle`) and the Slate wrappers expose designer properties.
+  (colour tokens, `UMvsButton` kinds, `FMvsGadgetWheelStyle`) and the Slate wrappers expose designer properties.
 - Editor-authored MVVM bindings remain available: the resolver is in place, and any widget can be subclassed in a
   `WBP_`.
 
@@ -30,7 +30,7 @@ is not affected.
   1. In the C++ base, declare the widgets its behaviour needs as `UPROPERTY(meta = (BindWidgetOptional))` (for the
      pause menu: the menu list, its buttons and the status line), and use them when bound instead of building.
   2. Create `WBP_<Screen>` parented to the C++ class, with widgets of those names, and point the matching
-     `UGothamUISettings` screen class at it.
+     `UMvsUISettings` screen class at it.
   3. The screen's G4 shots are the check: the asset must reproduce them, or the baselines change on purpose.
 - **Not done yet:** step 2 is designer work in the editor. Until a screen has its asset, it keeps its code layout,
   and nothing about it changes.
