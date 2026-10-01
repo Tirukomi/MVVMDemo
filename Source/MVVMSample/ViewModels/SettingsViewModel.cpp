@@ -66,7 +66,7 @@ const TArray<FGothamSettingsTab>& USettingsViewModel::GetTabs()
 		{ TEXT("Display"), LOCTEXT("TabDisplay", "Display"),
 			{ EGothamSetting::UIScale, EGothamSetting::SubtitleSize, EGothamSetting::SubtitleBackground } },
 		{ TEXT("Accessibility"), LOCTEXT("TabAccessibility", "Accessibility"),
-			{ EGothamSetting::ColorVision, EGothamSetting::HighContrast, EGothamSetting::ReducedMotion } },
+			{ EGothamSetting::ColorVision, EGothamSetting::HighContrast, EGothamSetting::TextSize, EGothamSetting::ReducedMotion } },
 		{ TEXT("Controls"), LOCTEXT("TabControls", "Controls"),
 			{ EGothamSetting::WheelMode, EGothamSetting::ScanMode } },
 		{ TEXT("Language"), LOCTEXT("TabLanguage", "Language"),

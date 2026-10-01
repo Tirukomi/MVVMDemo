@@ -26,13 +26,12 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
-	virtual void OnSettingsApplied() override { ApplyStyle(); }
+	/** Fonts, colours, the prompt text and the material's tint and motion: on settings changes and when shown. */
+	virtual void ApplyTheme() override;
 
 private:
 	/** Per frame of the fade: visibility, opacity and the material's progress, nothing else. */
 	void ApplyFade();
-	/** Fonts, colours, the prompt text and the material's tint and motion: on settings changes and when shown. */
-	void ApplyStyle();
 	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);
 
 	UPROPERTY(Transient)

@@ -98,7 +98,7 @@ void UComboWidget::OnFieldChanged(UObject* Source, UE::FieldNotification::FField
 	Refresh();
 }
 
-void UComboWidget::ApplyStyle()
+void UComboWidget::ApplyTheme()
 {
 	if (!CountText)
 	{
@@ -117,6 +117,7 @@ void UComboWidget::ApplyStyle()
 	DecayBar->EmptyColor = Track;
 	DecayBar->bReduceMotion = GetGothamSettings().bReducedMotion;
 	DecayBar->SynchronizeProperties();
+	Refresh();
 }
 
 void UComboWidget::Refresh()

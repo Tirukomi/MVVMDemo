@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Widgets/GothamOptionRow.h"
+#include "UI/Style/GothamMetrics.h"
 #include "UI/Style/GothamStyle.h"
 
 #include "Accessibility/GothamSettingsListener.h"
@@ -8,6 +9,7 @@
 #include "Components/Border.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
+#include "UI/GothamAccessibility.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Style/GothamLayout.h"
 #include "UI/Widgets/GothamButton.h"
@@ -18,7 +20,6 @@
 
 namespace
 {
-	constexpr float SelectorWidth = 260.f;
 }
 
 UGothamOptionRow::UGothamOptionRow(const FObjectInitializer& ObjectInitializer)
@@ -37,19 +38,19 @@ bool UGothamOptionRow::Initialize()
 		// A transparent border so the whole row (not just its text) takes hover and clicks.
 		UBorder* Hit = WidgetTree->ConstructWidget<UBorder>();
 		Hit->SetBrushColor(FLinearColor::Transparent);
-		Hit->SetPadding(FMargin(22.f, 6.f, 14.f, 6.f));
+		Hit->SetPadding(GothamMetrics::OptionRowPadding);
 		WidgetTree->RootWidget = Hit;
 
 		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Hit->SetContent(Row);
 
 		LabelText = WidgetTree->ConstructWidget<UGothamText>();
-		LabelText->SetFont(GothamStyle::Font(EGothamTextStyle::BodyStrong));
+		GothamStyle::SetTextStyle(LabelText, EGothamTextStyle::BodyStrong);
 		LabelText->SetAutoWrapText(true);
 		GothamLayout::Add(Row, LabelText).Fill().VCenter().Pad(0.f, 0.f, 16.f, 0.f);
 
 		USizeBox* SelectorBox = WidgetTree->ConstructWidget<USizeBox>();
-		SelectorBox->SetWidthOverride(SelectorWidth);
+		SelectorBox->SetWidthOverride(GothamMetrics::SelectorWidth);
 		GothamLayout::Add(Row, SelectorBox).VCenter();
 
 		UOverlay* Selector = WidgetTree->ConstructWidget<UOverlay>();
@@ -58,7 +59,7 @@ bool UGothamOptionRow::Initialize()
 		GothamLayout::Add(Selector, Decor).FillBoth();
 
 		ValueText = WidgetTree->ConstructWidget<UGothamText>();
-		ValueText->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
+		GothamStyle::SetTextStyle(ValueText, EGothamTextStyle::Header);
 		ValueText->SetJustification(ETextJustify::Center);
 		GothamLayout::Add(Selector, ValueText).Center().Pad(24.f, 2.f, 24.f, 8.f);
 	}
@@ -79,8 +80,14 @@ void UGothamOptionRow::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyColors(); });
-	ApplyColors();
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyState(); });
+	ApplyState();
+	// One sentence for the row, read when it gets focus and again as its value changes: "UI scale: 100%".
+	GothamAccessibility::SetText(GothamAccessibility::FindButton(*this), TAttribute<FText>::CreateWeakLambda(this, [this]()
+	{
+		return ViewModel ? FText::Format(NSLOCTEXT("Gotham.Accessibility", "SettingRow", "{0}: {1}"),
+			USettingsViewModel::GetLabel(Setting), ViewModel->GetValueText(Setting)) : FText::GetEmpty();
+	}));
 }
 
 void UGothamOptionRow::NativeDestruct()
@@ -137,14 +144,14 @@ void UGothamOptionRow::HandleFocusReceived()
 {
 	Super::HandleFocusReceived();
 	bFocused = true;
-	ApplyColors();
+	ApplyState();
 }
 
 void UGothamOptionRow::HandleFocusLost()
 {
 	Super::HandleFocusLost();
 	bFocused = false;
-	ApplyColors();
+	ApplyState();
 }
 
 void UGothamOptionRow::Step(int32 Direction)
@@ -170,7 +177,7 @@ void UGothamOptionRow::Refresh()
 	Decor->SetPosition(Index, Count, Setting != EGothamSetting::UIScale);
 }
 
-void UGothamOptionRow::ApplyColors()
+void UGothamOptionRow::ApplyState()
 {
 	if (!LabelText)
 	{

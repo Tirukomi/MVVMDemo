@@ -7,6 +7,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/SafeZone.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/LocalPlayer.h"
@@ -81,9 +82,17 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 		Vignette->SetVisibility(ESlateVisibility::HitTestInvisible);
 		Fill(Canvas, Vignette);
 
+		// Everything anchored to a screen edge sits inside the platform's safe zone (TVs overscan; the full-screen
+		// layers above stay full screen). On a PC monitor the safe zone is the whole screen.
+		USafeZone* Safe = WidgetTree->ConstructWidget<USafeZone>();
+		Fill(Canvas, Safe);
+		UCanvasPanel* Anchored = WidgetTree->ConstructWidget<UCanvasPanel>();
+		Safe->SetContent(Anchored);
+		SafeArea = Anchored;
+
 		// Top-left: health, then the combo counter under it.
 		UVerticalBox* Vitals = WidgetTree->ConstructWidget<UVerticalBox>();
-		Place(Canvas, Vitals, FAnchors(0.f, 0.f), FVector2D(0.f, 0.f), FVector2D(Margin, Margin));
+		Place(Anchored, Vitals, FAnchors(0.f, 0.f), FVector2D(0.f, 0.f), FVector2D(Margin, Margin));
 		HealthBar = WidgetTree->ConstructWidget<UHealthBarWidget>();
 		Vitals->AddChildToVerticalBox(HealthBar);
 		ComboCounter = WidgetTree->ConstructWidget<UComboWidget>();
@@ -91,7 +100,7 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 
 		// Top-right: gadget selector, objective under it.
 		UVerticalBox* Right = WidgetTree->ConstructWidget<UVerticalBox>();
-		Place(Canvas, Right, FAnchors(1.f, 0.f), FVector2D(1.f, 0.f), FVector2D(-Margin, Margin - 8.f));
+		Place(Anchored, Right, FAnchors(1.f, 0.f), FVector2D(1.f, 0.f), FVector2D(-Margin, Margin - 8.f));
 		GadgetSelector = WidgetTree->ConstructWidget<UGadgetSelectorWidget>();
 		Right->AddChildToVerticalBox(GadgetSelector)->SetHorizontalAlignment(HAlign_Right);
 		ObjectiveTracker = WidgetTree->ConstructWidget<UObjectiveTrackerWidget>();
@@ -100,7 +109,7 @@ TSharedRef<SWidget> UGothamHudWidget::RebuildWidget()
 		ObjectiveSlot->SetPadding(FMargin(0.f, 18.f, 0.f, 0.f));
 
 		Subtitles = WidgetTree->ConstructWidget<USubtitleWidget>();
-		Place(Canvas, Subtitles, FAnchors(0.5f, 1.f), FVector2D(0.5f, 1.f), FVector2D(0.f, -90.f));
+		Place(Anchored, Subtitles, FAnchors(0.5f, 1.f), FVector2D(0.5f, 1.f), FVector2D(0.f, -90.f));
 	}
 	return Super::RebuildWidget();
 }
@@ -125,8 +134,7 @@ void UGothamHudWidget::NativeConstruct()
 	Subtitles->SetViewModel(ViewModels->GetSubtitles());
 	ClueMarkers->SetViewModels(ViewModels->GetClues(), ViewModels->GetDetective());
 	ThreatIndicators->SetViewModel(ViewModels->GetThreats());
-	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyMarkerColors(); UpdateVignetteRest(); });
-	ApplyMarkerColors();
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { UpdateVignetteRest(); });
 
 	VitalsVM = ViewModels->GetVitals();
 	LastDamageCount = VitalsVM->GetDamageCount();
@@ -165,18 +173,6 @@ void UGothamHudWidget::UpdateVignetteRest()
 			Vignette->SetColor(Settings->GetColor(EGothamColorToken::Danger));
 		}
 		Vignette->SetIntensity(VitalsVM->GetIsLowHealth() ? LowHealthVignette : 0.f);
-	}
-}
-
-void UGothamHudWidget::ApplyMarkerColors()
-{
-	if (const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this))
-	{
-		ClueMarkers->SetColors(Settings->GetColor(EGothamColorToken::Unscanned), Settings->GetColor(EGothamColorToken::Scanned),
-			Settings->GetColor(EGothamColorToken::Accent), Settings->GetColor(EGothamColorToken::TextMuted));
-		ThreatIndicators->SetColors(Settings->GetColor(EGothamColorToken::Danger), Settings->GetColor(EGothamColorToken::TextMuted),
-			Settings->GetColor(EGothamColorToken::Panel), Settings->GetColor(EGothamColorToken::TextPrimary));
-		ThreatIndicators->SetReducedMotion(GothamMotion::IsReduced(this));
 	}
 }
 

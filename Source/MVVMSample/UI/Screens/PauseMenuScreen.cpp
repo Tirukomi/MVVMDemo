@@ -2,6 +2,7 @@
 
 #include "UI/Screens/PauseMenuScreen.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
@@ -60,10 +61,10 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 
 		// Right: where the investigation stands, so pausing doubles as a status check.
 		USizeBox* StatusWidth = WidgetTree->ConstructWidget<USizeBox>();
-		StatusWidth->SetWidthOverride(360.f);
+		StatusWidth->SetWidthOverride(GothamMetrics::PauseStatusWidth);
 		Split->AddChildToHorizontalBox(StatusWidth)->SetVerticalAlignment(VAlign_Top);
 		StatusPanel = WidgetTree->ConstructWidget<UGothamPanel>();
-		StatusPanel->SetPanelPadding(FMargin(22.f, 16.f, 22.f, 18.f));
+		StatusPanel->SetPanelPadding(GothamMetrics::PauseStatusPadding);
 		StatusPanel->SetShape(12.f, EGothamChamfer::Opposite);
 		StatusWidth->SetContent(StatusPanel);
 
@@ -82,9 +83,9 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 	return Super::RebuildWidget();
 }
 
-void UPauseMenuScreen::OnPaletteChanged()
+void UPauseMenuScreen::ApplyTheme()
 {
-	Super::OnPaletteChanged();
+	Super::ApplyTheme();
 	if (StatusPanel)
 	{
 		StatusPanel->SetColors(GothamStyle::Token(this, EGothamColorToken::Panel, GothamStyle::PanelAlpha(this)),

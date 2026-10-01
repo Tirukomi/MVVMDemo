@@ -95,15 +95,49 @@ namespace
 	}
 }
 
+FGothamTheme FGothamTheme::FromSettings(const FGothamSettingsData& Data)
+{
+	FGothamTheme Theme;
+	Theme.ColorMode = Data.ColorMode;
+	Theme.bHighContrast = Data.bHighContrast;
+	Theme.bReducedMotion = Data.bReducedMotion;
+	Theme.TextScale = Data.GetTextScale();
+	return Theme;
+}
+
+FLinearColor FGothamTheme::Color(EGothamColorToken Token, float Alpha) const
+{
+	FLinearColor Result = GothamPalette::Resolve(Token, ColorMode, bHighContrast);
+	Result.A = Alpha;
+	return Result;
+}
+
+float FGothamTheme::PanelAlpha() const
+{
+	return GothamPalette::PanelAlpha(bHighContrast);
+}
+
+FSlateFontInfo FGothamTheme::Font(EGothamTextStyle Style) const
+{
+	return GothamStyle::Font(Style, TextScale);
+}
+
 namespace GothamStyle
 {
-	FSlateFontInfo Font(EGothamTextStyle Style)
+	FGothamTheme Theme(const UObject* Context)
+	{
+		const UGothamSettingsSubsystem* Settings = Context ? UGothamSettingsSubsystem::Get(Context) : nullptr;
+		return Settings ? FGothamTheme::FromSettings(Settings->GetSettings()) : FGothamTheme();
+	}
+
+	FSlateFontInfo Font(EGothamTextStyle Style, float Scale)
 	{
 		const FStyleSpec S = Spec(Style);
+		const float Size = S.Size * Scale;
 		const TSharedPtr<const FCompositeFont>& Family = S.bCondensed ? Condensed() : BodyFamily();
 		FSlateFontInfo Info = Family.IsValid()
-			? FSlateFontInfo(Family, S.Size, S.Weight)
-			: FCoreStyle::GetDefaultFontStyle(FCString::Strcmp(S.Weight, TEXT("Regular")) == 0 ? "Regular" : "Bold", FMath::RoundToInt(S.Size));
+			? FSlateFontInfo(Family, Size, S.Weight)
+			: FCoreStyle::GetDefaultFontStyle(FCString::Strcmp(S.Weight, TEXT("Regular")) == 0 ? "Regular" : "Bold", FMath::RoundToInt(Size));
 		Info.LetterSpacing = S.LetterSpacing;
 		return Info;
 	}
@@ -115,10 +149,7 @@ namespace GothamStyle
 
 	FLinearColor Token(const UObject* Context, EGothamColorToken InToken, float Alpha)
 	{
-		const UGothamSettingsSubsystem* Settings = Context ? UGothamSettingsSubsystem::Get(Context) : nullptr;
-		FLinearColor Color = Settings ? Settings->GetColor(InToken) : GothamPalette::Resolve(InToken, EGothamColorMode::Default, false);
-		Color.A = Alpha;
-		return Color;
+		return Theme(Context).Color(InToken, Alpha);
 	}
 
 	FLinearColor ItemText(const UObject* Context, bool bHot)
@@ -128,8 +159,19 @@ namespace GothamStyle
 
 	float PanelAlpha(const UObject* Context)
 	{
-		const UGothamSettingsSubsystem* Settings = Context ? UGothamSettingsSubsystem::Get(Context) : nullptr;
-		return Settings ? Settings->GetPanelAlpha() : GothamPalette::PanelAlpha(false);
+		return Theme(Context).PanelAlpha();
+	}
+
+	void SetTextStyle(UTextBlock* Text, EGothamTextStyle Style)
+	{
+		if (UGothamText* Gotham = Cast<UGothamText>(Text))
+		{
+			Gotham->SetTextStyle(Style);
+		}
+		else if (Text)
+		{
+			Text->SetFont(Font(Style));
+		}
 	}
 
 	void ApplyText(UTextBlock* Text, EGothamTextStyle Style, const FLinearColor& Color)
@@ -138,7 +180,7 @@ namespace GothamStyle
 		{
 			return;
 		}
-		Text->SetFont(Font(Style));
+		SetTextStyle(Text, Style);
 		GothamText::SetUpperCase(Text, IsUpperCase(Style));
 		Text->SetColorAndOpacity(FSlateColor(Color));
 	}

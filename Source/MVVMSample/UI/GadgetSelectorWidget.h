@@ -26,7 +26,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
-	virtual void OnSettingsApplied() override { Refresh(); }
+	virtual void ApplyTheme() override { Refresh(); }
 
 private:
 	void RebuildEntries();

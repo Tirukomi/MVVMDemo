@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Accessibility/GothamSettingsListener.h"
 #include "Components/Widget.h"
 #include "UI/Slate/SGothamWorldOverlay.h"
 #include "GothamWorldOverlayLayer.generated.h"
@@ -10,7 +11,8 @@
 /**
  * UMG side of a world overlay (see SGothamWorldOverlay): owns the Slate layer, switches it on and off from view-model
  * state, and projects world positions into it with the owning player's view. A derived layer builds its Slate widget
- * with a provider, says when it should be active, and calls UpdateActive when that may have changed.
+ * with a provider, says when it should be active, and calls UpdateActive when that may have changed. It styles itself:
+ * ApplyTheme runs when the layer is built and whenever settings change.
  */
 UCLASS(Abstract)
 class MVVMSAMPLE_API UGothamWorldOverlayLayer : public UWidget
@@ -26,6 +28,9 @@ protected:
 	/** Create the Slate layer (SNew) and give it a provider; MakeProvider wraps a const member safely. */
 	virtual TSharedRef<SGothamWorldOverlayBase> MakeOverlay() PURE_VIRTUAL(UGothamWorldOverlayLayer::MakeOverlay, return MakeOverlayPlaceholder(););
 	virtual bool ShouldBeActive() const PURE_VIRTUAL(UGothamWorldOverlayLayer::ShouldBeActive, return false;);
+
+	/** Push colours and motion from the current theme to the Slate layer. */
+	virtual void ApplyTheme() {}
 
 	/** Re-evaluates ShouldBeActive; call from the view-model handlers that feed it. */
 	void UpdateActive();
@@ -55,4 +60,5 @@ private:
 	static TSharedRef<SGothamWorldOverlayBase> MakeOverlayPlaceholder();
 
 	TSharedPtr<SGothamWorldOverlayBase> Overlay;
+	FGothamSettingsListener SettingsListener;
 };

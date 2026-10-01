@@ -2,6 +2,7 @@
 
 #include "UI/Screens/ControlsScreen.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
@@ -30,14 +31,14 @@ TSharedRef<SWidget> UControlsScreen::RebuildWidget()
 
 		Status = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::Warning);
 		Status->SetAutoWrapText(true);
-		Column->AddChildToVerticalBox(Status)->SetPadding(FMargin(22.f, 0.f, 0.f, 10.f));
+		Column->AddChildToVerticalBox(Status)->SetPadding(FMargin(GothamMetrics::ItemIndent, 0.f, 0.f, 10.f));
 
 		constexpr float LabelWidth = 300.f;
 		constexpr float SlotWidth = 230.f;
 
 		// Header: which column is which device.
 		UHorizontalBox* Header = WidgetTree->ConstructWidget<UHorizontalBox>();
-		Column->AddChildToVerticalBox(Header)->SetPadding(FMargin(22.f, 0.f, 0.f, 6.f));
+		Column->AddChildToVerticalBox(Header)->SetPadding(FMargin(GothamMetrics::ItemIndent, 0.f, 0.f, 6.f));
 		auto AddHeaderCell = [&](const FText& Text, float Width)
 		{
 			USizeBox* Box = WidgetTree->ConstructWidget<USizeBox>();
@@ -75,7 +76,7 @@ TSharedRef<SWidget> UControlsScreen::RebuildWidget()
 			LabelBox->SetContent(Label);
 			UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(LabelBox);
 			LabelSlot->SetVerticalAlignment(VAlign_Center);
-			LabelSlot->SetPadding(FMargin(22.f, 0.f, 0.f, 0.f));
+			LabelSlot->SetPadding(FMargin(GothamMetrics::ItemIndent, 0.f, 0.f, 0.f));
 
 			for (int32 SlotIndex = 0; SlotIndex < 2; ++SlotIndex)
 			{
@@ -103,7 +104,7 @@ TSharedRef<SWidget> UControlsScreen::RebuildWidget()
 		UGothamButton* Reset = WidgetTree->ConstructWidget<UGothamButton>();
 		Reset->SetLabel(LOCTEXT("ResetAll", "Reset to defaults"));
 		Reset->OnClicked().AddLambda([this]() { ResetAll(); });
-		Buttons->AddChildToHorizontalBox(Reset)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
+		Buttons->AddChildToHorizontalBox(Reset)->SetPadding(FMargin(0.f, 0.f, GothamMetrics::ButtonGap, 0.f));
 		UGothamButton* Back = WidgetTree->ConstructWidget<UGothamButton>();
 		Back->SetLabel(LOCTEXT("Back", "Back"));
 		Back->OnClicked().AddLambda([this]() { DeactivateWidget(); });

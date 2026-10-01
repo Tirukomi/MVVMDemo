@@ -2,6 +2,7 @@
 
 #include "UI/Screens/SettingsScreen.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
@@ -40,7 +41,7 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 
 		// Left: the pages. Each page scrolls, so large UI scales and long translations never push rows off screen.
 		USizeBox* PageWidth = WidgetTree->ConstructWidget<USizeBox>();
-		PageWidth->SetWidthOverride(660.f);
+		PageWidth->SetWidthOverride(GothamMetrics::SettingsPageWidth);
 		Split->AddChildToHorizontalBox(PageWidth);
 		Switcher = WidgetTree->ConstructWidget<UGothamSwitcher>();
 		PageWidth->SetContent(Switcher);
@@ -81,10 +82,10 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 
 		// Right: what the focused option does.
 		USizeBox* DetailWidth = WidgetTree->ConstructWidget<USizeBox>();
-		DetailWidth->SetWidthOverride(400.f);
+		DetailWidth->SetWidthOverride(GothamMetrics::SettingsDetailWidth);
 		Split->AddChildToHorizontalBox(DetailWidth)->SetVerticalAlignment(VAlign_Top);
 		DetailPanel = WidgetTree->ConstructWidget<UGothamPanel>();
-		DetailPanel->SetPanelPadding(FMargin(22.f, 16.f, 22.f, 20.f));
+		DetailPanel->SetPanelPadding(GothamMetrics::SettingsDetailPadding);
 		DetailPanel->SetShape(12.f, EGothamChamfer::Opposite);
 		DetailWidth->SetContent(DetailPanel);
 		UVerticalBox* Detail = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -100,7 +101,7 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 
 		// Bottom-left: unapplied-changes note and the actions.
 		DirtyNote = MakeText(FText::GetEmpty(), EGothamTextStyle::Label, EGothamColorToken::Warning);
-		Column->AddChildToVerticalBox(DirtyNote)->SetPadding(FMargin(22.f, 12.f, 0.f, 8.f));
+		Column->AddChildToVerticalBox(DirtyNote)->SetPadding(FMargin(GothamMetrics::ItemIndent, 12.f, 0.f, 8.f));
 
 		UHorizontalBox* Buttons = WidgetTree->ConstructWidget<UHorizontalBox>();
 		Column->AddChildToVerticalBox(Buttons);
@@ -109,7 +110,7 @@ TSharedRef<SWidget> USettingsScreen::RebuildWidget()
 			UGothamButton* Button = WidgetTree->ConstructWidget<UGothamButton>();
 			Button->SetLabel(Label);
 			Button->OnClicked().AddLambda(MoveTemp(Action));
-			Buttons->AddChildToHorizontalBox(Button)->SetPadding(FMargin(0.f, 0.f, 10.f, 0.f));
+			Buttons->AddChildToHorizontalBox(Button)->SetPadding(FMargin(0.f, 0.f, GothamMetrics::ButtonGap, 0.f));
 		};
 		AddAction(LOCTEXT("Apply", "Apply"), [this]() { if (ViewModel) { ViewModel->Apply(); } });
 		AddAction(LOCTEXT("Revert", "Revert"), [this]() { if (ViewModel) { ViewModel->Revert(); } });
@@ -228,9 +229,9 @@ void USettingsScreen::OnViewModelChanged(UObject* Source, UE::FieldNotification:
 	ShowDetail(DetailItem.Get());
 }
 
-void USettingsScreen::OnPaletteChanged()
+void USettingsScreen::ApplyTheme()
 {
-	Super::OnPaletteChanged();
+	Super::ApplyTheme();
 	if (DetailPanel)
 	{
 		DetailPanel->SetColors(GothamStyle::Token(this, EGothamColorToken::Panel, GothamStyle::PanelAlpha(this)),

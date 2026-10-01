@@ -71,6 +71,21 @@ namespace GothamSettingsTable
 				[](const FData& D) { return D.UIScaleIndex; },
 				[](FData& D, int32 I) { D.UIScaleIndex = I; },
 				[](const FData& D) { return FText::Format(LOCTEXT("PercentFmt", "{0}%"), FText::AsNumber(FMath::RoundToInt(D.GetUIScale() * 100.f))); } },
+			{ EGothamSetting::TextSize, TEXT("TextSize"), EStore::Int,
+				LOCTEXT("TextSizeLabel", "Text size"),
+				LOCTEXT("TextSizeDesc", "Makes all menu and HUD text larger without scaling the rest of the layout. Subtitles have their own size."),
+				CountOf<EGothamTextSize>(), false,
+				[](const FData& D) { return static_cast<int32>(D.TextSize); },
+				[](FData& D, int32 I) { D.TextSize = static_cast<EGothamTextSize>(I); },
+				[](const FData& D)
+				{
+					switch (D.TextSize)
+					{
+					case EGothamTextSize::Large:  return LOCTEXT("SizeLarge", "Large");
+					case EGothamTextSize::Larger: return LOCTEXT("SizeLarger", "Larger");
+					default:                      return LOCTEXT("SizeStandard", "Standard");
+					}
+				} },
 			{ EGothamSetting::HighContrast, TEXT("HighContrast"), EStore::Bool,
 				LOCTEXT("HighContrastLabel", "High contrast"),
 				LOCTEXT("HighContrastDesc", "Solid panels and brighter text and edges, for readability over busy scenes."),

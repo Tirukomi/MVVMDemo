@@ -57,13 +57,13 @@ TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 
 		UnknownMark = WidgetTree->ConstructWidget<UGothamText>();
 		UnknownMark->SetText(FText::FromString(TEXT("?")));
-		UnknownMark->SetFont(GothamStyle::Font(EGothamTextStyle::Display));
+		GothamStyle::SetTextStyle(UnknownMark, EGothamTextStyle::Display);
 		UOverlaySlot* MarkSlot = Picture->AddChildToOverlay(UnknownMark);
 		MarkSlot->SetHorizontalAlignment(HAlign_Center);
 		MarkSlot->SetVerticalAlignment(VAlign_Center);
 
 		CaseNumber = WidgetTree->ConstructWidget<UGothamText>();
-		CaseNumber->SetFont(GothamStyle::Font(EGothamTextStyle::Key));
+		GothamStyle::SetTextStyle(CaseNumber, EGothamTextStyle::Key);
 		UOverlaySlot* NumberSlot = Picture->AddChildToOverlay(CaseNumber);
 		NumberSlot->SetPadding(FMargin(5.f, 3.f));
 

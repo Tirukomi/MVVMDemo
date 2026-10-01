@@ -2,6 +2,7 @@
 
 #include "UI/Screens/GothamScreen.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "Accessibility/GothamSettingsListener.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/BackgroundBlur.h"
@@ -10,6 +11,7 @@
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "Components/SafeZone.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
@@ -28,6 +30,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "UI/Widgets/GothamMenuList.h"
 #include "UI/Widgets/GothamScrim.h"
+#include "UI/Widgets/GothamSwatch.h"
 #include "UI/Widgets/GothamText.h"
 
 UGothamScreen::UGothamScreen(const FObjectInitializer& ObjectInitializer)
@@ -48,8 +51,8 @@ void UGothamScreen::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { OnPaletteChanged(); });
-	OnPaletteChanged();
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyTheme(); });
+	ApplyTheme();
 
 	// Bindings outlive the Slate widget (a pooled screen constructs again), so each is registered once.
 	if (!AcceptLabel.IsEmpty() && !AcceptHandle.IsValid())
@@ -158,28 +161,6 @@ void UGothamScreen::AcceptFocused()
 	}
 }
 
-void UGothamScreen::OnPaletteChanged()
-{
-	for (int32 i = 0; i < TokenTexts.Num(); ++i)
-	{
-		if (TokenTexts[i])
-		{
-			TokenTexts[i]->SetColorAndOpacity(GothamStyle::Token(this, TokenTextColors[i]));
-		}
-	}
-	for (UWidget* Bar : AccentBars)
-	{
-		if (UBorder* Border = Cast<UBorder>(Bar))
-		{
-			Border->SetBrushColor(GothamStyle::Token(this, EGothamColorToken::Accent));
-		}
-	}
-	if (UBorder* Rule = Cast<UBorder>(HeaderRule))
-	{
-		Rule->SetBrushColor(GothamStyle::Token(this, EGothamColorToken::PanelEdge, 0.5f));
-	}
-}
-
 UVerticalBox* UGothamScreen::BuildMenuFrame(const FText& Section, const FText& Title, float BlurStrength)
 {
 	UOverlay* Root = WidgetTree->ConstructWidget<UOverlay>();
@@ -197,12 +178,15 @@ UVerticalBox* UGothamScreen::BuildMenuFrame(const FText& Section, const FText& T
 	BlurSlot->SetVerticalAlignment(VAlign_Fill);
 	Blur->SetContent(WidgetTree->ConstructWidget<UGothamScrim>());
 
+	// The menu column sits inside the platform's safe zone; the blurred world behind it stays full screen.
+	USafeZone* Safe = WidgetTree->ConstructWidget<USafeZone>();
+	UOverlaySlot* SafeSlot = Root->AddChildToOverlay(Safe);
+	SafeSlot->SetHorizontalAlignment(HAlign_Fill);
+	SafeSlot->SetVerticalAlignment(VAlign_Fill);
 	UBorder* MarginBox = WidgetTree->ConstructWidget<UBorder>();
 	MarginBox->SetBrushColor(FLinearColor::Transparent);
-	MarginBox->SetPadding(FMargin(96.f, 64.f, 96.f, 48.f));
-	UOverlaySlot* MarginSlot = Root->AddChildToOverlay(MarginBox);
-	MarginSlot->SetHorizontalAlignment(HAlign_Fill);
-	MarginSlot->SetVerticalAlignment(VAlign_Fill);
+	MarginBox->SetPadding(GothamMetrics::FrameMargin);
+	Safe->SetContent(MarginBox);
 
 	FrameBox = WidgetTree->ConstructWidget<UVerticalBox>();
 	MarginBox->SetContent(FrameBox);
@@ -210,23 +194,23 @@ UVerticalBox* UGothamScreen::BuildMenuFrame(const FText& Section, const FText& T
 
 	FrameBox->AddChildToVerticalBox(MakeText(Section, EGothamTextStyle::Label, EGothamColorToken::Accent));
 	UTextBlock* TitleText = MakeText(Title, EGothamTextStyle::Title, EGothamColorToken::TextPrimary);
-	FrameBox->AddChildToVerticalBox(TitleText)->SetPadding(FMargin(0.f, 2.f, 0.f, 10.f));
+	FrameBox->AddChildToVerticalBox(TitleText)->SetPadding(GothamMetrics::TitlePadding);
 
 	// Header rule: a short accent bar running into a thin full-width line.
 	UHorizontalBox* Rule = WidgetTree->ConstructWidget<UHorizontalBox>();
-	FrameBox->AddChildToVerticalBox(Rule)->SetPadding(FMargin(0.f, 0.f, 0.f, 26.f));
+	FrameBox->AddChildToVerticalBox(Rule)->SetPadding(FMargin(0.f, 0.f, 0.f, GothamMetrics::HeaderRuleGap));
 	USizeBox* AccentBox = WidgetTree->ConstructWidget<USizeBox>();
-	AccentBox->SetWidthOverride(64.f);
-	AccentBox->SetHeightOverride(3.f);
-	UBorder* Accent = WidgetTree->ConstructWidget<UBorder>();
+	AccentBox->SetWidthOverride(GothamMetrics::AccentBarWidth);
+	AccentBox->SetHeightOverride(GothamMetrics::AccentBarHeight);
+	UGothamSwatch* Accent = WidgetTree->ConstructWidget<UGothamSwatch>();
+	Accent->SetColorToken(EGothamColorToken::Accent);
 	AccentBox->SetContent(Accent);
-	AccentBars.Add(Accent);
 	Rule->AddChildToHorizontalBox(AccentBox)->SetVerticalAlignment(VAlign_Center);
 	USizeBox* LineBox = WidgetTree->ConstructWidget<USizeBox>();
 	LineBox->SetHeightOverride(1.f);
-	UBorder* Line = WidgetTree->ConstructWidget<UBorder>();
+	UGothamSwatch* Line = WidgetTree->ConstructWidget<UGothamSwatch>();
+	Line->SetColorToken(EGothamColorToken::PanelEdge, 0.5f);
 	LineBox->SetContent(Line);
-	HeaderRule = Line;
 	UHorizontalBoxSlot* LineSlot = Rule->AddChildToHorizontalBox(LineBox);
 	LineSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	LineSlot->SetVerticalAlignment(VAlign_Center);
@@ -267,17 +251,16 @@ void UGothamScreen::AddFooter(UWidget* Footer)
 	{
 		UVerticalBoxSlot* FooterSlot = FrameBox->AddChildToVerticalBox(Footer);
 		FooterSlot->SetHorizontalAlignment(HAlign_Right);
-		FooterSlot->SetPadding(FMargin(0.f, 16.f, 0.f, 0.f));
+		FooterSlot->SetPadding(FMargin(0.f, GothamMetrics::FooterGap, 0.f, 0.f));
 	}
 }
 
 UTextBlock* UGothamScreen::MakeText(const FText& Text, EGothamTextStyle Style, EGothamColorToken Color)
 {
-	UTextBlock* Block = WidgetTree->ConstructWidget<UGothamText>();
+	UGothamText* Block = WidgetTree->ConstructWidget<UGothamText>();
 	GothamStyle::ApplyText(Block, Style, GothamStyle::Token(this, Color));
+	Block->SetColorToken(Color);
 	Block->SetText(Text);
-	TokenTexts.Add(Block);
-	TokenTextColors.Add(Color);
 	return Block;
 }
 

@@ -2,9 +2,11 @@
 
 #include "Core/GothamMenuInputTest.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "Accessibility/GothamSettingsSubsystem.h"
 #include "Core/GothamPlayerController.h"
 #include "Engine/LocalPlayer.h"
+#include "HAL/IConsoleManager.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/TextBlock.h"
@@ -12,6 +14,8 @@
 #include "Engine/UserInterfaceSettings.h"
 #include "Internationalization/Culture.h"
 #include "Internationalization/Internationalization.h"
+#include "UI/GothamAccessibility.h"
+#include "UI/GothamHudWidget.h"
 #include "UI/GothamUISettings.h"
 #include "UI/Layout/GothamUISubsystem.h"
 #include "UI/Screens/ClueLogScreen.h"
@@ -22,6 +26,7 @@
 #include "UI/Widgets/GothamHintButton.h"
 #include "UI/Widgets/GothamOptionRow.h"
 #include "UI/Widgets/GothamTabList.h"
+#include "UI/Widgets/GothamText.h"
 #include "UObject/UObjectIterator.h"
 #include "ViewModels/SettingsViewModel.h"
 #include "Algo/Reverse.h"
@@ -374,6 +379,35 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 	constexpr float Open = 3.f;
 	constexpr float Quick = 1.5f;
 
+	// Review finding 30: the HUD's edge-anchored elements follow the platform safe zone. A PC has none, so the
+	// engine's debug ratio stands in for a TV's: at 90% the safe area starts 5% in from the left edge.
+	TSharedPtr<FVector2D> SafeOrigin = MakeShared<FVector2D>(FVector2D::ZeroVector);
+	auto SafeArea = []() { const UGothamHudWidget* Hud = ActiveScreen<UGothamHudWidget>(); return Hud ? Hud->GetSafeArea() : nullptr; };
+	auto SetSafeRatio = [](float Ratio)
+	{
+		if (IConsoleVariable* Var = IConsoleManager::Get().FindConsoleVariable(TEXT("r.DebugSafeZone.TitleRatio")))
+		{
+			Var->Set(Ratio, ECVF_SetByCode);
+		}
+	};
+	Script->Do([SafeArea, SafeOrigin, SetSafeRatio]()
+		{
+			const UWidget* Area = SafeArea();
+			*SafeOrigin = Area ? Area->GetCachedGeometry().GetAbsolutePosition() : FVector2D::ZeroVector;
+			SetSafeRatio(0.9f);
+		})
+		.WaitUntil([SafeArea, SafeOrigin]()
+		{
+			const UWidget* Area = SafeArea();
+			return Area && Area->GetCachedGeometry().GetAbsolutePosition().X > SafeOrigin->X + 10.0;
+		}, Quick, TEXT("the HUD moves inside a 90% safe zone (review 30)"))
+		.Do([SetSafeRatio]() { SetSafeRatio(1.f); })
+		.WaitUntil([SafeArea, SafeOrigin]()
+		{
+			const UWidget* Area = SafeArea();
+			return Area && FMath::IsNearlyEqual(Area->GetCachedGeometry().GetAbsolutePosition().X, SafeOrigin->X, 1.0);
+		}, Quick, TEXT("and back to the screen edge without one"));
+
 	// Review finding 23: screens load when the layout is created, before any key opens one.
 	Script->Do([Self, WeakUI]()
 	{
@@ -414,7 +448,7 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		}, Quick, TEXT("a UI scale preview scales the layout, not the engine's UI settings (review 21)"))
 		.Do([Scale, ScaleBefore]() { *ScaleBefore = Scale(); SendKey(EKeys::Enter); })
 		.WaitUntil([Scale, ScaleBefore]() { return Scale() != *ScaleBefore; }, Quick, TEXT("Enter on a focused option row steps it"))
-		// The selector's left half steps back. The selector (260 wide, inset 14) sits at the row's right edge; click a
+		// The selector's left half steps back. The selector (GothamMetrics::SelectorWidth, inset SelectorInset) sits at the row's right edge; click a
 		// quarter of the way into it.
 		// Changing the UI scale re-lays out everything; clicks wait for the new geometry.
 		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
@@ -424,8 +458,8 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 		[](const FGeometry& Geometry)
 		{
 			const float Width = Geometry.GetLocalSize().X;
-			const float SelectorLeft = Width - 14.f - 260.f;
-			return FVector2D(Width > 0.f ? (SelectorLeft + 260.f * 0.25f) / Width : 0.5f, 0.5);
+			const float SelectorLeft = Width - GothamMetrics::SelectorInset - GothamMetrics::SelectorWidth;
+			return FVector2D(Width > 0.f ? (SelectorLeft + GothamMetrics::SelectorWidth * 0.25f) / Width : 0.5f, 0.5);
 		});
 	Script->WaitUntil([Scale, ScaleBefore]() { return Scale() == *ScaleBefore - 1; }, Quick, TEXT("clicking the left half of a selector steps it back"))
 		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
@@ -514,6 +548,37 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 			return !WeakUI->PopTopScreen();
 		}, Open, TEXT("menus close (cleanup)"));
 
+	// Review finding 31: Text size enlarges menu text on its own (UI scale stays), and a focused settings row tells a
+	// screen reader its label and value.
+	TSharedPtr<float> FontBefore = MakeShared<float>(0.f);
+	auto TitleSize = []() { const UGothamText* Text = FindIn<UGothamText>(ActiveScreen<USettingsScreen>()); return Text ? Text->GetFont().Size : 0.f; };
+	Script->Do(Push(&UGothamUISettings::SettingsScreenClass))
+		.WaitUntil([Settled]() { return Settled(ActiveScreen<USettingsScreen>()); }, Open, TEXT("settings open for text size (precondition)"))
+		.Do([Self]()
+		{
+			const FString Spoken = GothamAccessibility::GetText(FSlateApplication::Get().GetUserFocusedWidget(0)).ToString();
+			// Whichever row has focus (the screen keeps its last tab): "<label>: <value>".
+			bool bRow = false;
+			for (int32 i = 0; i < static_cast<int32>(EGothamSetting::Count); ++i)
+			{
+				bRow |= Spoken.StartsWith(USettingsViewModel::GetLabel(static_cast<EGothamSetting>(i)).ToString() + TEXT(": "));
+			}
+			Self->Check(bRow && Spoken.Len() > 4,
+				FString::Printf(TEXT("a focused settings row tells screen readers its label and value (review 31) [%s]"), *Spoken));
+		})
+		.Do([Settings, FontBefore, ScaleBefore, Scale, TitleSize]()
+		{
+			*FontBefore = TitleSize();
+			*ScaleBefore = Scale();
+			if (USettingsViewModel* VM = Settings()) { VM->Cycle(EGothamSetting::TextSize, +1); }
+		})
+		.WaitUntil([FontBefore, ScaleBefore, Scale, TitleSize]() { return *FontBefore > 0.f && TitleSize() > *FontBefore * 1.1f && Scale() == *ScaleBefore; },
+			Quick, TEXT("Text size enlarges menu text and leaves UI scale alone (review 31)"))
+		.Do([Settings]() { if (Settings()) { Settings()->Revert(); } })
+		.WaitUntil([FontBefore, TitleSize]() { return FMath::IsNearlyEqual(TitleSize(), *FontBefore); }, Quick, TEXT("reverting puts the text size back"))
+		.Do([]() { if (USettingsScreen* Screen = ActiveScreen<USettingsScreen>()) { Screen->DeactivateWidget(); } })
+		.WaitUntil([Closed]() { return Closed(ActiveScreen<USettingsScreen>()); }, Quick, TEXT("settings close (cleanup)"));
+
 	// Review finding 26: one background blur on screen. The quit confirmation over pause blurs; pause stops blurring
 	// under it and blurs again once it closes.
 	Script->Do([WeakUI]() { if (WeakUI.IsValid()) { WeakUI->TogglePauseMenu(); } })
@@ -599,6 +664,12 @@ TSharedPtr<FGothamScript> FGothamMenuInputTest::Build(AGothamPlayerController* C
 			if (WeakUI.IsValid()) { WeakUI->OpenGadgetWheel(); }
 		})
 		.WaitUntil([Settled]() { return Settled(ActiveScreen<UGadgetWheelScreen>()); }, Open, TEXT("the gadget wheel opens (precondition)"))
+		.Do([Self]()
+		{
+			const UGadgetWheel* Wheel = FindWheel(ActiveScreen<UGadgetWheelScreen>());
+			const FString Spoken = GothamAccessibility::GetText(Wheel ? Wheel->GetCachedWidget() : nullptr).ToString();
+			Self->Check(Spoken.StartsWith(TEXT("Gadget wheel")), FString::Printf(TEXT("the gadget wheel tells screen readers what it would use (review 31) [%s]"), *Spoken));
+		})
 		.Wait(GothamFeel::HitStopSeconds * 3.f)
 		.Do([Self, WeakPC, Settings]()
 		{

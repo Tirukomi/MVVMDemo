@@ -49,7 +49,7 @@ TSharedRef<SWidget> UDetectiveOverlayWidget::RebuildWidget()
 		StripSlot->SetPadding(FMargin(0.f, 48.f, 0.f, 0.f));
 
 		UTextBlock* Label = WidgetTree->ConstructWidget<UGothamText>();
-		Label->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
+		GothamStyle::SetTextStyle(Label, EGothamTextStyle::Header);
 		GothamText::SetUpperCase(Label, true);
 		Label->SetText(LOCTEXT("Mode", "DETECTIVE MODE"));
 		ModeLabel = Label;
@@ -76,7 +76,7 @@ void UDetectiveOverlayWidget::SetViewModel(UDetectiveViewModel* InViewModel)
 	GothamMVVM::Unbind(ViewModel, this);
 	ViewModel = InViewModel;
 	GothamMVVM::Bind(ViewModel, this, &UDetectiveOverlayWidget::OnFieldChanged, { FVM::Alpha, FVM::bIsVisible });
-	ApplyStyle();
+	ApplyTheme();
 	ApplyFade();
 }
 
@@ -91,7 +91,7 @@ void UDetectiveOverlayWidget::OnFieldChanged(UObject* Source, UE::FieldNotificat
 	// Alpha changes every frame of the fade; the style only needs refreshing when the overlay appears.
 	if (FieldId == UDetectiveViewModel::FFieldNotificationClassDescriptor::bIsVisible && ViewModel && ViewModel->GetIsVisible())
 	{
-		ApplyStyle();
+		ApplyTheme();
 	}
 	ApplyFade();
 }
@@ -111,7 +111,7 @@ void UDetectiveOverlayWidget::ApplyFade()
 	Prompt->SetRenderOpacity(ViewModel->GetAlpha());
 }
 
-void UDetectiveOverlayWidget::ApplyStyle()
+void UDetectiveOverlayWidget::ApplyTheme()
 {
 	if (!Scanlines)
 	{

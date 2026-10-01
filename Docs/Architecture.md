@@ -121,6 +121,19 @@ switches are reflected without extra code.
   level start.
 - Colours are semantic tokens (`GothamPalette`), resolved per colour-vision preset and high contrast; nothing in UI code
   uses a literal colour for meaning. The Detective post-process takes its clue colours as material parameters.
+- **One style source.** `FGothamTheme` (`GothamStyle::Theme(Context)`) is the resolved look of the current settings:
+  palette, panel opacity, motion, text size. Leaves style themselves from it: `UGothamText` keeps its type style (and
+  optionally a colour token) and re-applies both on settings changes, `UGothamSwatch` does the same for flat accent
+  blocks, and the world overlays restyle their Slate layers. Anything a widget styles by hand goes in one hook,
+  `ApplyTheme()` (screens, settings-aware widgets, overlays); interaction state (hover, focus, press) is `ApplyState()`.
+  Layout numbers are named in `UI/Style/GothamMetrics.h`, which the menu-input test reads too.
+- **Text size** (Accessibility tab) multiplies every UMG font on top of UI scale; subtitles keep their own size, and
+  the custom-painted Slate layers (wheel, markers) keep the default.
+- **Safe zones.** Edge-anchored HUD elements and the menu column sit in a `USafeZone`; full-screen layers (blur,
+  overlays, vignette) stay full screen. Checked with `r.DebugSafeZone.TitleRatio` in the menu-input test.
+- **Screen readers** (`UI/GothamAccessibility.h`). Menu buttons announce their label, settings rows "label: value",
+  prompts "action (key)", and the custom Slate layers a sentence of their own (the wheel's selection, clues in view,
+  incoming attacks). Set on the Slate widget a reader lands on; checked through `GetAccessibleText` in the test.
 - Text is `FText` (LOCTEXT / string table). `Scripts/Localize.bat` runs UE's gather -> `.po` import / export -> compile (translations live in one `.po` per culture); English,
   German, Japanese and an `en-XA` pseudo-locale are included.
 

@@ -2,6 +2,7 @@
 
 #include "UI/Screens/ClueLogScreen.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
@@ -61,10 +62,10 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 
 		// Right: the selected clue.
 		USizeBox* DetailWidth = WidgetTree->ConstructWidget<USizeBox>();
-		DetailWidth->SetWidthOverride(420.f);
+		DetailWidth->SetWidthOverride(GothamMetrics::CaseFileDetailWidth);
 		Split->AddChildToHorizontalBox(DetailWidth)->SetVerticalAlignment(VAlign_Top);
 		DetailPanel = WidgetTree->ConstructWidget<UGothamPanel>();
-		DetailPanel->SetPanelPadding(FMargin(18.f, 18.f, 18.f, 20.f));
+		DetailPanel->SetPanelPadding(GothamMetrics::CaseFileDetailPadding);
 		DetailPanel->SetShape(14.f, EGothamChamfer::Opposite);
 		DetailWidth->SetContent(DetailPanel);
 
@@ -120,9 +121,9 @@ void UClueLogScreen::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UClueLogScreen::OnPaletteChanged()
+void UClueLogScreen::ApplyTheme()
 {
-	Super::OnPaletteChanged();
+	Super::ApplyTheme();
 	if (DetailPanel)
 	{
 		DetailPanel->SetColors(GothamStyle::Token(this, EGothamColorToken::Panel, GothamStyle::PanelAlpha(this)),

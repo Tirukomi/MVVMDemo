@@ -54,8 +54,11 @@ protected:
 	virtual void NativeOnClosed() {}
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 
-	/** Re-apply palette-dependent colours (called on construct and whenever settings change). */
-	virtual void OnPaletteChanged();
+	/**
+	 * Re-apply what depends on settings that the screen styles by hand (panels it recolours, a wheel's motion).
+	 * Called on construct and whenever settings change. Text made with MakeText and the frame style themselves.
+	 */
+	virtual void ApplyTheme() {}
 
 	/** Whether other screens' keys (the case file's) open those screens on top of this one. Off for modals. */
 	bool bOpensScreensByKey = true;
@@ -94,7 +97,7 @@ protected:
 	void AddFooter(UWidget* Footer);
 
 	// Small builders so screens stay short and consistent.
-	/** A text block in a type-scale style, coloured from a palette token (kept in sync with settings). */
+	/** A text block in a type-scale style, coloured from a palette token; it keeps itself in step with settings. */
 	UTextBlock* MakeText(const FText& Text, EGothamTextStyle Style, EGothamColorToken Color);
 	/** A big left-aligned menu item in a highlight list. */
 	UGothamButton* AddMenuItem(UGothamMenuList* List, const FText& Label) const;
@@ -121,18 +124,6 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<class UBackgroundBlur> Backdrop;
 	float BackdropStrength = 0.f;
-
-	/** Text blocks made by MakeText, with the token each one uses. */
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UTextBlock>> TokenTexts;
-	TArray<EGothamColorToken> TokenTextColors;
-
-	/** Accent pieces of the frame header, recoloured with the palette. */
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UWidget>> AccentBars;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UWidget> HeaderRule;
 
 	FGothamSettingsListener SettingsListener;
 };

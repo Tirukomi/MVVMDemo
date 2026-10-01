@@ -2,6 +2,7 @@
 
 #include "UI/Screens/ConfirmModalScreen.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/BackgroundBlur.h"
 #include "Components/Border.h"
@@ -40,13 +41,13 @@ TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 		Blur->SetContent(Dim);
 
 		USizeBox* Width = WidgetTree->ConstructWidget<USizeBox>();
-		Width->SetWidthOverride(540.f);
+		Width->SetWidthOverride(GothamMetrics::ModalWidth);
 		UOverlaySlot* WidthSlot = Root->AddChildToOverlay(Width);
 		WidthSlot->SetHorizontalAlignment(HAlign_Center);
 		WidthSlot->SetVerticalAlignment(VAlign_Center);
 
 		Panel = WidgetTree->ConstructWidget<UGothamPanel>();
-		Panel->SetPanelPadding(FMargin(34.f, 24.f, 30.f, 24.f));
+		Panel->SetPanelPadding(GothamMetrics::ModalPadding);
 		Panel->SetShape(16.f, EGothamChamfer::Opposite);
 		Width->SetContent(Panel);
 		SlideTarget = Panel;
@@ -61,7 +62,7 @@ TSharedRef<SWidget> UConfirmModalScreen::RebuildWidget()
 
 		TitleText = MakeText(FText::GetEmpty(), EGothamTextStyle::Title, EGothamColorToken::TextPrimary);
 		TitleText->SetAutoWrapText(true);
-		Column->AddChildToVerticalBox(TitleText)->SetPadding(FMargin(0.f, 2.f, 0.f, 10.f));
+		Column->AddChildToVerticalBox(TitleText)->SetPadding(GothamMetrics::TitlePadding);
 
 		BodyText = MakeText(FText::GetEmpty(), EGothamTextStyle::Body, EGothamColorToken::TextMuted);
 		BodyText->SetAutoWrapText(true);
@@ -97,12 +98,12 @@ void UConfirmModalScreen::Setup(const FText& InTitle, const FText& InBody, FOnCo
 		CautionText->SetVisibility(bDestructive ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 		YesButton->SetKind(bDestructive ? EGothamButtonKind::Danger : EGothamButtonKind::Standard);
 	}
-	OnPaletteChanged();
+	ApplyTheme();
 }
 
-void UConfirmModalScreen::OnPaletteChanged()
+void UConfirmModalScreen::ApplyTheme()
 {
-	Super::OnPaletteChanged();
+	Super::ApplyTheme();
 	if (Panel)
 	{
 		const EGothamColorToken Accent = bDestructive ? EGothamColorToken::Danger : EGothamColorToken::Accent;

@@ -32,12 +32,15 @@ TSharedRef<SGothamWorldOverlayBase> UGothamWorldOverlayLayer::MakeOverlayPlaceho
 TSharedRef<SWidget> UGothamWorldOverlayLayer::RebuildWidget()
 {
 	Overlay = MakeOverlay();
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyTheme(); });
+	ApplyTheme();
 	UpdateActive();
 	return Overlay.ToSharedRef();
 }
 
 void UGothamWorldOverlayLayer::ReleaseSlateResources(bool bReleaseChildren)
 {
+	SettingsListener.Reset();
 	Super::ReleaseSlateResources(bReleaseChildren);
 	Overlay.Reset();
 }

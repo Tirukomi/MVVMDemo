@@ -35,6 +35,58 @@ void UGothamText::ApplyText()
 	Super::SetText(bUpperCase ? SourceText.ToUpper() : SourceText);
 }
 
+void UGothamText::SetTextStyle(EGothamTextStyle InStyle)
+{
+	TextStyle = InStyle;
+	ApplyTheme(true);
+}
+
+void UGothamText::SetColorToken(EGothamColorToken InToken, float InAlpha)
+{
+	ColorToken = InToken;
+	ColorAlpha = InAlpha;
+	ApplyTheme(true);
+}
+
+void UGothamText::ApplyTheme(bool bForce)
+{
+	if (!TextStyle && !ColorToken)
+	{
+		return;
+	}
+	const FGothamTheme Theme = GothamStyle::Theme(this);
+	// List rows rebuild their Slate widgets as they scroll back into view; the style is still right then.
+	if (!bForce && AppliedTheme == Theme)
+	{
+		return;
+	}
+	AppliedTheme = Theme;
+	if (TextStyle)
+	{
+		const FSlateFontInfo Styled = Theme.Font(*TextStyle);
+		if (!GetFont().IsIdenticalTo(Styled))
+		{
+			SetFont(Styled);
+		}
+	}
+	if (ColorToken)
+	{
+		SetColorAndOpacity(FSlateColor(Theme.Color(*ColorToken, ColorAlpha)));
+	}
+}
+
+TSharedRef<SWidget> UGothamText::RebuildWidget()
+{
+	// Subscribed once the text is first built (the world, and with it the settings, is known by now). The subscription
+	// is scoped to this object, so it lasts while the text exists, across list rows being released and rebuilt.
+	if (!SettingsListener.IsBound())
+	{
+		SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyTheme(); });
+	}
+	ApplyTheme();
+	return Super::RebuildWidget();
+}
+
 namespace GothamText
 {
 	void SetUpperCase(UTextBlock* Text, bool bUpperCase)

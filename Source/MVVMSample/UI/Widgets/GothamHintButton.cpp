@@ -10,6 +10,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Input/UIActionBinding.h"
+#include "UI/GothamAccessibility.h"
 #include "InputAction.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Style/GothamStyle.h"
@@ -79,6 +80,14 @@ void UGothamHintButton::NativeConstruct()
 	Super::NativeConstruct();
 	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyState(); });
 	ApplyState();
+	// "Back (Esc)": the action and the key that does it, in the naming of the device in use.
+	GothamAccessibility::SetText(GothamAccessibility::FindButton(*this), TAttribute<FText>::CreateWeakLambda(this, [this]()
+	{
+		const ULocalPlayer* Player = GetOwningLocalPlayer();
+		const FKey Key = UGothamInputGlyph::FindKey(Player, Action);
+		const FText KeyName = Key.IsValid() ? UGothamInputGlyph::GetKeyLabel(Key, Player) : FText::GetEmpty();
+		return PendingLabel.IsEmpty() ? KeyName : FText::Format(NSLOCTEXT("Gotham.Accessibility", "Prompt", "{0} ({1})"), PendingLabel, KeyName);
+	}));
 }
 
 void UGothamHintButton::NativeDestruct()

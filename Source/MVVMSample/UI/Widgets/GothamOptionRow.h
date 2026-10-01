@@ -48,7 +48,7 @@ protected:
 private:
 	void Step(int32 Direction);
 	void Refresh();
-	void ApplyColors();
+	void ApplyState();
 	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { Refresh(); }
 
 	EGothamSetting Setting = EGothamSetting::Language;

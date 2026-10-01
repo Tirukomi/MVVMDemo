@@ -32,7 +32,9 @@ Follows Epic's Unreal coding standard, plus these project rules.
 
 ## Additional rules
 
-- Colours that carry meaning come from `GothamPalette` tokens, never literals.
+- Colours that carry meaning come from `GothamPalette` tokens, never literals. Text that should follow settings is a
+  `UGothamText` with a type style (and a token when its colour is fixed); layout numbers that recur are named in
+  `GothamMetrics`.
 - Code-built text is `UGothamText`, and capitals go through `GothamText::SetUpperCase`, never
   `ETextTransformPolicy::ToUpper`: Slate's transform cannot change a string's length, so German "ß" ("SS") ensures and
   stays in mixed case.

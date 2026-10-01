@@ -54,7 +54,7 @@ protected:
 	virtual void NativeOnFocusChanging(const FWeakWidgetPath& PreviousFocusPath, const FWidgetPath& NewWidgetPath, const FFocusEvent& InFocusEvent) override;
 
 private:
-	void ApplyLook();
+	void ApplyTheme();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UGothamHighlightBar> Highlight;

@@ -3,6 +3,7 @@
 #include "UI/Widgets/GothamMenuList.h"
 
 #include "Accessibility/GothamSettingsListener.h"
+#include "Accessibility/GothamSettingsSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
@@ -66,8 +67,8 @@ void UGothamMenuList::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyLook(); });
-	ApplyLook();
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyTheme(); });
+	ApplyTheme();
 }
 
 void UGothamMenuList::NativeDestruct()
@@ -76,7 +77,7 @@ void UGothamMenuList::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UGothamMenuList::ApplyLook()
+void UGothamMenuList::ApplyTheme()
 {
 	const TSharedPtr<SGothamHighlight> Bar = Highlight ? Highlight->GetSlate() : nullptr;
 	if (!Bar.IsValid())
@@ -84,7 +85,8 @@ void UGothamMenuList::ApplyLook()
 		return;
 	}
 	using namespace GothamStyle;
-	const bool bHighContrast = PanelAlpha(this) > 0.9f;
+	const UGothamSettingsSubsystem* Settings = UGothamSettingsSubsystem::Get(this);
+	const bool bHighContrast = Settings && Settings->GetSettings().bHighContrast;
 	FGothamPanelLook Look;
 	Look.Corner = 10.f;
 	Look.ChamferMask = EGothamChamfer::Opposite;

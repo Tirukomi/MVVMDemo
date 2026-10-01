@@ -4,6 +4,7 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "Components/TextBlock.h"
+#include "UI/GothamAccessibility.h"
 #include "Styling/SlateBrush.h"
 #include "UI/GothamWidgetTick.h"
 #include "UI/Slate/SGothamPanel.h"
@@ -57,6 +58,12 @@ void UGothamButton::NativeConstruct()
 	Super::NativeConstruct();
 	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyState(); });
 	ApplyState();
+	// The label as written (not the capitals the style may show), so readers do not spell it out.
+	GothamAccessibility::SetText(GothamAccessibility::FindButton(*this), TAttribute<FText>::CreateWeakLambda(this, [this]()
+	{
+		const UGothamText* Text = Cast<UGothamText>(Label);
+		return Text ? Text->GetSourceText() : (Label ? Label->GetText() : FText::GetEmpty());
+	}));
 }
 
 void UGothamButton::NativeDestruct()
@@ -94,20 +101,20 @@ void UGothamButton::ApplyKind()
 	switch (Kind)
 	{
 	case EGothamButtonKind::MenuItem:
-		Label->SetFont(GothamStyle::Font(EGothamTextStyle::Header));
+		GothamStyle::SetTextStyle(Label, EGothamTextStyle::Header);
 		GothamText::SetUpperCase(Label, true);
 		Label->SetJustification(ETextJustify::Left);
 		Frame->SetPanelPadding(FMargin(22.f, 9.f, 40.f, 9.f));
 		break;
 	case EGothamButtonKind::Tab:
-		Label->SetFont(GothamStyle::Font(EGothamTextStyle::Label));
+		GothamStyle::SetTextStyle(Label, EGothamTextStyle::Label);
 		GothamText::SetUpperCase(Label, true);
 		Label->SetJustification(ETextJustify::Center);
 		Frame->SetPanelPadding(FMargin(20.f, 8.f));
 		Frame->SetShape(6.f, EGothamChamfer::Opposite);
 		break;
 	default:
-		Label->SetFont(GothamStyle::Font(EGothamTextStyle::BodyStrong));
+		GothamStyle::SetTextStyle(Label, EGothamTextStyle::BodyStrong);
 		GothamText::SetUpperCase(Label, false);
 		Label->SetJustification(ETextJustify::Center);
 		Frame->SetPanelPadding(FMargin(22.f, 9.f));

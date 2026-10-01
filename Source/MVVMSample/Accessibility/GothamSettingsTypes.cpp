@@ -24,6 +24,16 @@ const TArray<FGothamLanguageOption>& FGothamSettingsData::GetLanguages()
 	return Languages;
 }
 
+float FGothamSettingsData::GetTextScale() const
+{
+	switch (TextSize)
+	{
+	case EGothamTextSize::Large:  return 1.15f;
+	case EGothamTextSize::Larger: return 1.3f;
+	default:                      return 1.f;
+	}
+}
+
 float FGothamSettingsData::GetUIScale() const
 {
 	const TArray<float>& Steps = GetUIScaleSteps();
@@ -68,7 +78,7 @@ void FGothamSettingsData::GetOptionPosition(EGothamSetting Setting, int32& OutIn
 
 bool FGothamSettingsData::operator==(const FGothamSettingsData& Other) const
 {
-	return Language == Other.Language && ColorMode == Other.ColorMode && UIScaleIndex == Other.UIScaleIndex
+	return Language == Other.Language && ColorMode == Other.ColorMode && UIScaleIndex == Other.UIScaleIndex && TextSize == Other.TextSize
 		&& bHighContrast == Other.bHighContrast && bReducedMotion == Other.bReducedMotion && WheelMode == Other.WheelMode && ScanMode == Other.ScanMode
 		&& SubtitleSize == Other.SubtitleSize && bSubtitleBackground == Other.bSubtitleBackground;
 }

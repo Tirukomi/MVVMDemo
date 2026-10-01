@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Slate/SThreatIndicatorLayer.h"
+#include "UI/GothamAccessibility.h"
 
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
@@ -20,6 +21,19 @@ namespace
 void SThreatIndicatorLayer::Construct(const FArguments& InArgs)
 {
 	ConstructOverlay();
+	GothamAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SThreatIndicatorLayer::GetAccessibleSummary));
+}
+
+FText SThreatIndicatorLayer::GetAccessibleSummary() const
+{
+	int32 Warnings = 0;
+	for (const FGothamThreatIndicator& Indicator : GetItems())
+	{
+		Warnings += Indicator.bWarning ? 1 : 0;
+	}
+	return Warnings > 0
+		? FText::Format(NSLOCTEXT("Gotham.Accessibility", "ThreatWarning", "{0} {0}|plural(one=attack,other=attacks) incoming: counter now"), Warnings)
+		: FText::Format(NSLOCTEXT("Gotham.Accessibility", "Threats", "{0} {0}|plural(one=enemy,other=enemies) nearby"), GetItems().Num());
 }
 
 void SThreatIndicatorLayer::SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText)

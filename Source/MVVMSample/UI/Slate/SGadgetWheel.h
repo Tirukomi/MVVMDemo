@@ -37,6 +37,9 @@ public:
 
 	int32 GetHoveredIndex() const { return HoveredIndex; }
 
+	/** What a screen reader announces: the wheel and the gadget it would use. */
+	FText GetAccessibleSummary() const;
+
 	/** Fires OnItemSelected for the hovered segment. Returns false if nothing is hovered. */
 	bool CommitHovered();
 

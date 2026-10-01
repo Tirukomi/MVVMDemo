@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Game\n"
-"POT-Creation-Date: 2026-09-30 23:51\n"
-"PO-Revision-Date: 2026-09-30 23:51\n"
+"POT-Creation-Date: 2026-10-01 12:44\n"
+"PO-Revision-Date: 2026-10-01 12:44\n"
 "Language-Team: \n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -13,68 +13,75 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Key:	WheelModeLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(104)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(104)
+msgctxt "Gotham.Settings,WheelModeLabel"
+msgid "Gadget wheel"
+msgstr "Gadget wheel"
+
+#. Key:	WheelModeDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(105)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(105)
+msgctxt "Gotham.Settings,WheelModeDesc"
+msgid "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close."
+msgstr "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close."
+
+#. Key:	WheelHold
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(109)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(109)
+msgctxt "Gotham.Settings,WheelHold"
+msgid "Hold"
+msgstr "Hold"
+
+#. Key:	WheelToggle
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(109)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(109)
+msgctxt "Gotham.Settings,WheelToggle"
+msgid "Toggle"
+msgstr "Toggle"
+
+#. Key:	ScanModeLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(111)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(111)
+msgctxt "Gotham.Settings,ScanModeLabel"
+msgid "Clue analysis"
+msgstr "Clue analysis"
+
+#. Key:	ScanModeDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(112)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(112)
+msgctxt "Gotham.Settings,ScanModeDesc"
+msgid "Hold: keep the button held to analyse a clue. Tap: a single press analyses it."
+msgstr "Hold: keep the button held to analyse a clue. Tap: a single press analyses it."
+
 #. Key:	ScanHold
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(116)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(116)
 msgctxt "Gotham.Settings,ScanHold"
 msgid "Hold"
 msgstr "Hold"
 
 #. Key:	ScanTap
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(101)
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(116)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(116)
 msgctxt "Gotham.Settings,ScanTap"
 msgid "Tap"
 msgstr "Tap"
 
 #. Key:	SubtitleSizeLabel
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(103)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(103)
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(118)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(118)
 msgctxt "Gotham.Settings,SubtitleSizeLabel"
 msgid "Subtitle size"
 msgstr "Subtitle size"
 
 #. Key:	SubtitleSizeDesc
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(104)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(104)
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(119)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(119)
 msgctxt "Gotham.Settings,SubtitleSizeDesc"
 msgid "Text size for subtitles and speaker names."
 msgstr "Text size for subtitles and speaker names."
-
-#. Key:	SizeSmall
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(112)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(112)
-msgctxt "Gotham.Settings,SizeSmall"
-msgid "Small"
-msgstr "Small"
-
-#. Key:	SizeLarge
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(113)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(113)
-msgctxt "Gotham.Settings,SizeLarge"
-msgid "Large"
-msgstr "Large"
-
-#. Key:	SizeMedium
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(114)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(114)
-msgctxt "Gotham.Settings,SizeMedium"
-msgid "Medium"
-msgstr "Medium"
-
-#. Key:	SubtitleBackgroundLabel
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(118)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(118)
-msgctxt "Gotham.Settings,SubtitleBackgroundLabel"
-msgid "Subtitle background"
-msgstr "Subtitle background"
-
-#. Key:	SubtitleBackgroundDesc
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(119)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(119)
-msgctxt "Gotham.Settings,SubtitleBackgroundDesc"
-msgid "Draws a solid panel behind subtitles so they read over any scene."
-msgstr "Draws a solid panel behind subtitles so they read over any scene."
 
 #. Key:	Off
 #. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(12)
@@ -89,6 +96,34 @@ msgstr "Off"
 msgctxt "Gotham.Settings,On"
 msgid "On"
 msgstr "On"
+
+#. Key:	SizeSmall
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(127)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(127)
+msgctxt "Gotham.Settings,SizeSmall"
+msgid "Small"
+msgstr "Small"
+
+#. Key:	SizeMedium
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(129)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(129)
+msgctxt "Gotham.Settings,SizeMedium"
+msgid "Medium"
+msgstr "Medium"
+
+#. Key:	SubtitleBackgroundLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(133)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(133)
+msgctxt "Gotham.Settings,SubtitleBackgroundLabel"
+msgid "Subtitle background"
+msgstr "Subtitle background"
+
+#. Key:	SubtitleBackgroundDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(134)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(134)
+msgctxt "Gotham.Settings,SubtitleBackgroundDesc"
+msgid "Draws a solid panel behind subtitles so they read over any scene."
+msgstr "Draws a solid panel behind subtitles so they read over any scene."
 
 #. Key:	LanguageLabel
 #. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(40)
@@ -167,75 +202,68 @@ msgctxt "Gotham.Settings,PercentFmt"
 msgid "{0}%"
 msgstr "{0}%"
 
-#. Key:	HighContrastLabel
+#. Key:	TextSizeLabel
 #. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(75)
 #: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(75)
+msgctxt "Gotham.Settings,TextSizeLabel"
+msgid "Text size"
+msgstr "Text size"
+
+#. Key:	TextSizeDesc
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(76)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(76)
+msgctxt "Gotham.Settings,TextSizeDesc"
+msgid "Makes all menu and HUD text larger without scaling the rest of the layout. Subtitles have their own size."
+msgstr "Makes all menu and HUD text larger without scaling the rest of the layout. Subtitles have their own size."
+
+#. Key:	SizeLarge
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(84)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(84)
+msgctxt "Gotham.Settings,SizeLarge"
+msgid "Large"
+msgstr "Large"
+
+#. Key:	SizeLarger
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(85)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(85)
+msgctxt "Gotham.Settings,SizeLarger"
+msgid "Larger"
+msgstr "Larger"
+
+#. Key:	SizeStandard
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(86)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(86)
+msgctxt "Gotham.Settings,SizeStandard"
+msgid "Standard"
+msgstr "Standard"
+
+#. Key:	HighContrastLabel
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(90)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(90)
 msgctxt "Gotham.Settings,HighContrastLabel"
 msgid "High contrast"
 msgstr "High contrast"
 
 #. Key:	HighContrastDesc
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(76)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(76)
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(91)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(91)
 msgctxt "Gotham.Settings,HighContrastDesc"
 msgid "Solid panels and brighter text and edges, for readability over busy scenes."
 msgstr "Solid panels and brighter text and edges, for readability over busy scenes."
 
 #. Key:	ReducedMotionLabel
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(82)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(82)
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(97)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(97)
 msgctxt "Gotham.Settings,ReducedMotionLabel"
 msgid "Reduced motion"
 msgstr "Reduced motion"
 
 #. Key:	ReducedMotionDesc
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(83)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(83)
+#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(98)
+#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(98)
 msgctxt "Gotham.Settings,ReducedMotionDesc"
 msgid "Turns off pops, slides, pulses, screen transitions and rain streaks. Colour cues stay on."
 msgstr "Turns off pops, slides, pulses, screen transitions and rain streaks. Colour cues stay on."
-
-#. Key:	WheelModeLabel
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(89)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(89)
-msgctxt "Gotham.Settings,WheelModeLabel"
-msgid "Gadget wheel"
-msgstr "Gadget wheel"
-
-#. Key:	WheelModeDesc
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(90)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(90)
-msgctxt "Gotham.Settings,WheelModeDesc"
-msgid "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close."
-msgstr "Hold: the gadget wheel stays open while the button is held. Toggle: press once to open and again to close."
-
-#. Key:	WheelHold
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
-msgctxt "Gotham.Settings,WheelHold"
-msgid "Hold"
-msgstr "Hold"
-
-#. Key:	WheelToggle
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(94)
-msgctxt "Gotham.Settings,WheelToggle"
-msgid "Toggle"
-msgstr "Toggle"
-
-#. Key:	ScanModeLabel
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(96)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(96)
-msgctxt "Gotham.Settings,ScanModeLabel"
-msgid "Clue analysis"
-msgstr "Clue analysis"
-
-#. Key:	ScanModeDesc
-#. SourceLocation:	Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(97)
-#: Source/MVVMSample/Accessibility/GothamSettingsTable.cpp(97)
-msgctxt "Gotham.Settings,ScanModeDesc"
-msgid "Hold: keep the button held to analyse a clue. Tap: a single press analyses it."
-msgstr "Hold: keep the button held to analyse a clue. Tap: a single press analyses it."
 
 #. Key:	Ledger.Title
 #. SourceLocation:	Source/MVVMSample/Gameplay/ClueStrings.cpp(13)
@@ -699,6 +727,34 @@ msgctxt "Gotham.Keys,XboxMenu"
 msgid "Menu"
 msgstr "Menu"
 
+#. Key:	Accept
+#. SourceLocation:	Source/MVVMSample/Input/GothamUIInput.cpp(23)
+#: Source/MVVMSample/Input/GothamUIInput.cpp(23)
+msgctxt "Gotham.UIInput,Accept"
+msgid "Select"
+msgstr "Select"
+
+#. Key:	Back
+#. SourceLocation:	Source/MVVMSample/Input/GothamUIInput.cpp(24)
+#: Source/MVVMSample/Input/GothamUIInput.cpp(24)
+msgctxt "Gotham.UIInput,Back"
+msgid "Back"
+msgstr "Back"
+
+#. Key:	PreviousTab
+#. SourceLocation:	Source/MVVMSample/Input/GothamUIInput.cpp(25)
+#: Source/MVVMSample/Input/GothamUIInput.cpp(25)
+msgctxt "Gotham.UIInput,PreviousTab"
+msgid "Previous tab"
+msgstr "Previous tab"
+
+#. Key:	NextTab
+#. SourceLocation:	Source/MVVMSample/Input/GothamUIInput.cpp(26)
+#: Source/MVVMSample/Input/GothamUIInput.cpp(26)
+msgctxt "Gotham.UIInput,NextTab"
+msgid "Next tab"
+msgstr "Next tab"
+
 #. Key:	CaseNumberFmt
 #. SourceLocation:	Source/MVVMSample/UI/ClueEntryWidget.cpp(28)
 #: Source/MVVMSample/UI/ClueEntryWidget.cpp(28)
@@ -706,26 +762,26 @@ msgctxt "Gotham.ClueLog,CaseNumberFmt"
 msgid "No. {0}"
 msgstr "No. {0}"
 
-#. Key:	Analysing
-#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(83)
-#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(83)
-msgctxt "Gotham.ClueMarkers,Analysing"
-msgid "Analysing"
-msgstr "Analysing"
-
 #. Key:	Unknown
-#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(84)
-#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(84)
+#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(100)
+#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(100)
 msgctxt "Gotham.ClueMarkers,Unknown"
 msgid "Unknown evidence"
 msgstr "Unknown evidence"
 
 #. Key:	DistanceFmt
-#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(86)
-#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(86)
+#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(106)
+#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(106)
 msgctxt "Gotham.ClueMarkers,DistanceFmt"
 msgid "{0} m"
 msgstr "{0} m"
+
+#. Key:	Analysing
+#. SourceLocation:	Source/MVVMSample/UI/ClueMarkerLayer.cpp(99)
+#: Source/MVVMSample/UI/ClueMarkerLayer.cpp(99)
+msgctxt "Gotham.ClueMarkers,Analysing"
+msgid "Analysing"
+msgstr "Analysing"
 
 #. Key:	Hits
 #. SourceLocation:	Source/MVVMSample/UI/ComboWidget.cpp(41)
@@ -735,15 +791,15 @@ msgid "Hits"
 msgstr "Hits"
 
 #. Key:	HoldToAnalyse
-#. SourceLocation:	Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
-#: Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
+#. SourceLocation:	Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(123)
+#: Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(123)
 msgctxt "Gotham.DetectiveOverlay,HoldToAnalyse"
 msgid "Hold to analyse"
 msgstr "Hold to analyse"
 
 #. Key:	Scan
-#. SourceLocation:	Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
-#: Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(104)
+#. SourceLocation:	Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(123)
+#: Source/MVVMSample/UI/DetectiveOverlayWidget.cpp(123)
 msgctxt "Gotham.DetectiveOverlay,Scan"
 msgid "Scan"
 msgstr "Scan"
@@ -791,333 +847,375 @@ msgid "Objective"
 msgstr "Objective"
 
 #. Key:	SummaryFmt
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(141)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(141)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(142)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(142)
 msgctxt "Gotham.ClueLog,SummaryFmt"
 msgid "{0} of {1} clues discovered"
 msgstr "{0} of {1} clues discovered"
 
 #. Key:	Analysed
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(199)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(199)
 msgctxt "Gotham.ClueLog,Analysed"
 msgid "Analysed"
 msgstr "Analysed"
 
 #. Key:	Unknown
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(198)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(199)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(199)
 msgctxt "Gotham.ClueLog,Unknown"
 msgid "Not yet found"
 msgstr "Not yet found"
 
 #. Key:	Section
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(38)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(38)
 msgctxt "Gotham.ClueLog,Section"
 msgid "Investigation"
 msgstr "Investigation"
 
 #. Key:	Title
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(37)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(38)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(38)
 msgctxt "Gotham.ClueLog,Title"
 msgid "Case file"
 msgstr "Case file"
 
 #. Key:	Back
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(96)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(96)
 msgctxt "Gotham.ClueLog,Back"
 msgid "Close"
 msgstr "Close"
 
 #. Key:	Select
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
-#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(95)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(96)
+#: Source/MVVMSample/UI/Screens/ClueLogScreen.cpp(96)
 msgctxt "Gotham.ClueLog,Select"
 msgid "Browse"
 msgstr "Browse"
 
 #. Key:	Caution
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(58)
-#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(58)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(59)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(59)
 msgctxt "Gotham.ConfirmModal,Caution"
 msgid "Caution"
 msgstr "Caution"
 
 #. Key:	Yes
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(74)
-#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(74)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(75)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(75)
 msgctxt "Gotham.ConfirmModal,Yes"
 msgid "Yes"
 msgstr "Yes"
 
 #. Key:	No
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(79)
-#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(79)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(80)
+#: Source/MVVMSample/UI/Screens/ConfirmModalScreen.cpp(80)
 msgctxt "Gotham.ConfirmModal,No"
 msgid "No"
 msgstr "No"
 
 #. Key:	ResetAll
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(106)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(106)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(105)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(105)
 msgctxt "Gotham.ControlsScreen,ResetAll"
 msgid "Reset to defaults"
 msgstr "Reset to defaults"
 
 #. Key:	Back
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(110)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(110)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(109)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(109)
 msgctxt "Gotham.ControlsScreen,Back"
 msgid "Back"
 msgstr "Back"
 
 #. Key:	BackHint
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(113)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(113)
 msgctxt "Gotham.ControlsScreen,BackHint"
 msgid "Back"
 msgstr "Back"
 
 #. Key:	Rebind
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(114)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(113)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(113)
 msgctxt "Gotham.ControlsScreen,Rebind"
 msgid "Rebind"
 msgstr "Rebind"
 
-#. Key:	WasReset
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(206)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(206)
-msgctxt "Gotham.ControlsScreen,WasReset"
-msgid "Controls reset to defaults."
-msgstr "Controls reset to defaults."
-
 #. Key:	PressPad
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(220)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(220)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(146)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(146)
 msgctxt "Gotham.ControlsScreen,PressPad"
 msgid "Press a gamepad button. Choose B to cancel."
 msgstr "Press a gamepad button. Choose B to cancel."
 
 #. Key:	PressKey
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(221)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(221)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(147)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(147)
 msgctxt "Gotham.ControlsScreen,PressKey"
 msgid "Press a key or mouse button. Choose Esc to cancel."
 msgstr "Press a key or mouse button. Choose Esc to cancel."
 
 #. Key:	Capturing
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(209)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(209)
 msgctxt "Gotham.ControlsScreen,Capturing"
 msgid "..."
 msgstr "..."
 
 #. Key:	Unbound
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(281)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(209)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(209)
 msgctxt "Gotham.ControlsScreen,Unbound"
 msgid "Unbound"
 msgstr "Unbound"
 
 #. Key:	Section
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(30)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(30)
 msgctxt "Gotham.ControlsScreen,Section"
 msgid "Options"
 msgstr "Options"
 
 #. Key:	Title
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(31)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(30)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(30)
 msgctxt "Gotham.ControlsScreen,Title"
 msgid "Controls"
 msgstr "Controls"
 
 #. Key:	KeyboardColumn
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(53)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(53)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(52)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(52)
 msgctxt "Gotham.ControlsScreen,KeyboardColumn"
 msgid "Keyboard / Mouse"
 msgstr "Keyboard / Mouse"
 
 #. Key:	GamepadColumn
-#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(54)
-#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(54)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/ControlsScreen.cpp(53)
+#: Source/MVVMSample/UI/Screens/ControlsScreen.cpp(53)
 msgctxt "Gotham.ControlsScreen,GamepadColumn"
 msgid "Gamepad"
 msgstr "Gamepad"
 
 #. Key:	EvidenceFmt
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(141)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(141)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(142)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(142)
 msgctxt "Gotham.PauseMenu,EvidenceFmt"
 msgid "{0} / {1}"
 msgstr "{0} / {1}"
 
 #. Key:	QuitBody
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(173)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(173)
 msgctxt "Gotham.PauseMenu,QuitBody"
 msgid "Unsaved progress will be lost."
 msgstr "Unsaved progress will be lost."
 
 #. Key:	QuitTitle
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(172)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(173)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(173)
 msgctxt "Gotham.PauseMenu,QuitTitle"
 msgid "Quit game?"
 msgstr "Quit game?"
 
 #. Key:	Section
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(37)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(37)
 msgctxt "Gotham.PauseMenu,Section"
 msgid "Blackwater Ops"
 msgstr "Blackwater Ops"
 
 #. Key:	Title
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(36)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(37)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(37)
 msgctxt "Gotham.PauseMenu,Title"
 msgid "Paused"
 msgstr "Paused"
 
 #. Key:	Resume
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(48)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(48)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(49)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(49)
 msgctxt "Gotham.PauseMenu,Resume"
 msgid "Resume"
 msgstr "Resume"
 
 #. Key:	CaseFile
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(49)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(49)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(50)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(50)
 msgctxt "Gotham.PauseMenu,CaseFile"
 msgid "Case file"
 msgstr "Case file"
 
 #. Key:	Settings
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(50)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(50)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(51)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(51)
 msgctxt "Gotham.PauseMenu,Settings"
 msgid "Settings"
 msgstr "Settings"
 
 #. Key:	Quit
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(51)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(51)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(52)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(52)
 msgctxt "Gotham.PauseMenu,Quit"
 msgid "Quit"
 msgstr "Quit"
 
 #. Key:	ObjectiveLabel
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(72)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(72)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(73)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(73)
 msgctxt "Gotham.PauseMenu,ObjectiveLabel"
 msgid "Objective"
 msgstr "Objective"
 
 #. Key:	EvidenceLabel
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(76)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(76)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(77)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(77)
 msgctxt "Gotham.PauseMenu,EvidenceLabel"
 msgid "Evidence"
 msgstr "Evidence"
 
 #. Key:	Back
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(81)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(81)
 msgctxt "Gotham.PauseMenu,Back"
 msgid "Resume"
 msgstr "Resume"
 
 #. Key:	Select
-#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
-#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(80)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(81)
+#: Source/MVVMSample/UI/Screens/PauseMenuScreen.cpp(81)
 msgctxt "Gotham.PauseMenu,Select"
 msgid "Select"
 msgstr "Select"
 
 #. Key:	Apply
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(114)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(114)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(115)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(115)
 msgctxt "Gotham.SettingsScreen,Apply"
 msgid "Apply"
 msgstr "Apply"
 
 #. Key:	Revert
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(115)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(115)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(116)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(116)
 msgctxt "Gotham.SettingsScreen,Revert"
 msgid "Revert"
 msgstr "Revert"
 
 #. Key:	Defaults
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(116)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(116)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(117)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(117)
 msgctxt "Gotham.SettingsScreen,Defaults"
 msgid "Defaults"
 msgstr "Defaults"
 
 #. Key:	Back
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(117)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(117)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(118)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(118)
 msgctxt "Gotham.SettingsScreen,Back"
 msgid "Back"
 msgstr "Back"
 
 #. Key:	BackHint
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(120)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(120)
 msgctxt "Gotham.SettingsScreen,BackHint"
 msgid "Back (discards unapplied changes)"
 msgstr "Back (discards unapplied changes)"
 
 #. Key:	Select
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(119)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(120)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(120)
 msgctxt "Gotham.SettingsScreen,Select"
 msgid "Change"
 msgstr "Change"
 
 #. Key:	KeyBindingsDesc
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(231)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(231)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(221)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(221)
 msgctxt "Gotham.SettingsScreen,KeyBindingsDesc"
 msgid "Change the key or button for every action, separately for keyboard and mouse and for gamepad."
 msgstr "Change the key or button for every action, separately for keyboard and mouse and for gamepad."
 
 #. Key:	Unapplied
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(260)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(260)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(250)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(250)
 msgctxt "Gotham.SettingsScreen,Unapplied"
 msgid "Unapplied changes. Choose Apply to keep them."
 msgstr "Unapplied changes. Choose Apply to keep them."
 
 #. Key:	Section
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(34)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(34)
 msgctxt "Gotham.SettingsScreen,Section"
 msgid "Options"
 msgstr "Options"
 
 #. Key:	Title
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(33)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(34)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(34)
 msgctxt "Gotham.SettingsScreen,Title"
 msgid "Settings"
 msgstr "Settings"
 
 #. Key:	KeyBindings
-#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(69)
-#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(69)
+#. SourceLocation:	Source/MVVMSample/UI/Screens/SettingsScreen.cpp(70)
+#: Source/MVVMSample/UI/Screens/SettingsScreen.cpp(70)
 msgctxt "Gotham.SettingsScreen,KeyBindings"
 msgid "Key bindings"
 msgstr "Key bindings"
+
+#. Key:	Markers
+#. SourceLocation:	Source/MVVMSample/UI/Slate/SClueMarkerLayer.cpp(43)
+#: Source/MVVMSample/UI/Slate/SClueMarkerLayer.cpp(43)
+msgctxt "Gotham.Accessibility,Markers"
+msgid "{0} {0}|plural(one=clue,other=clues) in view, {1} not yet scanned"
+msgstr "{0} {0}|plural(one=clue,other=clues) in view, {1} not yet scanned"
+
+#. Key:	WheelSelected
+#. SourceLocation:	Source/MVVMSample/UI/Slate/SGadgetWheel.cpp(37)
+#: Source/MVVMSample/UI/Slate/SGadgetWheel.cpp(37)
+msgctxt "Gotham.Accessibility,WheelSelected"
+msgid "Gadget wheel: {0}"
+msgstr "Gadget wheel: {0}"
+
+#. Key:	WheelNone
+#. SourceLocation:	Source/MVVMSample/UI/Slate/SGadgetWheel.cpp(38)
+#: Source/MVVMSample/UI/Slate/SGadgetWheel.cpp(38)
+msgctxt "Gotham.Accessibility,WheelNone"
+msgid "Gadget wheel: nothing selected"
+msgstr "Gadget wheel: nothing selected"
+
+#. Key:	ThreatWarning
+#. SourceLocation:	Source/MVVMSample/UI/Slate/SThreatIndicatorLayer.cpp(35)
+#: Source/MVVMSample/UI/Slate/SThreatIndicatorLayer.cpp(35)
+msgctxt "Gotham.Accessibility,ThreatWarning"
+msgid "{0} {0}|plural(one=attack,other=attacks) incoming: counter now"
+msgstr "{0} {0}|plural(one=attack,other=attacks) incoming: counter now"
+
+#. Key:	Threats
+#. SourceLocation:	Source/MVVMSample/UI/Slate/SThreatIndicatorLayer.cpp(36)
+#: Source/MVVMSample/UI/Slate/SThreatIndicatorLayer.cpp(36)
+msgctxt "Gotham.Accessibility,Threats"
+msgid "{0} {0}|plural(one=enemy,other=enemies) nearby"
+msgstr "{0} {0}|plural(one=enemy,other=enemies) nearby"
+
+#. Key:	Prompt
+#. SourceLocation:	Source/MVVMSample/UI/Widgets/GothamHintButton.cpp(89)
+#: Source/MVVMSample/UI/Widgets/GothamHintButton.cpp(89)
+msgctxt "Gotham.Accessibility,Prompt"
+msgid "{0} ({1})"
+msgstr "{0} ({1})"
+
+#. Key:	SettingRow
+#. SourceLocation:	Source/MVVMSample/UI/Widgets/GothamOptionRow.cpp(88)
+#: Source/MVVMSample/UI/Widgets/GothamOptionRow.cpp(88)
+msgctxt "Gotham.Accessibility,SettingRow"
+msgid "{0}: {1}"
+msgstr "{0}: {1}"
 
 #. Key:	Unknown
 #. SourceLocation:	Source/MVVMSample/ViewModels/ClueViewModels.cpp(27)
@@ -1148,50 +1246,57 @@ msgid "x{0}"
 msgstr "x{0}"
 
 #. Key:	BadPad
-#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(29)
-#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(29)
+#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(42)
+#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(42)
 msgctxt "Gotham.Controls,BadPad"
 msgid "That button cannot be used here. Choose a gamepad button."
 msgstr "That button cannot be used here. Choose a gamepad button."
 
 #. Key:	BadKey
-#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(30)
-#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(30)
+#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(43)
+#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(43)
 msgctxt "Gotham.Controls,BadKey"
 msgid "That key cannot be used here. Choose another key or mouse button."
 msgstr "That key cannot be used here. Choose another key or mouse button."
 
 #. Key:	Swapped
-#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(41)
-#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(41)
+#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(54)
+#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(54)
 msgctxt "Gotham.Controls,Swapped"
 msgid "That key was already in use; the two actions swapped keys."
 msgstr "That key was already in use; the two actions swapped keys."
 
+#. Key:	WasReset
+#. SourceLocation:	Source/MVVMSample/ViewModels/ControlsViewModel.cpp(70)
+#: Source/MVVMSample/ViewModels/ControlsViewModel.cpp(70)
+msgctxt "Gotham.ControlsScreen,WasReset"
+msgid "Controls reset to defaults."
+msgstr "Controls reset to defaults."
+
 #. Key:	Detective
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(255)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(258)
+#: Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(258)
 msgctxt "Gotham.Subtitles,Detective"
 msgid "Detective"
 msgstr "Detective"
 
 #. Key:	ClueFound
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(256)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(256)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(259)
+#: Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(259)
 msgctxt "Gotham.Subtitles,ClueFound"
 msgid "{0}. {1}"
 msgstr "{0}. {1}"
 
 #. Key:	DebugTitle
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(299)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(299)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(292)
+#: Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(292)
 msgctxt "Gotham.Clues,DebugTitle"
 msgid "Debug clue {0}"
 msgstr "Debug clue {0}"
 
 #. Key:	DebugBody
-#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(300)
-#: Source/MVVMSample/ViewModels/GothamViewModelSubsystem.cpp(300)
+#. SourceLocation:	Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(293)
+#: Source/MVVMSample/ViewModels/GothamViewModelBinders.cpp(293)
 msgctxt "Gotham.Clues,DebugBody"
 msgid "Generated to stress the virtualised list."
 msgstr "Generated to stress the virtualised list."

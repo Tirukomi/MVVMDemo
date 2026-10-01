@@ -31,6 +31,9 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
+
+	/** What a screen reader announces for the threat prompts and arrows. */
+	FText GetAccessibleSummary() const;
 	void SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText);
 	void SetKeyLabel(const FText& InLabel) { KeyLabel = InLabel; }
 	void SetReducedMotion(bool bInReduced) { bReducedMotion = bInReduced; }

@@ -27,7 +27,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeOnClosed() override;
-	virtual void OnPaletteChanged() override;
+	virtual void ApplyTheme() override;
 
 private:
 	void Finish(bool bConfirmed);

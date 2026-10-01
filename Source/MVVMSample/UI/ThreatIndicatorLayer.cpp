@@ -5,6 +5,7 @@
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/Slate/SThreatIndicatorLayer.h"
+#include "UI/Style/GothamStyle.h"
 #include "UI/Widgets/GothamInputGlyph.h"
 #include "ViewModels/GothamMVVM.h"
 #include "ViewModels/ThreatViewModel.h"
@@ -25,19 +26,14 @@ void UThreatIndicatorLayer::SetViewModel(UThreatViewModel* InViewModel)
 	UpdateActive();
 }
 
-void UThreatIndicatorLayer::SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText)
+void UThreatIndicatorLayer::ApplyTheme()
 {
 	if (SThreatIndicatorLayer* Layer = GetOverlay<SThreatIndicatorLayer>())
 	{
-		Layer->SetColors(InDanger, InIdle, InPanel, InText);
-	}
-}
-
-void UThreatIndicatorLayer::SetReducedMotion(bool bInReduced)
-{
-	if (SThreatIndicatorLayer* Layer = GetOverlay<SThreatIndicatorLayer>())
-	{
-		Layer->SetReducedMotion(bInReduced);
+		const FGothamTheme Theme = GothamStyle::Theme(this);
+		Layer->SetColors(Theme.Color(EGothamColorToken::Danger), Theme.Color(EGothamColorToken::TextMuted),
+			Theme.Color(EGothamColorToken::Panel), Theme.Color(EGothamColorToken::TextPrimary));
+		Layer->SetReducedMotion(Theme.bReducedMotion);
 	}
 }
 

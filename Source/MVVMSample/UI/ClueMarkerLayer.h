@@ -25,11 +25,11 @@ public:
 	float MaxDistance = 3500.f;
 
 	void SetViewModels(UClueListViewModel* InClues, UDetectiveViewModel* InDetective);
-	void SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted);
 
 protected:
 	virtual TSharedRef<SGothamWorldOverlayBase> MakeOverlay() override;
 	virtual bool ShouldBeActive() const override;
+	virtual void ApplyTheme() override;
 
 private:
 	void OnDetectiveChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);

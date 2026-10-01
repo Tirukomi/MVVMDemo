@@ -9,8 +9,8 @@ void UGothamSettingsAwareWidget::NativeConstruct()
 {
 	GothamUI::DisableTick(this);
 	Super::NativeConstruct();
-	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { OnSettingsApplied(); });
-	OnSettingsApplied();
+	SettingsListener.Bind(this, [this](const FGothamSettingsData&) { ApplyTheme(); });
+	ApplyTheme();
 }
 
 void UGothamSettingsAwareWidget::NativeDestruct()

@@ -38,6 +38,9 @@ public:
 	/** The HUD keeps the game in control: mouse captured, no cursor. */
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
+	/** The area the edge-anchored elements are laid out in (the safe zone). */
+	UWidget* GetSafeArea() const { return SafeArea; }
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
@@ -48,10 +51,13 @@ private:
 	/** Flash to full, then settle at the low-health level (or zero) over half a second. */
 	void FlashVignette();
 	void UpdateVignetteRest();
-	void ApplyMarkerColors();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UDamageVignette> Vignette;
+
+	/** The canvas inside the safe zone that the edge-anchored HUD elements are placed on. */
+	UPROPERTY(Transient)
+	TObjectPtr<UWidget> SafeArea;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UDetectiveOverlayWidget> DetectiveOverlay;

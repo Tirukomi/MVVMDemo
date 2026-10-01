@@ -129,9 +129,9 @@ void UGadgetWheelScreen::RefreshItems()
 	Wheel->SetItems(Items);
 }
 
-void UGadgetWheelScreen::OnPaletteChanged()
+void UGadgetWheelScreen::ApplyTheme()
 {
-	Super::OnPaletteChanged();
+	Super::ApplyTheme();
 	// Runs on every settings change, so reduced motion applies to an open wheel too.
 	if (Wheel)
 	{

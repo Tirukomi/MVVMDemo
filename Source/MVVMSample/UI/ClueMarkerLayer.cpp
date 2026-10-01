@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Internationalization/TextLocalizationManager.h"
 #include "UI/Slate/SClueMarkerLayer.h"
+#include "UI/Style/GothamStyle.h"
 #include "ViewModels/ClueViewModels.h"
 #include "ViewModels/DetectiveViewModel.h"
 #include "ViewModels/GothamMVVM.h"
@@ -34,11 +35,13 @@ void UClueMarkerLayer::SetViewModels(UClueListViewModel* InClues, UDetectiveView
 	UpdateActive();
 }
 
-void UClueMarkerLayer::SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted)
+void UClueMarkerLayer::ApplyTheme()
 {
 	if (SClueMarkerLayer* Layer = GetOverlay<SClueMarkerLayer>())
 	{
-		Layer->SetColors(InUnknown, InKnown, InAnalysing, InMuted);
+		const FGothamTheme Theme = GothamStyle::Theme(this);
+		Layer->SetColors(Theme.Color(EGothamColorToken::Unscanned), Theme.Color(EGothamColorToken::Scanned),
+			Theme.Color(EGothamColorToken::Accent), Theme.Color(EGothamColorToken::TextMuted));
 	}
 }
 

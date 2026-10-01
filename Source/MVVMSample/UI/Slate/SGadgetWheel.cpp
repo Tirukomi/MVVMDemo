@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Slate/SGadgetWheel.h"
+#include "UI/GothamAccessibility.h"
 
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
@@ -27,6 +28,14 @@ void SGadgetWheel::Construct(const FArguments& InArgs)
 	OnItemSelected = InArgs._OnItemSelected;
 	OnItemHovered = InArgs._OnItemHovered;
 	SetCanTick(false);
+	GothamAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SGadgetWheel::GetAccessibleSummary));
+}
+
+FText SGadgetWheel::GetAccessibleSummary() const
+{
+	return Items.IsValidIndex(HoveredIndex)
+		? FText::Format(NSLOCTEXT("Gotham.Accessibility", "WheelSelected", "Gadget wheel: {0}"), Items[HoveredIndex].Label)
+		: NSLOCTEXT("Gotham.Accessibility", "WheelNone", "Gadget wheel: nothing selected");
 }
 
 void SGadgetWheel::SetStyle(const FGothamGadgetWheelStyle& InStyle)

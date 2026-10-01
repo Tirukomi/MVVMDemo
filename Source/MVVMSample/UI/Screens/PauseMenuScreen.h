@@ -30,7 +30,7 @@ protected:
 	virtual void NativeDestruct() override;
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnClosed() override;
-	virtual void OnPaletteChanged() override;
+	virtual void ApplyTheme() override;
 
 private:
 	void RefreshStatus();

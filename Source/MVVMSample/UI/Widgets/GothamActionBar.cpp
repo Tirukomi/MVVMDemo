@@ -2,6 +2,7 @@
 
 #include "UI/Widgets/GothamActionBar.h"
 
+#include "UI/Style/GothamMetrics.h"
 #include "CommonActivatableWidget.h"
 #include "Input/UIActionBinding.h"
 #include "UI/Widgets/GothamHintButton.h"
@@ -16,7 +17,7 @@ UGothamActionBar::UGothamActionBar(const FObjectInitializer& ObjectInitializer)
 		ButtonClass->SetObjectPropertyValue_InContainer(this, UGothamHintButton::StaticClass());
 	}
 	InitEntryBoxType(EDynamicBoxType::Horizontal);
-	SetEntrySpacing(FVector2D(20.f, 0.f));
+	SetEntrySpacing(FVector2D(GothamMetrics::PromptSpacing, 0.f));
 }
 
 void UGothamActionBar::NativeOnActionButtonCreated(ICommonBoundActionButtonInterface* ActionButton, const FUIActionBindingHandle& RepresentedAction)

@@ -23,12 +23,11 @@ public:
 	float ArrowRange = 2500.f;
 
 	void SetViewModel(UThreatViewModel* InViewModel);
-	void SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText);
-	void SetReducedMotion(bool bInReduced);
 
 protected:
 	virtual TSharedRef<SGothamWorldOverlayBase> MakeOverlay() override;
 	virtual bool ShouldBeActive() const override;
+	virtual void ApplyTheme() override;
 
 private:
 	void OnThreatsChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);

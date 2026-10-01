@@ -54,6 +54,15 @@ the end.
     stacked two: a layer shows only its top screen.) New `pause-quit` perf scenario and menu-input rules.
   - Tweens run as active timers on the animated widget, tracked in Slate metadata, not on the core ticker.
   - Measured: every change is inside run-to-run noise on this machine except the second blur (about 0.035 ms GPU).
+- **R6 done**, findings 28 to 31:
+  - One style source: `FGothamTheme`; `UGothamText` and `UGothamSwatch` style themselves, the overlays restyle their
+    layers, and the HUD no longer pushes colours into them. `UGothamScreen`'s parallel arrays are gone, and the
+    restyle hooks are one name, `ApplyTheme` (interaction state stays `ApplyState`).
+  - Metrics in `GothamMetrics.h`; high contrast is read from the settings; the menu test reads the selector metrics.
+    Both steps were checked pixel-identical against every baseline before the visible changes.
+  - Safe zones around the HUD's edge elements and the menu column, checked with the engine's debug safe-zone ratio.
+  - Screen-reader text on buttons, settings rows, prompts and the custom Slate layers; a Text size setting
+    (Standard / Large / Larger) separate from UI scale, translated, on the Accessibility tab.
 
 ## Rules for every iteration
 

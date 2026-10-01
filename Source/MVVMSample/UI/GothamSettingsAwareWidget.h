@@ -12,7 +12,7 @@ class UGothamSettingsSubsystem;
 
 /**
  * Base for widgets that restyle themselves from accessibility settings (palette, contrast, motion, language).
- * Subscribes while constructed and calls OnSettingsApplied() on every change.
+ * Subscribes while constructed and calls ApplyTheme() on every change.
  */
 UCLASS(Abstract)
 class MVVMSAMPLE_API UGothamSettingsAwareWidget : public UUserWidget
@@ -24,7 +24,7 @@ protected:
 	virtual void NativeDestruct() override;
 
 	/** Re-apply anything that depends on settings. Default does nothing. */
-	virtual void OnSettingsApplied() {}
+	virtual void ApplyTheme() {}
 
 	/** Current settings, or defaults if the subsystem is unavailable (e.g. in a test). */
 	const FGothamSettingsData& GetGothamSettings() const;

@@ -32,7 +32,7 @@ protected:
 	virtual void NativeDestruct() override;
 	virtual void NativeOnClosed() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual void OnPaletteChanged() override;
+	virtual void ApplyTheme() override;
 
 private:
 	void RefreshDirtyNote();

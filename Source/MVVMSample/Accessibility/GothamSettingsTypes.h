@@ -15,6 +15,15 @@ enum class EGothamColorMode : uint8
 	Count
 };
 
+/** Text size for every menu and HUD label, separate from UI scale (which scales layout too). */
+enum class EGothamTextSize : uint8
+{
+	Standard,
+	Large,
+	Larger,
+	Count
+};
+
 enum class EGothamSubtitleSize : uint8
 {
 	Small,
@@ -44,6 +53,7 @@ enum class EGothamSetting : uint8
 	Language,
 	ColorVision,
 	UIScale,
+	TextSize,
 	HighContrast,
 	ReducedMotion,
 	WheelMode,
@@ -66,6 +76,7 @@ struct MVVMSAMPLE_API FGothamSettingsData
 	FString Language = TEXT("en");
 	EGothamColorMode ColorMode = EGothamColorMode::Default;
 	int32 UIScaleIndex = 1;
+	EGothamTextSize TextSize = EGothamTextSize::Standard;
 	bool bHighContrast = false;
 	bool bReducedMotion = false;
 	EGothamWheelMode WheelMode = EGothamWheelMode::Hold;
@@ -77,6 +88,8 @@ struct MVVMSAMPLE_API FGothamSettingsData
 	static const TArray<FGothamLanguageOption>& GetLanguages();
 
 	float GetUIScale() const;
+	/** What text size multiplies font sizes by (on top of UI scale). */
+	float GetTextScale() const;
 	int32 GetSubtitleFontSize() const;
 
 	/** Where the current value sits among the option's choices, for the selector's position pips. */

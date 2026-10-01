@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UI/Slate/SClueMarkerLayer.h"
+#include "UI/GothamAccessibility.h"
 
 #include "Framework/Application/SlateApplication.h"
 #include "Fonts/FontMeasure.h"
@@ -29,6 +30,18 @@ namespace GothamMarkers
 void SClueMarkerLayer::Construct(const FArguments& InArgs)
 {
 	ConstructOverlay();
+	GothamAccessibility::SetText(SharedThis(this), TAttribute<FText>::CreateSP(this, &SClueMarkerLayer::GetAccessibleSummary));
+}
+
+FText SClueMarkerLayer::GetAccessibleSummary() const
+{
+	int32 Unknown = 0;
+	for (const FGothamClueMarker& Marker : GetItems())
+	{
+		Unknown += Marker.State == FGothamClueMarker::EState::Unknown ? 1 : 0;
+	}
+	return FText::Format(NSLOCTEXT("Gotham.Accessibility", "Markers", "{0} {0}|plural(one=clue,other=clues) in view, {1} not yet scanned"),
+		GetItems().Num(), Unknown);
 }
 
 void SClueMarkerLayer::SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted)

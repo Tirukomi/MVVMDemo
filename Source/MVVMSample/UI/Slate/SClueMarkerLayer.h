@@ -40,6 +40,9 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
+	/** What a screen reader announces for the markers. */
+	FText GetAccessibleSummary() const;
+
 	void SetColors(const FLinearColor& InUnknown, const FLinearColor& InKnown, const FLinearColor& InAnalysing, const FLinearColor& InMuted);
 
 	virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
