@@ -62,19 +62,57 @@ void UMvsTabList::NativeConstruct()
 {
 	MvsUI::DisableTick(this);
 	Super::NativeConstruct();
+
+	// Second review 30: a reopened screen came back without tabs, so Q / E and the tab prompts did nothing.
+	if (GetTabCount() == 0 && !TabIds.IsEmpty())
+	{
+		// Without "selection required", registering does not select the first tab, which would switch the page
+		// away from the one still showing and back.
+		SetSelectionRequired(false);
+		for (int32 i = 0; i < TabIds.Num(); ++i)
+		{
+			Register(i);
+		}
+		SetSelectionRequired(true);
+		if (LastSelectedTab.IsNone() || !SelectTabByID(LastSelectedTab, true))
+		{
+			SelectTabByID(TabIds[0], true);
+		}
+	}
+}
+
+void UMvsTabList::NativeDestruct()
+{
+	LastSelectedTab = GetSelectedTabId();
+	Super::NativeDestruct();
 }
 
 bool UMvsTabList::AddTab(FName TabId, const FText& Label, UWidget* Content)
 {
 	EnsureTree();
-	if (!RegisterTab(TabId, UMvsButton::StaticClass(), Content))
+	TabIds.Add(TabId);
+	TabLabels.Add(Label);
+	TabContents.Add(Content);
+	if (!Register(TabIds.Num() - 1))
+	{
+		TabIds.Pop();
+		TabLabels.Pop();
+		TabContents.Pop();
+		return false;
+	}
+	return true;
+}
+
+bool UMvsTabList::Register(int32 Index)
+{
+	if (!RegisterTab(TabIds[Index], UMvsButton::StaticClass(), TabContents[Index]))
 	{
 		return false;
 	}
-	if (UMvsButton* Button = Cast<UMvsButton>(GetTabButtonBaseByID(TabId)))
+	if (UMvsButton* Button = Cast<UMvsButton>(GetTabButtonBaseByID(TabIds[Index])))
 	{
 		Button->SetKind(EMvsButtonKind::Tab);
-		Button->SetLabel(Label);
+		Button->SetLabel(TabLabels[Index]);
 	}
 	return true;
 }

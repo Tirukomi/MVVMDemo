@@ -112,7 +112,7 @@ Project-settings soft references (materials, clue assets) are listed under `Dire
 
 ## Honest limitations
 
-- **Little real input has been driven by a script.** The menu-input test (`Mvs.Functional.MenuInput`) drives menu keys, prompt clicks and
+- **Little real input has been driven by a script.** The functional menu tests (`Mvs.Functional.*`, one per screen) drive menu keys, prompt clicks and
   toggles through Slate's own input path, and the project owner has played it by hand. Everything else (combat
   counters, hold-to-use wheel, rebinding capture) is verified through unit tests, dev flags and screenshots.
 - The HUD widgets are C++-built rather than designer-authored; see [ADR 0002](Docs/ADR/0002-code-built-widgets.md).

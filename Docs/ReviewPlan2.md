@@ -58,6 +58,22 @@ left is mostly four things:
     really shipped.
   - `MVVMSample.Build.cs`: template comments gone, RenderCore and RHI only outside Shipping (the perf harness), and
     the public module root kept on purpose (documented: the test module is its only consumer).
+- **S3 done** (findings 17, 18, 21; found 30):
+  - `Mvs.Functional.MenuInput` is seven functional tests: `Hud`, `CaseFile`, `Pause`, `Settings`, `Controls`,
+    `GadgetWheel` and `ViewModelResolver`, sharing `MvsMenuTestKit.h`. Each starts and ends with no menu open and the
+    settings reverted, so one bug fails one test, and any one runs alone (`run_tests.py Mvs.Functional.Pause`).
+  - Splitting found a player-facing bug [30]: settings reopened from pause had no tabs. It only showed once the
+    rules stopped running in one fixed order. Fixed in `UMvsTabList`; two rules guard it, checked to fail without the fix.
+  - The "game window must be the active application" precondition is gone [18]: Slate skipped mouse capture while
+    another application was active, so a click's release never reached the button. The tests turn on the engine's
+    switch for input while inactive (`SetHandleDeviceInputWhenApplicationNotActive`), and one rule clicks a prompt with
+    the application marked inactive.
+  - The resolver test [21] checks that every HUD view model class resolves to the player's instance, and that a class
+    the player has none of, or no widget, resolves to nothing.
+  - 61 tests now (54 editor, 7 functional); the functional pass still takes about a minute.
+  - Gate: the first full run failed G5 on `pause-quit` alone (+0.051 ms against +0.05; rounds -0.065 to +0.089), a
+    scenario S3's code does not run in (pause and its quit confirmation; the tab list is in settings). The G5 rerun
+    passed (+0.018 ms). `pause-quit` is the noisiest scenario: its pairs spread about twice as wide as the others'.
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured
@@ -154,7 +170,7 @@ left is mostly four things:
 
 ## S8: Docs (two hours) [22]
 
-- README: one correct test count (55 today: 54 in the editor pass, 1 functional).
+- README: one correct test count (61 since S3: 54 in the editor pass, 7 functional).
 - Move the process documents (`ProjectPlan`, `RefactoringPlan`, `RefactoringProposal`, `ReviewFixPlan`, `VisualPlan`)
   into `Docs/History/`, so `Docs/` shows the architecture, ADRs, standards, performance and designer guide first.
 - Fix stale paths, e.g. `MvsScript.h` still points at `Tests/ScriptTests.cpp`.
@@ -254,3 +270,6 @@ About 7 to 9 days. S0, S1 and S2 are cheap and independent, so they go first.
     *Checked in code; the plan's wording, not a bug.*
 29. The threat indicator layer runs an active timer and repaints every frame whenever a thug exists, even when nothing
     moved. *Measured: the largest Slate item of the idle HUD.*
+30. Settings reopened from pause have no tabs: closing them back onto pause destructs the tab list, and Common UI's
+    tab list removes its tabs on destruct, while the screen registered them only once. Q / E and the tab prompts did
+    nothing. *Found by S3's split; fixed in S3.*

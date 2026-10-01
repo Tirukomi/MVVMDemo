@@ -23,6 +23,9 @@ public:
  * Common UI tab list with UMvsButton tabs laid out in a row between the "previous" and "next" prompts
  * (Q / E, LB / RB). The keys are Common UI's tab actions (UMvsUIInputData), bound while the list is on screen; tabs
  * are not focus stops, so up / down navigation stays inside the page.
+ *
+ * Common UI removes every tab when the list is destructed, which happens each time its screen closes; the list keeps
+ * what AddTab registered and registers it again when it is constructed, on the tab it was showing.
  */
 UCLASS()
 class MVVMSAMPLE_API UMvsTabList : public UCommonTabListWidgetBase
@@ -41,12 +44,22 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual void HandleTabCreation_Implementation(FName TabNameID, UCommonButtonBase* TabButton) override;
 	virtual void HandleTabRemoval_Implementation(FName TabNameID, UCommonButtonBase* TabButton) override;
 
 private:
 	void EnsureTree();
+	bool Register(int32 Index);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHorizontalBox> TabBox;
+
+	/** What AddTab registered, in order, to register again after a destruct. */
+	TArray<FName> TabIds;
+	TArray<FText> TabLabels;
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UWidget>> TabContents;
+	/** The tab showing when the list was last destructed. */
+	FName LastSelectedTab;
 };

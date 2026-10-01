@@ -67,8 +67,8 @@ hit-testing, layer tracking) so the rules are unit-tested without a world.
   tab list's tab actions. Only the active screen's bindings fire. The prompt row is a bound action bar
   (`UMvsActionBar`) of `UMvsHintButton`s: not focusable, showing the key of the device in use, and clicking one
   runs its binding. Clicking first restores the item that had focus before the pointer arrived (clicking lets Slate move
-  focus to the screen), so "Select" clicks that item through `IMvsAcceptable`. `Mvs.Functional.MenuInput` checks
-  all of it through Slate's input path.
+  focus to the screen), so "Select" clicks that item through `IMvsAcceptable`. The functional menu tests
+  (`Mvs.Functional.*`, one per screen) check all of it through Slate's input path.
 - **Menu focus.** `UMvsMenuList` draws a highlight bar behind the current item. It is event-driven:
   `NativeOnFocusChanging` finds which item is on the new focus path, and `SMvsHighlight` eases toward it with
   `FMvsSlideRect` (tested), reading the target's geometry only while the list holds focus. Buttons and option rows
@@ -148,16 +148,17 @@ side). Clues are `UClueDataAsset`s placed as `AClueActor`s; custom depth + stenc
 Automation specs live in their own module, `Source/MVVMSampleTests` (a DeveloperTool module: built for the editor and
 Development builds, never for Shipping), so the game module holds no test code. Tests use the game's exported API and
 explicit test-access friends (`FMvsInputTestAccess`). The dev aids that drive the game (flags, the perf harness,
-the menu-input script, `FMvsScript`) stay in the game module, compiled out of Shipping. The specs cover view-model behaviour, component logic (via `Advance()`
+`FMvsScript`) stay in the game module, compiled out of Shipping. The specs cover view-model behaviour, component logic (via `Advance()`
 so unregistered components can be driven), input/palette/settings rules and rebinding. Run them with
 `Scripts/run_tests.py` (exit code reflects failures). It runs two passes: the editor pass (headless) and a game pass
-for `Mvs.Functional.*`, latent tests that need the running game, such as the menu input rules (focus,
-hit-testing, prompt clicks, toggle keys) driven through Slate's own input path. Visual verification uses the dev
+for `Mvs.Functional.*`, latent tests that need the running game: one per screen (HUD, case file, pause, settings,
+key bindings, gadget wheel) plus the view-model resolver, each starting and ending with no menu open, driving focus,
+hit-testing, prompt clicks and toggle keys through Slate's own input path (`MvsMenuTestKit.h`). Visual verification uses the dev
 flags documented in the README.
 
 Everything that drives the running game on its own is a script for one runner, `FMvsScript`
 (`Core/MvsScript.h`): the dev flags (`Core/MvsDevAids.cpp`, compiled out of Shipping), the perf harness and the
-menu input test. A script is a list of steps (`At`, `Wait`, `Do`, `Expect`, `Sample`, `Screenshot`, `Quit`) run in
+functional menu tests. A script is a list of steps (`At`, `Wait`, `Do`, `Expect`, `Sample`, `Screenshot`, `Quit`) run in
 real time on the core ticker, so paused and slowed screens do not stop it; its timing rules are unit-tested with a
 fake clock. A new demo or check is a short step list, not a new ticker.
 

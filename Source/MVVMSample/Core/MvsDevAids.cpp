@@ -154,7 +154,7 @@ namespace MvsDevAidsPrivate
 	}
 
 	/** -MvsQuitAfterLoad, -MvsPerf: runs that take over and quit on their own. (The menu-input rules are the automation
-	 *  test Mvs.Functional.MenuInput, in the test module, so they are not in the game.) */
+	 *  tests Mvs.Functional.*, in the test module, so they are not in the game.) */
 	bool RunSelfContained(AMvsPlayerController* Controller, FTimeline& Timeline)
 	{
 		const TCHAR* Cmd = FCommandLine::Get();
