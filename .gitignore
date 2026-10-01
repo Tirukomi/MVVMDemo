@@ -21,3 +21,6 @@ Content/__ExternalObjects__/
 
 # IDE (Rider)
 .idea/
+
+# Per-machine engine / project paths (see Scripts/Paths.cfg)
+Scripts/Paths.local.cfg

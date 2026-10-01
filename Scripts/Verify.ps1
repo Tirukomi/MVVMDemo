@@ -30,9 +30,10 @@ param(
 
 # Continue, not Stop: native tools (the build, python) write progress to stderr, which must not abort the gate.
 $ErrorActionPreference = "Continue"
-$root = Split-Path -Parent $PSScriptRoot
-$engineDir = "D:\UnrealEngine\UE_5.8\Engine"
-$editor = "$engineDir\Binaries\Win64\UnrealEditor.exe"
+. (Join-Path $PSScriptRoot "Paths.ps1")   # engine and project roots (Scripts/Paths.cfg)
+$root = $ProjectDir
+$engineDir = $EngineDir
+$editor = $UnrealEditor
 $project = "$root\MVVMSample.uproject"
 $verifyDir = Join-Path $root "Saved\Verify"
 $perfDir = Join-Path $root "Saved\Perf"

@@ -11,5 +11,6 @@ public class MVVMSampleEditorTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V7;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
 		ExtraModuleNames.Add("MVVMSample");
+		ExtraModuleNames.Add("MVVMSampleTests");
 	}
 }

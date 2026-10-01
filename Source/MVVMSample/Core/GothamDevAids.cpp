@@ -113,7 +113,12 @@ namespace GothamDevAidsPrivate
 
 		void After(float Seconds, FGothamScript::FAction Action) { Entries.Add({ Seconds, MoveTemp(Action) }); }
 
-		void Run()
+		/**
+		 * Starts the actions. With UI set, the clock starts once its screen classes are preloaded: a loaded machine can
+		 * take longer than a second to preload them, and opening the case file before that would load it on the spot.
+		 * Counting from then keeps the actions' spacing (the mid-effect shots depend on it) however long that takes.
+		 */
+		void Run(const TWeakObjectPtr<UGothamUISubsystem>& UI = nullptr)
 		{
 			if (Entries.IsEmpty())
 			{
@@ -125,7 +130,15 @@ namespace GothamDevAidsPrivate
 			{
 				Script->At(Entry.At).Do(MoveTemp(Entry.Action));
 			}
-			Script->Start();
+			if (!UI.IsValid() || UI->AreScreensLoaded())
+			{
+				Script->Start();
+				return;
+			}
+			TSharedRef<FGothamScript> Preload = MakeShared<FGothamScript>();
+			Preload->WaitUntil([UI]() { return !UI.IsValid() || UI->AreScreensLoaded(); }, 30.f, TEXT("screen classes preloaded"))
+				.Do([Script]() { Script->Start(); });
+			Preload->Start();
 		}
 	};
 
@@ -466,7 +479,7 @@ namespace GothamDevAids
 		RebindDemo(F, WeakPC, WeakUI, Timeline);
 		CycleLanguage(F, WeakPC, Timeline);
 		ScheduleScreenshot(F, WeakPC, Timeline);
-		Timeline.Run();
+		Timeline.Run(WeakUI);
 	}
 }
 

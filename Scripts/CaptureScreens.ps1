@@ -5,8 +5,9 @@
 # -OutDir writes somewhere else (Scripts/Verify.ps1 captures into Saved/Verify/Screens and diffs against Docs/img).
 param([string]$Only = "", [string]$OutDir = "", [int]$Parallel = 3)
 
-$root = Split-Path -Parent $PSScriptRoot
-$engine = "D:\UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe"
+. (Join-Path $PSScriptRoot "Paths.ps1")
+$root = $ProjectDir
+$engine = $UnrealEditor
 $out = if ($OutDir) { $OutDir } else { Join-Path $root "Docs\img" }
 New-Item -ItemType Directory -Force $out | Out-Null
 

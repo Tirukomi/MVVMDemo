@@ -55,7 +55,7 @@ Never hard-code a colour that means something. Ask the palette for a token (`Goo
 4. Read it wherever it matters through `UGothamSettingsSubsystem::Get(this)`. To react to changes, derive a
    widget from `UGothamSettingsAwareWidget` and override `OnSettingsApplied`, or, in any other class, keep an
    `FGothamSettingsListener` member and `Bind` it (it unsubscribes itself).
-5. Add a case to `Tests/SettingsTests.cpp`.
+5. Add a case to `Source/MVVMSampleTests/Private/SettingsTests.cpp`.
 
 ## Add a rebindable action
 

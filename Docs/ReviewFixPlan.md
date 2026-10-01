@@ -6,7 +6,7 @@ the end.
 
 ## Status (2026-10-01)
 
-- **R0 done** except the packaged Shipping build check, which is still open. The GPU column is in the perf report;
+- **R0 done** (the packaged Shipping check was done in R7, after R4 to R6). The GPU column is in the perf report;
   the baseline numbers are not written up in `Docs/Performance.md` yet.
 - **R1 done:** findings 1 to 10 fixed, each guarded by a rule in `Gotham.Functional.MenuInput` (or
   `Gotham.Input.KeyLabels` for 5). Two more found and fixed on the way:
@@ -63,6 +63,15 @@ the end.
   - Safe zones around the HUD's edge elements and the menu column, checked with the engine's debug safe-zone ratio.
   - Screen-reader text on buttons, settings rows, prompts and the custom Slate layers; a Text size setting
     (Standard / Large / Larger) separate from UI scale, translated, on the Accessibility tab.
+- **R7 done**, findings 32, 34 and 38:
+  - Packaged builds: Shipping builds, cooks and runs (30 s, no crash), stages the six fonts and the en / de / ja
+    `.locres`, and contains no test code. A cooked Development build renders `ui-scale-150-de` and `settings-ja`
+    pixel-identical to the editor baselines (the HUD within its usual noise), so fonts, translations and UI scale
+    survive cooking. A missing font now logs a warning instead of falling back silently.
+  - Scripts read the engine and project roots from `Scripts/Paths.cfg` (`Paths.bat`, `Paths.ps1`, `paths.py`), with a
+    per-machine `Paths.local.cfg` that is not committed.
+  - Tests are their own DeveloperTool module, `MVVMSampleTests`; it needed no new exports, and the game module has no
+    test code left.
 
 ## Rules for every iteration
 

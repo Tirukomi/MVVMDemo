@@ -1,2 +1,3 @@
 @echo off
-"D:\UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "%~dp0..\MVVMSample.uproject" -ExecutePythonScript="%~dp0CreateDetectiveAssets.py" -unattended -nosplash -nullrhi
+call "%~dp0Paths.bat"
+"%UE_CMD%" "%PROJECT%" -ExecutePythonScript="%~dp0CreateDetectiveAssets.py" -unattended -nosplash -nullrhi

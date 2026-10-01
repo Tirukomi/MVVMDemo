@@ -8,6 +8,11 @@
 			"Name": "MVVMSample",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "MVVMSampleTests",
+			"Type": "DeveloperTool",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

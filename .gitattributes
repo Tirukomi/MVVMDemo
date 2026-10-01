@@ -14,3 +14,4 @@
 *.py text eol=crlf
 *.ps1 text eol=crlf
 *.bat text eol=crlf
+*.cfg text eol=crlf

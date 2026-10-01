@@ -11,6 +11,8 @@
 #include "Styling/CoreStyle.h"
 #include "UI/Widgets/GothamText.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogGothamStyle, Log, All);
+
 namespace
 {
 	FString FontPath(const TCHAR* File)
@@ -25,6 +27,8 @@ namespace
 		{
 			if (!IFileManager::Get().FileExists(*FontPath(Weight.Value)))
 			{
+				// Not silent: a missing font is a staging mistake (Config/DefaultGame.ini stages Content/UI/Fonts).
+				UE_LOG(LogGothamStyle, Warning, TEXT("Font %s is missing; UI text falls back to the engine font."), *FontPath(Weight.Value));
 				return nullptr;
 			}
 		}
@@ -35,7 +39,11 @@ namespace
 		}
 
 		const FString Japanese = FontPath(TEXT("NotoSansJP.ttf"));
-		if (IFileManager::Get().FileExists(*Japanese))
+		if (!IFileManager::Get().FileExists(*Japanese))
+		{
+			UE_LOG(LogGothamStyle, Warning, TEXT("Font %s is missing; Japanese falls back to the engine's CJK font."), *Japanese);
+		}
+		else
 		{
 			FCompositeSubFont& Sub = Font->SubTypefaces.AddDefaulted_GetRef();
 			Sub.CharacterRanges.Add(FInt32Range(0x3000, 0x30FF));   // CJK punctuation, hiragana, katakana

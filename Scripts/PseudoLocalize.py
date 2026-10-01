@@ -6,7 +6,9 @@ hand (or by a translator) and are never generated.
 import re
 import sys
 
-PO = r"D:\UEProjects\MVVMSample\Content\Localization\Game\en-XA\Game.po"
+from paths import PROJECT_DIR  # engine and project roots (Scripts/Paths.cfg)
+
+PO = PROJECT_DIR / "Content" / "Localization" / "Game" / "en-XA" / "Game.po"
 
 ACCENTS = str.maketrans("aeiouAEIOUcnysCNYS", "áéíóúÅÉÍÓÚçñýšÇÑÝŠ")
 ESCAPES = {"\\\\": "\\", '\\"': '"', "\\n": "\n", "\\t": "\t", "\\r": "\r"}

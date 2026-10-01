@@ -13,8 +13,7 @@ import pathlib
 import subprocess
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-BINARIES = pathlib.Path(r"D:\UnrealEngine\UE_5.8\Engine\Binaries\Win64")
+from paths import BINARIES, PROJECT_DIR as ROOT  # engine and project roots (Scripts/Paths.cfg)
 REPORTS = ROOT / "Saved" / "AutomationReports"
 FUNCTIONAL = "Gotham.Functional"
 

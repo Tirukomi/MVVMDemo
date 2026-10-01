@@ -145,7 +145,10 @@ side). Clues are `UClueDataAsset`s placed as `AClueActor`s; custom depth + stenc
 
 ## Testing
 
-Automation specs live in `Source/MVVMSample/Tests`. They cover view-model behaviour, component logic (via `Advance()`
+Automation specs live in their own module, `Source/MVVMSampleTests` (a DeveloperTool module: built for the editor and
+Development builds, never for Shipping), so the game module holds no test code. Tests use the game's exported API and
+explicit test-access friends (`FGothamInputTestAccess`). The dev aids that drive the game (flags, the perf harness,
+the menu-input script, `FGothamScript`) stay in the game module, compiled out of Shipping. The specs cover view-model behaviour, component logic (via `Advance()`
 so unregistered components can be driven), input/palette/settings rules and rebinding. Run them with
 `Scripts/run_tests.py` (exit code reflects failures). It runs two passes: the editor pass (headless) and a game pass
 for `Gotham.Functional.*`, latent tests that need the running game, such as the menu input rules (focus,
