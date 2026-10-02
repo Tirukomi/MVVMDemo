@@ -4,6 +4,7 @@
 
 #include "UI/Slate/MvsWheelTypes.h"
 #include "UI/Slate/SComboMeter.h"
+#include "UI/Slate/SThreatIndicatorLayer.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -52,6 +53,30 @@ bool FMvsComboMeterTest::RunTest(const FString& Parameters)
 	TestEqual("half lights five", SComboMeter::GetLitSegments(0.5f, 10), 5);
 	TestEqual("a sliver still lights one segment", SComboMeter::GetLitSegments(0.01f, 10), 1);
 	TestEqual("over-range is clamped", SComboMeter::GetLitSegments(3.f, 10), 10);
+	return true;
+}
+
+// Second review 29: a world overlay repaints only when its items changed or it animates, not every frame while active.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsWorldOverlayRepaintTest, "Mvs.Slate.WorldOverlay.Repaint", MvsSlateTests::Flags)
+bool FMvsWorldOverlayRepaintTest::RunTest(const FString& Parameters)
+{
+	TSharedRef<SThreatIndicatorLayer> Layer = SNew(SThreatIndicatorLayer);
+	FMvsThreatIndicator Thug;
+	Thug.bProjected = true;
+	Thug.Screen = FVector2D(400.0, 300.0);
+	Layer->SetProvider([&Thug](TArray<FMvsThreatIndicator>& Out) { Out.Add(Thug); });
+
+	TestTrue("a new item repaints", Layer->Refresh(1.0));
+	TestFalse("the same item next frame does not", Layer->Refresh(1.1));
+	Thug.Screen.X += 3.0;
+	TestTrue("a moved item repaints", Layer->Refresh(1.2));
+	TestFalse("and is still next frame", Layer->Refresh(1.3));
+
+	Thug.bWarning = true;
+	TestTrue("a warning repaints", Layer->Refresh(1.4));
+	TestTrue("and keeps repainting while it pulses", Layer->Refresh(1.5));
+	Layer->SetReducedMotion(true);
+	TestFalse("under reduced motion a warning does not pulse, so it does not repaint unchanged", Layer->Refresh(1.6));
 	return true;
 }
 

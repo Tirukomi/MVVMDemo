@@ -121,6 +121,14 @@ left is mostly four things:
     settings in the asset (an evidence Style and Color, two paddings).
   - Checked with G1 (incremental), G2 (64), G4, G6 and G7, and one harness session instead of G5 (pause-quit 0.073 ms of
     UI, budget 0.15 ms). ADR 0008 has the cost and benefit notes.
+- **S7 done** (findings 23 to 26, 29; numbers in `Docs/Performance.md`, "Second review S7"):
+  - Case file: the scrolling cost is the engine tile view re-adding every visible tile each frame the offset moves
+    (0.55 ms scrolling, 0.13 ms still). Tiles are now one widget each (`SClueTile`) and not hit-testable inside, which
+    cut it from about 0.60 to 0.55 ms, pixel-identical. The 0.3 ms target needs a custom grid instead of `UTileView`:
+    left open as a decision.
+  - World overlays repaint only when their items change or they animate [29], with a test.
+  - Findings 24 and 25 do not show in the capture, so they are not done; 26 was out of date (the components already
+    stop ticking when idle).
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured

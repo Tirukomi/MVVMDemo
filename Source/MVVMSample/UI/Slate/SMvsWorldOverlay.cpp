@@ -25,8 +25,17 @@ void SMvsWorldOverlayBase::SetActive(bool bInActive)
 
 EActiveTimerReturnType SMvsWorldOverlayBase::OnRefreshTimer(double InCurrentTime, float InDeltaTime)
 {
-	RefreshTime = InCurrentTime;
-	RefreshItems();
-	Invalidate(EInvalidateWidgetReason::Paint);
+	Refresh(InCurrentTime);
 	return EActiveTimerReturnType::Continue;
+}
+
+bool SMvsWorldOverlayBase::Refresh(double InCurrentTime)
+{
+	RefreshTime = InCurrentTime;
+	const bool bRepaint = RefreshItems() || IsAnimating();
+	if (bRepaint)
+	{
+		Invalidate(EInvalidateWidgetReason::Paint);
+	}
+	return bRepaint;
 }

@@ -69,9 +69,10 @@ void UClueListViewModel::SetEntries(TArray<TObjectPtr<UClueEntryViewModel>> InEn
 	Entries = MoveTemp(InEntries);
 	// Entries may arrive already discovered (rebinding after progress), so recount rather than assume zero.
 	DiscoveredCount = 0;
-	for (const UClueEntryViewModel* Entry : Entries)
+	for (int32 i = 0; i < Entries.Num(); ++i)
 	{
-		DiscoveredCount += Entry->GetIsDiscovered() ? 1 : 0;
+		Entries[i]->SetListIndex(i);
+		DiscoveredCount += Entries[i]->GetIsDiscovered() ? 1 : 0;
 	}
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Entries);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(DiscoveredCount);

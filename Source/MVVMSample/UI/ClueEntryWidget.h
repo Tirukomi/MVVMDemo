@@ -6,12 +6,29 @@
 #include "Blueprint/IUserObjectListEntry.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TileView.h"
+#include "Components/Widget.h"
 #include "ClueEntryWidget.generated.h"
 
 class UClueEntryViewModel;
-class UMvsPanel;
-class UImage;
-class UTextBlock;
+struct FMvsTheme;
+class SClueTile;
+
+/** The UMG side of SClueTile: one widget for a whole case-file tile. */
+UCLASS()
+class MVVMSAMPLE_API UMvsClueTile : public UWidget
+{
+	GENERATED_BODY()
+
+public:
+	SClueTile* GetTile() const { return Tile.Get(); }
+	virtual void ReleaseSlateResources(bool bReleaseChildren) override;
+
+protected:
+	virtual TSharedRef<SWidget> RebuildWidget() override;
+
+private:
+	TSharedPtr<SClueTile> Tile;
+};
 
 /**
  * One evidence-board tile: a thumbnail with its case number and title. The tile view pools these: it creates only
@@ -39,7 +56,7 @@ protected:
 private:
 	void Bind(UClueEntryViewModel* InViewModel);
 	void Refresh();
-	void ApplySelection();
+	void ApplySelection(const FMvsTheme& Theme);
 	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { Refresh(); }
 
 	bool bSelected = false;
@@ -48,19 +65,10 @@ private:
 	TObjectPtr<UClueEntryViewModel> ViewModel;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UMvsPanel> Frame;
+	TObjectPtr<UMvsClueTile> Tile;
 
-	UPROPERTY(Transient)
-	TObjectPtr<UImage> Thumbnail;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UTextBlock> UnknownMark;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UTextBlock> CaseNumber;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UTextBlock> TitleText;
+	/** The title as last set, so an unchanged title is not upper-cased again on every rebind. */
+	FText ShownTitle;
 };
 
 /** Tile view whose entry class is set from code (no designer asset to point at it). */

@@ -17,6 +17,13 @@ struct FMvsThreatIndicator
 	/** Warning progress 0..1 (the counter window closing). */
 	float Progress = 0.f;
 	float Opacity = 1.f;
+
+	bool operator==(const FMvsThreatIndicator& Other) const
+	{
+		return bProjected == Other.bProjected && bWarning == Other.bWarning && Screen.Equals(Other.Screen, 0.01)
+			&& ViewDirection.Equals(Other.ViewDirection, 1e-4) && FMath::IsNearlyEqual(Progress, Other.Progress)
+			&& FMath::IsNearlyEqual(Opacity, Other.Opacity);
+	}
 };
 
 /**
@@ -37,6 +44,8 @@ public:
 	void SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText);
 	void SetKeyLabel(const FText& InLabel) { KeyLabel = InLabel; }
 	void SetReducedMotion(bool bInReduced) { bReducedMotion = bInReduced; }
+	/** A warning's strokes and arrow pulse, unless motion is reduced. */
+	virtual bool IsAnimating() const override;
 
 	virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
 		FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;

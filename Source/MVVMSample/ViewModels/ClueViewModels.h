@@ -24,6 +24,9 @@ public:
 	/** A fake clue added by a dev aid to stress the list: never counts toward the objective. */
 	void SetIsDebug(bool bInDebug) { bIsDebug = bInDebug; }
 	bool IsDebug() const { return bIsDebug; }
+	/** Where the entry sits in its list (the case number), set by UClueListViewModel::SetEntries. */
+	int32 GetListIndex() const { return ListIndex; }
+	void SetListIndex(int32 InIndex) { ListIndex = InIndex; }
 
 	/** Starts streaming the thumbnail if it is not loaded yet. Safe to call repeatedly. */
 	void RequestThumbnail();
@@ -62,6 +65,7 @@ private:
 	FVector WorldLocation = FVector::ZeroVector;
 	bool bHasWorldLocation = false;
 	bool bIsDebug = false;
+	int32 ListIndex = INDEX_NONE;
 	FText Title;
 	FText Description;
 	TSoftObjectPtr<UTexture2D> ThumbnailPath;

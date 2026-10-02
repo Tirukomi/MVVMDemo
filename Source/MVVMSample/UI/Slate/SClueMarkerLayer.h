@@ -17,6 +17,15 @@ struct FMvsClueMarker
 	float Progress = 0.f;
 	FText Label;
 	FText Distance;
+
+	/** Same drawing; the texts are rebuilt every frame, so compared by what they read. */
+	bool operator==(const FMvsClueMarker& Other) const
+	{
+		return State == Other.State && Position.Equals(Other.Position, 0.01) && FMath::IsNearlyEqual(Scale, Other.Scale)
+			&& FMath::IsNearlyEqual(Opacity, Other.Opacity) && FMath::IsNearlyEqual(Progress, Other.Progress)
+			&& Label.ToString().Equals(Other.Label.ToString(), ESearchCase::CaseSensitive)
+			&& Distance.ToString().Equals(Other.Distance.ToString(), ESearchCase::CaseSensitive);
+	}
 };
 
 /** Marker sizing and fading by distance. Pure, so the rules are testable. */

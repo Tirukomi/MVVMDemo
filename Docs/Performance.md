@@ -221,6 +221,36 @@ failed twice on a different scenario each time (`case-file-505` and `hud-animati
 alternating in sign and order-balanced averages within +-0.05 ms. G5 now runs six rounds and judges the median of the
 three pair averages (one round of each order). S0's real shift (`settings`, pairs +0.14 and +0.19 ms) still fails it.
 
+## Second review S7: the case file and the world overlays (2026-10-02)
+
+Traces with `Scripts/ProfileUI.ps1`, single harness sessions for the split (game thread, UI cost = scenario minus its
+reference in the same run).
+
+**The case file (`case-file-505`).** Scrolling costs about 0.55 ms of UI; the same screen held still costs 0.13 ms.
+The difference is the engine's tile view: on every frame the offset moves it clears its panel and re-adds every
+visible tile (16 a frame here), so each tile's widgets are invalidated, prepassed and hit-test registered again. That
+happens at any scroll speed, so it is the per-frame cost of scrolling, not of this scenario's speed (it scrolls at up
+to 120 rows a second; a gamepad steps about 7). The tiles' own work is small: one rebind a frame, 0.009 ms.
+
+| Change | What it cut |
+|---|---|
+| Tile content hit-test invisible (the list row takes the input) | hit-test grid additions 70 to 6 a frame |
+| One widget per tile (`SClueTile`: frame and thumbnail painted, three text blocks laid out by hand), 11 Slate widgets to 6 | tile view tick 0.232 to 0.183 ms, removal invalidation 0.083 to 0.050 ms, widget ticks 39 to 23 a frame |
+| One theme per tile refresh, the case number from the entry instead of a search of the list | (inside the 0.009 ms) |
+
+Result: about 0.55 ms against 0.60 to 0.63 ms in recent gates; the `case-file` screenshot is pixel-identical. The
+0.3 ms target while scrolling is out of reach without replacing `UTileView` with a grid that moves its children
+instead of re-adding them (and re-doing its navigation and selection): a decision, not a fix, so it is left open.
+
+**World overlays (finding 29).** They repainted every frame while active. Now the active timer still fetches items
+each frame (cheap: projecting a few positions) but repaints only when the items differ or the layer animates (a
+warning's pulse, off under reduced motion); `Mvs.Slate.WorldOverlay.Repaint` checks it.
+
+**Not done, because the capture does not show them** (findings 24 to 26): the threat subsystem's per-frame arrays and
+the wheel's per-sector vertex arrays do not appear among the timers, and the gadget, combo and forensic components
+already switch their tick off when idle (none ticks in `hud-idle`; finding 26 was out of date). The combo component's
+0.039 ms a frame in combat is the combo meter's updates, which run through it, inside the 0.30 ms combat budget.
+
 ## Budgets
 
 | Budget | Target | Status |

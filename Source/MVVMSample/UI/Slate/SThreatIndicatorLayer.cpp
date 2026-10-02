@@ -36,6 +36,11 @@ FText SThreatIndicatorLayer::GetAccessibleSummary() const
 		: FText::Format(NSLOCTEXT("Mvs.Accessibility", "Threats", "{0} {0}|plural(one=enemy,other=enemies) nearby"), GetItems().Num());
 }
 
+bool SThreatIndicatorLayer::IsAnimating() const
+{
+	return !bReducedMotion && GetItems().ContainsByPredicate([](const FMvsThreatIndicator& Threat) { return Threat.bWarning; });
+}
+
 void SThreatIndicatorLayer::SetColors(const FLinearColor& InDanger, const FLinearColor& InIdle, const FLinearColor& InPanel, const FLinearColor& InText)
 {
 	Danger = InDanger;

@@ -21,7 +21,7 @@ namespace MvsWorldOverlayPrivate
 			const FWidgetStyle&, bool) const override { return LayerId; }
 
 	private:
-		virtual void RefreshItems() override {}
+		virtual bool RefreshItems() override { return false; }
 		virtual void ClearItems() override {}
 	};
 }

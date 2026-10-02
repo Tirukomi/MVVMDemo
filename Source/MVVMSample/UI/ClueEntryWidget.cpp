@@ -4,17 +4,10 @@
 #include "UI/Style/MvsStyle.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Components/Image.h"
-#include "Components/Overlay.h"
-#include "Components/OverlaySlot.h"
 #include "Components/SizeBox.h"
-#include "Components/TextBlock.h"
-#include "Components/VerticalBox.h"
-#include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
-#include "UI/Slate/SMvsPanel.h"
-#include "UI/Widgets/MvsPanel.h"
-#include "UI/Widgets/MvsText.h"
+#include "UI/Slate/SClueTile.h"
+#include "Widgets/Text/STextBlock.h"
 #include "ViewModels/ClueViewModels.h"
 #include "ViewModels/MvsMVVM.h"
 
@@ -28,6 +21,18 @@ FText MvsCaseNumber(int32 Index)
 	return FText::Format(LOCTEXT("CaseNumberFmt", "No. {0}"), FText::AsNumber(Index + 1, &Digits));
 }
 
+TSharedRef<SWidget> UMvsClueTile::RebuildWidget()
+{
+	Tile = SNew(SClueTile);
+	return Tile.ToSharedRef();
+}
+
+void UMvsClueTile::ReleaseSlateResources(bool bReleaseChildren)
+{
+	Super::ReleaseSlateResources(bReleaseChildren);
+	Tile.Reset();
+}
+
 TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
@@ -36,43 +41,22 @@ TSharedRef<SWidget> UClueEntryWidget::RebuildWidget()
 		USizeBox* Outer = WidgetTree->ConstructWidget<USizeBox>();
 		Outer->SetWidthOverride(TileWidth - 12.f);
 		Outer->SetHeightOverride(TileHeight - 12.f);
+		// The list row takes hover, clicks and selection; nothing inside the tile is a hit-test target. The tile view
+		// re-adds every visible tile on each frame of a scroll, so each hit-testable widget was churn (S7).
+		Outer->SetVisibility(ESlateVisibility::HitTestInvisible);
 		WidgetTree->RootWidget = Outer;
 
-		Frame = WidgetTree->ConstructWidget<UMvsPanel>();
-		Frame->SetPanelPadding(FMargin(7.f));
-		Frame->SetShape(10.f, EMvsChamfer::Opposite);
-		Outer->SetContent(Frame);
-
-		UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
-		Frame->SetContent(Column);
-
-		UOverlay* Picture = WidgetTree->ConstructWidget<UOverlay>();
-		UVerticalBoxSlot* PictureSlot = Column->AddChildToVerticalBox(Picture);
-		PictureSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-
-		Thumbnail = WidgetTree->ConstructWidget<UImage>();
-		UOverlaySlot* ThumbSlot = Picture->AddChildToOverlay(Thumbnail);
-		ThumbSlot->SetHorizontalAlignment(HAlign_Fill);
-		ThumbSlot->SetVerticalAlignment(VAlign_Fill);
-
-		UnknownMark = WidgetTree->ConstructWidget<UMvsText>();
-		UnknownMark->SetText(FText::FromString(TEXT("?")));
-		MvsStyle::SetTextStyle(UnknownMark, EMvsTextStyle::Display);
-		UOverlaySlot* MarkSlot = Picture->AddChildToOverlay(UnknownMark);
-		MarkSlot->SetHorizontalAlignment(HAlign_Center);
-		MarkSlot->SetVerticalAlignment(VAlign_Center);
-
-		CaseNumber = WidgetTree->ConstructWidget<UMvsText>();
-		MvsStyle::SetTextStyle(CaseNumber, EMvsTextStyle::Key);
-		UOverlaySlot* NumberSlot = Picture->AddChildToOverlay(CaseNumber);
-		NumberSlot->SetPadding(FMargin(5.f, 3.f));
-
-		TitleText = WidgetTree->ConstructWidget<UMvsText>();
-		MvsStyle::ApplyText(TitleText, EMvsTextStyle::Label, FLinearColor::White);
-		TitleText->SetClipping(EWidgetClipping::ClipToBounds);
-		Column->AddChildToVerticalBox(TitleText)->SetPadding(FMargin(1.f, 6.f, 0.f, 0.f));
+		// One widget for the frame, thumbnail and texts (SClueTile): it used to be six containers and three texts.
+		Tile = WidgetTree->ConstructWidget<UMvsClueTile>();
+		Outer->SetContent(Tile);
 	}
-	return Super::RebuildWidget();
+	TSharedRef<SWidget> Built = Super::RebuildWidget();
+	if (SClueTile* Slate = Tile ? Tile->GetTile() : nullptr)
+	{
+		Slate->GetMark().SetText(FText::FromString(TEXT("?")));
+	}
+	Refresh();
+	return Built;
 }
 
 void UClueEntryWidget::NativeOnListItemObjectSet(UObject* ListItemObject)
@@ -85,7 +69,7 @@ void UClueEntryWidget::NativeOnItemSelectionChanged(bool bIsSelected)
 {
 	IUserObjectListEntry::NativeOnItemSelectionChanged(bIsSelected);
 	bSelected = bIsSelected;
-	ApplySelection();
+	ApplySelection(MvsStyle::Theme(this));
 }
 
 void UClueEntryWidget::NativeConstruct()
@@ -132,18 +116,29 @@ void UClueEntryWidget::Bind(UClueEntryViewModel* InViewModel)
 
 void UClueEntryWidget::Refresh()
 {
-	if (!Frame || !ViewModel)
+	SClueTile* Slate = Tile ? Tile->GetTile() : nullptr;
+	if (!Slate || !ViewModel)
 	{
 		return;
 	}
-	using namespace MvsStyle;
+	// One theme per refresh (rebinding while scrolling runs this several times a frame), not one per colour.
+	const FMvsTheme Theme = MvsStyle::Theme(this);
 	const bool bDiscovered = ViewModel->GetIsDiscovered();
-	TitleText->SetText(ViewModel->GetDisplayTitle());
-	TitleText->SetColorAndOpacity(Token(this, bDiscovered ? EMvsColorToken::TextPrimary : EMvsColorToken::TextMuted));
 
-	const UListView* Owner = Cast<UListView>(GetOwningListView());
-	CaseNumber->SetText(Owner ? MvsCaseNumber(Owner->GetIndexForItem(ViewModel)) : FText::GetEmpty());
-	CaseNumber->SetColorAndOpacity(Token(this, EMvsColorToken::TextMuted));
+	// The title is a Label: capitals, as UMvsText shows that style (culture-aware, so only when it changed).
+	if (!ShownTitle.IdenticalTo(ViewModel->GetDisplayTitle()))
+	{
+		ShownTitle = ViewModel->GetDisplayTitle();
+		Slate->GetTitle().SetText(ShownTitle.ToUpper());
+	}
+	Slate->GetTitle().SetFont(Theme.Font(EMvsTextStyle::Label));
+	Slate->GetTitle().SetColorAndOpacity(Theme.Color(bDiscovered ? EMvsColorToken::TextPrimary : EMvsColorToken::TextMuted));
+
+	// The entry knows its place in the list; asking the list searched all of it on every rebind.
+	const int32 Index = ViewModel->GetListIndex();
+	Slate->GetNumber().SetText(Index != INDEX_NONE ? MvsCaseNumber(Index) : FText::GetEmpty());
+	Slate->GetNumber().SetFont(Theme.Font(EMvsTextStyle::Key));
+	Slate->GetNumber().SetColorAndOpacity(Theme.Color(EMvsColorToken::TextMuted));
 
 	// Thumbnails only load for discovered clues, and only once a tile that shows them is on screen.
 	if (bDiscovered)
@@ -153,31 +148,40 @@ void UClueEntryWidget::Refresh()
 	UTexture2D* Texture = bDiscovered ? ViewModel->GetThumbnail() : nullptr;
 	if (Texture)
 	{
-		Thumbnail->SetBrushFromTexture(Texture, false);
-		Thumbnail->SetColorAndOpacity(FLinearColor::White);
+		FSlateBrush Brush;
+		Brush.SetResourceObject(Texture);
+		Brush.ImageSize = FVector2D(Texture->GetSizeX(), Texture->GetSizeY());
+		Slate->SetThumbnail(Brush, FLinearColor::White);
 	}
 	else
 	{
-		Thumbnail->SetBrush(FSlateBrush());
-		Thumbnail->SetColorAndOpacity(Token(this, EMvsColorToken::PanelEdge, 0.12f));
+		Slate->SetThumbnail(FSlateBrush(), Theme.Color(EMvsColorToken::PanelEdge, 0.12f));
 	}
-	UnknownMark->SetVisibility(bDiscovered ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
-	UnknownMark->SetColorAndOpacity(Token(this, EMvsColorToken::PanelEdge, 0.5f));
-	ApplySelection();
+	Slate->GetMark().SetVisibility(bDiscovered ? EVisibility::Collapsed : EVisibility::HitTestInvisible);
+	Slate->GetMark().SetFont(Theme.Font(EMvsTextStyle::Display));
+	Slate->GetMark().SetColorAndOpacity(Theme.Color(EMvsColorToken::PanelEdge, 0.5f));
+	ApplySelection(Theme);
 }
 
-void UClueEntryWidget::ApplySelection()
+void UClueEntryWidget::ApplySelection(const FMvsTheme& Theme)
 {
-	if (!Frame)
+	SClueTile* Slate = Tile ? Tile->GetTile() : nullptr;
+	if (!Slate)
 	{
 		return;
 	}
-	using namespace MvsStyle;
-	const FLinearColor Accent = Token(this, EMvsColorToken::Accent);
-	Frame->SetColors(Token(this, EMvsColorToken::Panel, PanelAlpha(this)),
-		bSelected ? Accent : Token(this, EMvsColorToken::PanelEdge, 0.45f), bSelected ? 1.5f : 1.f);
-	Frame->SetAccent(Accent, bSelected ? 3.f : 0.f);
-	Frame->SetGlow(Token(this, EMvsColorToken::Accent, 0.3f), bSelected ? 5.f : 0.f);
+	const FLinearColor Accent = Theme.Color(EMvsColorToken::Accent);
+	FMvsPanelLook Look;
+	Look.Corner = 10.f;
+	Look.ChamferMask = EMvsChamfer::Opposite;
+	Look.Fill = Theme.Color(EMvsColorToken::Panel, Theme.PanelAlpha());
+	Look.Edge = bSelected ? Accent : Theme.Color(EMvsColorToken::PanelEdge, 0.45f);
+	Look.EdgeThickness = bSelected ? 1.5f : 1.f;
+	Look.Accent = Accent;
+	Look.AccentWidth = bSelected ? 3.f : 0.f;
+	Look.Glow = Theme.Color(EMvsColorToken::Accent, 0.3f);
+	Look.GlowSize = bSelected ? 5.f : 0.f;
+	Slate->SetLook(Look);
 }
 
 #undef LOCTEXT_NAMESPACE
