@@ -109,19 +109,18 @@ left is mostly four things:
     the focused row's view model. `Mvs.Settings.Rows` replaces `Mvs.Settings.Revision`: a step notifies only the row it
     touched, and only the fields that changed. 64 tests.
   - `UControlsViewModel` keeps its own `Revision`: finding 14 is about settings.
-- **S6 in progress** (finding 11): the C++ side is ready, the asset is not built yet.
-  - Split chosen for pixel identity: the designer authors the pause status panel's content (a Widget Blueprint's tree
-    goes into the code-built panel); the frame, menu and panel stay code-built. Rebuilding the whole frame by hand in
-    the designer would make "pixel-identical" a matter of luck.
-  - `UMvsText` has designer settings (Mvs: Style, Color, opacity), so a designer's text styles itself like a code-built
-    one; `UClueListViewModel::ProgressText` ("2 / 5", the existing translation key) binds without a conversion
-    function; the captions are `BindWidgetOptional` and filled from the game's translated keys, because a localized
-    text typed into a Widget Blueprint gets a key no translation has.
-  - Tests: `Mvs.Functional.Pause` checks the status shows the objective and evidence count for whichever pause class is
-    configured, and opens a C++ stand-in for a designer tree (`UMvsTestDesignerPause`) to check the reparenting and
-    the designer style settings.
-  - The asset steps are in `Docs/DesignerGuide.md`, "Build a screen's content in the widget designer". After the asset:
-    the gate (screenshots `pause` and `pause-quit` pixel-identical), then ADR 0008's cost and benefit notes.
+- **S6 done** (finding 11):
+  - `WBP_PauseMenu` (built in the editor by the project owner) authors the pause status panel's content and fills it
+    with MVVM View Bindings through `UMvsViewModelResolver`; it is the configured `PauseMenuClass`. The frame, menu and
+    panel stay code-built, so the screenshots stay pixel-identical: `pause` and `pause-quit` 0.00%.
+  - C++ side: `UMvsText` designer settings (Mvs: Style, Color, opacity), `UClueListViewModel::ProgressText`, the pause
+    screen takes a designer tree as its status content, `BindWidgetOptional` captions filled from the game's
+    translation keys, and `UMvsTestDesignerPause` for the tests. Steps in `Docs/DesignerGuide.md`.
+  - The gate found three things: the perf worktree did not see the untracked asset (commit before G5), the screenshot
+    dev aid opened pause before the Widget Blueprint had preloaded (it now finishes the preload first), and two Details
+    settings in the asset (an evidence Style and Color, two paddings).
+  - Checked with G1 (incremental), G2 (64), G4, G6 and G7, and one harness session instead of G5 (pause-quit 0.073 ms of
+    UI, budget 0.15 ms). ADR 0008 has the cost and benefit notes.
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured

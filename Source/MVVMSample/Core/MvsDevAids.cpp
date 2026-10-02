@@ -187,32 +187,29 @@ namespace MvsDevAidsPrivate
 	/** -MvsOpenPause / -Quit / -Wheel / -Settings / -Controls. */
 	void OpenScreens(const FFlags& F, UMvsUISubsystem* UI, FTimeline& Timeline)
 	{
-		// At the timeline's start, which waits for the screen classes to preload: a designer's Widget Blueprint is not
-		// in memory at load the way a C++ class is, and opening it on the first frame loaded it on the spot (S6's gate).
-		Timeline.After(0.f, [F, WeakUI = TWeakObjectPtr<UMvsUISubsystem>(UI)]
+		// On the first frame, as the screenshots were taken (pause freezes the world behind it at that moment). A designer's
+		// Widget Blueprint is not in memory at load the way a C++ class is, so finish the screens' preload first instead
+		// of loading one on the spot (S6's gate); a dev-only wait.
+		if ((F.bPause || F.bWheel || F.bSettings || F.bControls) && !UI->AreScreensLoaded())
 		{
-			UMvsUISubsystem* Open = WeakUI.Get();
-			if (!Open)
-			{
-				return;
-			}
-			if (F.bPause)
-			{
-				Open->HandleShortcut(TEXT("Pause"));
-			}
-			if (F.bWheel)
-			{
-				Open->HandleShortcut(TEXT("GadgetWheel"));
-			}
-			if (F.bSettings)
-			{
-				Open->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->SettingsScreenClass);
-			}
-			if (F.bControls)
-			{
-				Open->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->ControlsScreenClass);
-			}
-		});
+			FlushAsyncLoading();
+		}
+		if (F.bPause)
+		{
+			UI->HandleShortcut(TEXT("Pause"));
+		}
+		if (F.bWheel)
+		{
+			UI->HandleShortcut(TEXT("GadgetWheel"));
+		}
+		if (F.bSettings)
+		{
+			UI->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->SettingsScreenClass);
+		}
+		if (F.bControls)
+		{
+			UI->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->ControlsScreenClass);
+		}
 		if (F.bQuit)
 		{
 			// After the pause menu's intro, the way a player would reach it.
