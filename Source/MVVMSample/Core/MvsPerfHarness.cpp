@@ -98,6 +98,8 @@ namespace
 		 *  the gate can prove it catches a real regression of a known size. */
 		FString InjectScenario;
 		double InjectMs = 0.0;
+		/** Whether this scenario's warm-up has collected garbage yet. */
+		bool bCollected = false;
 
 		static double UsedMB() { return FPlatformMemory::GetStats().UsedPhysical / (1024.0 * 1024.0); }
 
@@ -141,6 +143,7 @@ namespace
 		void StartScenario(int32 InIndex)
 		{
 			Index = InIndex;
+			bCollected = false;
 			FrameMs.Reset();
 			GameMsSum = 0.0;
 			GpuMsSum = 0.0;
@@ -201,6 +204,14 @@ namespace
 			{
 				const double Until = FPlatformTime::Seconds() + InjectMs / 1000.0;
 				while (FPlatformTime::Seconds() < Until) {}
+			}
+			// Halfway through the warm-up, collect what the scenario before left behind (its screen has finished closing by
+			// then), so no scenario pays for another's garbage: a second case-file scenario moved a collection from combat
+			// into settings, +0.1 ms on one and -0.1 ms on the other, with neither screen changed.
+			if (!bCollected && Elapsed > WarmupSeconds * 0.5f)
+			{
+				bCollected = true;
+				CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
 			}
 			if (Elapsed > WarmupSeconds)
 			{
