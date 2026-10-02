@@ -134,12 +134,13 @@ left is mostly four things:
   and every path to them is updated; no other stale paths found in the docs, source or scripts.
 
 **Open after the second review:**
-- The case file scrolls at about 0.55 ms of UI against a 0.3 ms target (budget 0.75 ms): reaching the target needs a
-  grid that moves its tiles instead of `UTileView` re-adding them every frame (S7). A decision, not a defect.
+- (Decided after S8) The case file keeps `UTileView`: continuous scrolling costs about 0.55 ms (budget 0.75 ms), and
+  browsing it the way a player does costs about 0.06 ms, measured by the new `case-file-browse` scenario (budget
+  0.15 ms). A custom grid for the 0.3 ms target is not worth re-doing the tile view's input handling.
 - (Resolved after S8) The pause-quit user-widget count "61 against 48" was a wrong comparison: 48 came from the S6 gate
   runs where pause never opened. Every valid run shows 61, and both pause classes give the same widgets class for class.
-- Navigation in a windowed game searches at an offset equal to the window's position (finding 4, seen in R8): not
-  reproduced in fullscreen.
+- (Closed after S8) Navigation in a windowed game searching at an offset equal to the window's position (finding 4):
+  a known engine issue in windowed mode, according to the project owner; fullscreen is not affected. Not verified here.
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured

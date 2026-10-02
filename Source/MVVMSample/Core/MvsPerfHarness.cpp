@@ -327,13 +327,40 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); } },
 		Showing(EMvsUILayer::GameMenu, UGadgetWheelScreen::StaticClass()) });
 
-	// 5. Case file with 505 clues, scrolled continuously (worst case for the pooled list).
-	Run->Scenarios.Add({ TEXT("case-file-505"),
-		[WeakUI, WeakVMs]()
+	// The case file with 505 clues (the level's five plus 500 fake ones), for the two case-file scenarios.
+	const TFunction<void()> OpenCaseFile = [WeakUI, WeakVMs]()
+	{
+		if (WeakVMs.IsValid()) { WeakVMs->AddDebugClues(500); }
+		// Pushed, not toggled: right after the other case-file scenario, its screen is still on the stack for its outro,
+		// and the key would close that instead of opening one (as with pause-quit, found by the Valid check).
+		if (WeakUI.IsValid()) { WeakUI->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->ClueLogClass); }
+	};
+	const TFunction<void()> CloseCaseFile = [WeakUI, WeakVMs]()
+	{
+		if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); }
+		// Later scenarios (and the HUD's objective) must see the level's real clues again, not 505.
+		if (UClueListViewModel* Clues = WeakVMs.IsValid() ? WeakVMs->GetClues() : nullptr)
 		{
-			if (WeakVMs.IsValid()) { WeakVMs->AddDebugClues(500); }
-			if (WeakUI.IsValid()) { WeakUI->HandleShortcut(TEXT("ClueLog")); }
-		},
+			Clues->SetEntries(Clues->GetEntries().FilterByPredicate([](const UClueEntryViewModel* Entry) { return Entry && !Entry->IsDebug(); }));
+		}
+	};
+	const TFunction<bool()> CaseFileFull = [IsCaseFile = Showing(EMvsUILayer::Menu, UClueLogScreen::StaticClass())]()
+	{
+		// The case file, with the 505 entries and tiles on screen.
+		for (TObjectIterator<UMvsClueTileView> It; It && IsCaseFile(); ++It)
+		{
+			if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->GetNumItems() >= 500 && It->GetDisplayedEntryWidgets().Num() > 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	};
+
+	// 5. Case file scrolled continuously, at up to 120 rows a second: the worst case for the pooled list. The tile view
+	// re-adds every visible tile on each frame its offset moves, so this is the per-frame cost of any scrolling.
+	Run->Scenarios.Add({ TEXT("case-file-505"),
+		OpenCaseFile,
 		[](float Seconds)
 		{
 			// Scroll back and forth across the whole board (offset is in rows of 4 tiles); the pool must keep rebinding tiles.
@@ -342,27 +369,34 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 				It->SetScrollOffset(62.f + 60.f * FMath::Sin(Seconds * 2.f));
 			}
 		},
-		[WeakUI, WeakVMs]()
+		CloseCaseFile,
+		CaseFileFull });
+
+	// 5b. The same case file browsed the way a player does: one row every 0.15 s (a held d-pad's repeat), down 30 rows
+	// and back, through the list's own navigation (it selects the tile and scrolls it into view). Most frames are still
+	// between steps, so this is what browsing costs on average, next to the worst case above.
+	Run->Scenarios.Add({ TEXT("case-file-browse"),
+		OpenCaseFile,
+		[LastRow = MakeShared<int32>(INDEX_NONE)](float Seconds)
 		{
-			if (WeakUI.IsValid()) { WeakUI->PopTopScreen(); }
-			// Later scenarios (and the HUD's objective) must see the level's real clues again, not 505.
-			if (UClueListViewModel* Clues = WeakVMs.IsValid() ? WeakVMs->GetClues() : nullptr)
+			constexpr int32 Rows = 30;
+			const int32 Step = FMath::FloorToInt(Seconds / 0.15f) % (2 * Rows);
+			const int32 Row = Step < Rows ? Step : 2 * Rows - Step;
+			if (Row == *LastRow)
 			{
-				Clues->SetEntries(Clues->GetEntries().FilterByPredicate([](const UClueEntryViewModel* Entry) { return Entry && !Entry->IsDebug(); }));
+				return;
 			}
-		},
-		[IsCaseFile = Showing(EMvsUILayer::Menu, UClueLogScreen::StaticClass())]()
-		{
-			// The case file, with the 505 entries and tiles on screen.
-			for (TObjectIterator<UMvsClueTileView> It; It && IsCaseFile(); ++It)
+			*LastRow = Row;
+			for (TObjectIterator<UMvsClueTileView> It; It; ++It)
 			{
-				if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->GetNumItems() >= 500 && It->GetDisplayedEntryWidgets().Num() > 0)
+				if (!It->HasAnyFlags(RF_ClassDefaultObject))
 				{
-					return true;
+					It->NavigateToIndex(Row * 4);
 				}
 			}
-			return false;
-		} });
+		},
+		CloseCaseFile,
+		CaseFileFull });
 
 	// 6. Settings screen open (rows, scroll box, buttons).
 	Run->Scenarios.Add({ TEXT("settings"),

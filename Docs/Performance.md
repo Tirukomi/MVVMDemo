@@ -238,9 +238,15 @@ to 120 rows a second; a gamepad steps about 7). The tiles' own work is small: on
 | One widget per tile (`SClueTile`: frame and thumbnail painted, three text blocks laid out by hand), 11 Slate widgets to 6 | tile view tick 0.232 to 0.183 ms, removal invalidation 0.083 to 0.050 ms, widget ticks 39 to 23 a frame |
 | One theme per tile refresh, the case number from the entry instead of a search of the list | (inside the 0.009 ms) |
 
-Result: about 0.55 ms against 0.60 to 0.63 ms in recent gates; the `case-file` screenshot is pixel-identical. The
-0.3 ms target while scrolling is out of reach without replacing `UTileView` with a grid that moves its children
-instead of re-adding them (and re-doing its navigation and selection): a decision, not a fix, so it is left open.
+Result: about 0.55 ms against 0.60 to 0.63 ms in recent gates; the `case-file` screenshot is pixel-identical.
+
+**Decision (after S8): the case file keeps `UTileView`, and its budget is the bar, not 0.3 ms.** Reaching 0.3 ms while
+scrolling would need a grid that moves its tiles instead of re-adding them, and re-doing the tile view's navigation,
+selection, mouse and scrollbar handling. The cost is paid only on frames where the offset moves, so a second scenario
+measures normal use: `case-file-browse` steps one row every 0.15 s (a held d-pad's repeat), down 30 rows and back,
+through the list's own navigation, which snaps the row into view. One session: 0.06 ms of UI against 0.55 ms for the
+continuous scroll; in the trace the tile view's tick is 0.026 ms a frame against 0.19 ms, with 0.6 tile removals a
+frame against 16. Budgets: `case-file-505` 0.75 ms (the worst case), `case-file-browse` 0.15 ms (normal use).
 
 **World overlays (finding 29).** They repainted every frame while active. Now the active timer still fetches items
 each frame (cheap: projecting a few positions) but repaints only when the items differ or the layer animates (a
@@ -255,7 +261,7 @@ already switch their tick off when idle (none ticks in `hud-idle`; finding 26 wa
 
 | Budget | Target | Status |
 |---|---|---|
-| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met except the case file: +0.55 to +0.65 ms while scrolling 505 clues continuously (measured since S0; before that the scenario never opened it). Others up to +0.22 ms (Forensic Mode). Gated per scenario by `Scripts/PerfBudgets.json` |
+| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met in use: browsing the 505-clue case file costs about 0.06 ms. Scrolling it continuously costs about 0.55 ms, the tile view re-adding every visible tile each frame the offset moves (accepted after S8, budget 0.75 ms; see "Second review S7"). Others up to +0.23 ms (combat). Gated per scenario by `Scripts/PerfBudgets.json` |
 | Ticking widgets while idle | 0 | Met for the HUD and menus; the case file's tiles tick (the list view requires it) |
 | Row widgets for any list | bounded by viewport, not item count | Met (case-file tile view: 20 tiles for 205 clues) |
 | Widget objects, all screens | no unbounded growth | Steady: 9 (HUD) to 38 (tabbed settings) |

@@ -8,7 +8,7 @@
 #
 # Output in Saved/Profiling: the .utrace (open it in Unreal Insights for the timeline), stats_<scenario>.csv.
 # Tracing costs time itself, so read the numbers relative to no-ui from the same trace, not against G5's.
-param([string[]]$Scenarios = @("hud-idle", "hud-animating", "forensic", "gadget-wheel", "case-file-505", "settings", "pause-quit", "combat"),
+param([string[]]$Scenarios = @("hud-idle", "hud-animating", "forensic", "gadget-wheel", "case-file-505", "case-file-browse", "settings", "pause-quit", "combat"),
       [switch]$All, [int]$Seconds = 8)
 
 . (Join-Path $PSScriptRoot "Paths.ps1")
