@@ -10,7 +10,7 @@
 #include "MvsOptionRow.generated.h"
 
 class UMvsSelectorDecor;
-class USettingsViewModel;
+class USettingRowViewModel;
 class UTextBlock;
 
 /**
@@ -31,8 +31,10 @@ public:
 	/** The click Enter would make: steps the value forward (IMvsAcceptable). */
 	virtual void Accept() override { HandleButtonClicked(); }
 
-	void Setup(EMvsSetting InSetting, USettingsViewModel* InViewModel);
-	EMvsSetting GetSetting() const { return Setting; }
+	/** Shows one option and edits it through its row view model (each of its fields bound on its own). */
+	void Setup(USettingRowViewModel* InRow);
+	EMvsSetting GetSetting() const;
+	USettingRowViewModel* GetRow() const { return Row; }
 
 protected:
 	virtual bool Initialize() override;
@@ -51,14 +53,13 @@ private:
 	void ApplyState();
 	void OnFieldChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId) { Refresh(); }
 
-	EMvsSetting Setting = EMvsSetting::Language;
 	bool bFocused = false;
 	/** Set by a mouse press, read by the click it produces: which way the clicked half of the selector steps. */
 	TOptional<int32> PointerDirection;
 	FMvsSettingsListener SettingsListener;
 
 	UPROPERTY(Transient)
-	TObjectPtr<USettingsViewModel> ViewModel;
+	TObjectPtr<USettingRowViewModel> Row;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> LabelText;

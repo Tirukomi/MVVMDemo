@@ -8,6 +8,7 @@
 #include "Input/MvsBindings.h"
 #include "Input/MvsBindingStore.h"
 #include "ViewModels/ControlsViewModel.h"
+#include "ViewModels/SettingRowViewModel.h"
 #include "ViewModels/SettingsViewModel.h"
 #include "ViewModels/SubtitleViewModel.h"
 
@@ -192,13 +193,15 @@ bool FMvsSettingsModelTest::RunTest(const FString& Parameters)
 	TestTrue("and counts it as unapplied", VM->GetIsDirty());
 	TestEqual("syncing previews nothing back", Previews, 0);
 
-	const int32 RevisionBefore = VM->GetRevision();
+	int32 Retexts = 0;
+	VM->GetRow(EMvsSetting::ReducedMotion)->AddFieldValueChangedDelegate(USettingRowViewModel::FFieldNotificationClassDescriptor::Label,
+		INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateLambda([&Retexts](UObject*, UE::FieldNotification::FFieldId) { ++Retexts; }));
 	VM->Sync(Model->GetSaved(), Model->GetSettings());
-	TestEqual("syncing the same values changes nothing on screen", VM->GetRevision(), RevisionBefore);
+	TestEqual("syncing the same values changes nothing on screen", Retexts, 0);
 	FMvsSettingsData OtherLanguage = Model->GetSettings();
 	OtherLanguage.Language = OtherLanguage.Language == TEXT("de") ? TEXT("en") : TEXT("de");
 	VM->Sync(Model->GetSaved(), OtherLanguage);
-	TestTrue("a language change re-texts the view", VM->GetRevision() > RevisionBefore);
+	TestEqual("a language change re-texts the view", Retexts, 1);
 
 	Model->Revert();
 	TestFalse("revert goes back to the saved settings", Model->GetSettings().bHighContrast);

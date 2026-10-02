@@ -16,11 +16,7 @@
 #include "UI/Widgets/MvsSelectorDecor.h"
 #include "UI/Widgets/MvsText.h"
 #include "ViewModels/MvsMVVM.h"
-#include "ViewModels/SettingsViewModel.h"
-
-namespace
-{
-}
+#include "ViewModels/SettingRowViewModel.h"
 
 UMvsOptionRow::UMvsOptionRow(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -41,17 +37,17 @@ bool UMvsOptionRow::Initialize()
 		Hit->SetPadding(MvsMetrics::OptionRowPadding);
 		WidgetTree->RootWidget = Hit;
 
-		UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
-		Hit->SetContent(Row);
+		UHorizontalBox* Line = WidgetTree->ConstructWidget<UHorizontalBox>();
+		Hit->SetContent(Line);
 
 		LabelText = WidgetTree->ConstructWidget<UMvsText>();
 		MvsStyle::SetTextStyle(LabelText, EMvsTextStyle::BodyStrong);
 		LabelText->SetAutoWrapText(true);
-		MvsLayout::Add(Row, LabelText).Fill().VCenter().Pad(0.f, 0.f, 16.f, 0.f);
+		MvsLayout::Add(Line, LabelText).Fill().VCenter().Pad(0.f, 0.f, 16.f, 0.f);
 
 		USizeBox* SelectorBox = WidgetTree->ConstructWidget<USizeBox>();
 		SelectorBox->SetWidthOverride(MvsMetrics::SelectorWidth);
-		MvsLayout::Add(Row, SelectorBox).VCenter();
+		MvsLayout::Add(Line, SelectorBox).VCenter();
 
 		UOverlay* Selector = WidgetTree->ConstructWidget<UOverlay>();
 		SelectorBox->SetContent(Selector);
@@ -66,14 +62,19 @@ bool UMvsOptionRow::Initialize()
 	return Super::Initialize();
 }
 
-void UMvsOptionRow::Setup(EMvsSetting InSetting, USettingsViewModel* InViewModel)
+void UMvsOptionRow::Setup(USettingRowViewModel* InRow)
 {
-	MvsMVVM::Unbind(ViewModel, this);
-	Setting = InSetting;
-	ViewModel = InViewModel;
-	// Any value change, or a language switch, bumps Revision and refreshes the row.
-	MvsMVVM::Bind(ViewModel, this, &UMvsOptionRow::OnFieldChanged, { USettingsViewModel::FFieldNotificationClassDescriptor::Revision });
+	MvsMVVM::Unbind(Row, this);
+	Row = InRow;
+	// Only this option's fields: stepping another option, or applying, leaves this row alone.
+	using FRowVM = USettingRowViewModel::FFieldNotificationClassDescriptor;
+	MvsMVVM::Bind(Row, this, &UMvsOptionRow::OnFieldChanged, { FRowVM::Label, FRowVM::ValueText, FRowVM::ChoiceIndex, FRowVM::ChoiceCount });
 	Refresh();
+}
+
+EMvsSetting UMvsOptionRow::GetSetting() const
+{
+	return Row ? Row->GetSetting() : EMvsSetting::Count;
 }
 
 void UMvsOptionRow::NativeConstruct()
@@ -85,14 +86,13 @@ void UMvsOptionRow::NativeConstruct()
 	// One sentence for the row, read when it gets focus and again as its value changes: "UI scale: 100%".
 	MvsAccessibility::SetText(MvsAccessibility::FindButton(*this), TAttribute<FText>::CreateWeakLambda(this, [this]()
 	{
-		return ViewModel ? FText::Format(NSLOCTEXT("Mvs.Accessibility", "SettingRow", "{0}: {1}"),
-			USettingsViewModel::GetLabel(Setting), ViewModel->GetValueText(Setting)) : FText::GetEmpty();
+		return Row ? FText::Format(NSLOCTEXT("Mvs.Accessibility", "SettingRow", "{0}: {1}"), Row->GetLabel(), Row->GetValueText()) : FText::GetEmpty();
 	}));
 }
 
 void UMvsOptionRow::NativeDestruct()
 {
-	MvsMVVM::Unbind(ViewModel, this);
+	MvsMVVM::Unbind(Row, this);
 	SettingsListener.Reset();
 	Super::NativeDestruct();
 }
@@ -156,25 +156,21 @@ void UMvsOptionRow::HandleFocusLost()
 
 void UMvsOptionRow::Step(int32 Direction)
 {
-	if (ViewModel)
+	if (Row)
 	{
-		ViewModel->Cycle(Setting, Direction);
+		Row->Step(Direction);
 	}
 }
 
 void UMvsOptionRow::Refresh()
 {
-	if (!ViewModel || !LabelText)
+	if (!Row || !LabelText)
 	{
 		return;
 	}
-	LabelText->SetText(USettingsViewModel::GetLabel(Setting));
-	ValueText->SetText(ViewModel->GetValueText(Setting));
-	int32 Index = 0;
-	int32 Count = 1;
-	ViewModel->GetCurrent().GetOptionPosition(Setting, Index, Count);
-	// UI scale clamps at its ends; every other option wraps.
-	Decor->SetPosition(Index, Count, Setting != EMvsSetting::UIScale);
+	LabelText->SetText(Row->GetLabel());
+	ValueText->SetText(Row->GetValueText());
+	Decor->SetPosition(Row->GetChoiceIndex(), Row->GetChoiceCount(), Row->GetWraps());
 }
 
 void UMvsOptionRow::ApplyState()

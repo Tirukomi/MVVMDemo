@@ -8,6 +8,7 @@
 #include "Accessibility/MvsSettingsTable.h"
 #include "Accessibility/MvsSettingsTypes.h"
 #include "Misc/ConfigCacheIni.h"
+#include "ViewModels/SettingRowViewModel.h"
 #include "ViewModels/SettingsViewModel.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -90,35 +91,77 @@ bool FMvsSettingsEdgeCasesTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-// Views refresh on one field, Revision: it must bump whenever a displayed value can have changed, and only then.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsSettingsRevisionTest, "Mvs.Settings.Revision",
+// Second review 14: one view model per option. A change notifies only the row it touched, and only the fields that read
+// differently; a language refresh re-texts every row.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsSettingsRowsTest, "Mvs.Settings.Rows",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
-bool FMvsSettingsRevisionTest::RunTest(const FString& Parameters)
+bool FMvsSettingsRowsTest::RunTest(const FString& Parameters)
 {
+	using FRowVM = USettingRowViewModel::FFieldNotificationClassDescriptor;
 	USettingsViewModel* ViewModel = NewObject<USettingsViewModel>();
 	ViewModel->Initialize(FMvsSettingsData());
-	int32 Notifies = 0;
-	ViewModel->AddFieldValueChangedDelegate(USettingsViewModel::FFieldNotificationClassDescriptor::Revision,
-		INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateLambda([&Notifies](UObject*, UE::FieldNotification::FFieldId) { ++Notifies; }));
-	const int32 Start = ViewModel->GetRevision();
+	for (int32 i = 0; i < static_cast<int32>(EMvsSetting::Count); ++i)
+	{
+		const USettingRowViewModel* Row = ViewModel->GetRow(static_cast<EMvsSetting>(i));
+		TestTrue(FString::Printf(TEXT("setting %d has a row for itself"), i), Row && Row->GetSetting() == static_cast<EMvsSetting>(i));
+	}
+	USettingRowViewModel* Contrast = ViewModel->GetRow(EMvsSetting::HighContrast);
+	USettingRowViewModel* Scale = ViewModel->GetRow(EMvsSetting::UIScale);
+	if (!Contrast || !Scale)
+	{
+		return false;
+	}
+
+	TMap<FName, int32> Notifies;
+	auto Count = [&Notifies](USettingRowViewModel* Row, const TCHAR* Prefix)
+	{
+		for (const UE::FieldNotification::FFieldId Field : { FRowVM::Label, FRowVM::ValueText, FRowVM::Description, FRowVM::ChoiceIndex, FRowVM::ChoiceCount })
+		{
+			const FName Key(*FString::Printf(TEXT("%s.%s"), Prefix, *Field.GetName().ToString()));
+			Row->AddFieldValueChangedDelegate(Field, INotifyFieldValueChanged::FFieldValueChangedDelegate::CreateLambda(
+				[&Notifies, Key](UObject*, UE::FieldNotification::FFieldId) { ++Notifies.FindOrAdd(Key); }));
+		}
+	};
+	Count(Contrast, TEXT("Contrast"));
+	Count(Scale, TEXT("Scale"));
+	auto Total = [&Notifies](const TCHAR* Prefix)
+	{
+		int32 Sum = 0;
+		for (const TPair<FName, int32>& Pair : Notifies)
+		{
+			Sum += Pair.Key.ToString().StartsWith(Prefix) ? Pair.Value : 0;
+		}
+		return Sum;
+	};
 
 	ViewModel->Cycle(EMvsSetting::HighContrast, +1);
-	TestEqual("a value change bumps", ViewModel->GetRevision(), Start + 1);
+	TestEqual("stepping high contrast changes its value text", Notifies.FindRef(TEXT("Contrast.ValueText")), 1);
+	TestEqual("and its position", Notifies.FindRef(TEXT("Contrast.ChoiceIndex")), 1);
+	TestEqual("but not its label or description", Notifies.FindRef(TEXT("Contrast.Label")) + Notifies.FindRef(TEXT("Contrast.Description")), 0);
+	TestEqual("and no other row", Total(TEXT("Scale.")), 0);
+	TestEqual("the row reads the new value", Contrast->GetValueText().ToString(), FString(TEXT("On")));
+
+	Notifies.Reset();
 	ViewModel->Apply();
-	TestEqual("applying changes nothing on screen", ViewModel->GetRevision(), Start + 1);
+	TestEqual("applying changes nothing on screen", Total(TEXT("")), 0);
 	ViewModel->Revert();
-	TestEqual("reverting to identical values changes nothing", ViewModel->GetRevision(), Start + 1);
+	TestEqual("reverting to identical values changes nothing", Total(TEXT("")), 0);
 
 	FMvsSettingsData AtSmallest;
 	AtSmallest.UIScaleIndex = 0;
 	ViewModel->Initialize(AtSmallest);
-	const int32 BeforeClamp = ViewModel->GetRevision();
-	ViewModel->Cycle(EMvsSetting::UIScale, -1);
-	TestEqual("a clamped step that changes nothing does not bump", ViewModel->GetRevision(), BeforeClamp);
+	TestFalse("UI scale stops at its ends", Scale->GetWraps());
+	TestTrue("other options wrap", Contrast->GetWraps());
+	Notifies.Reset();
+	Scale->Step(-1);
+	TestEqual("a clamped step that changes nothing notifies nothing", Total(TEXT("")), 0);
+	Scale->Step(+1);
+	TestEqual("a row's step edits its own option", ViewModel->GetCurrent().UIScaleIndex, 1);
 
+	Notifies.Reset();
 	ViewModel->RefreshTexts();
-	TestEqual("a language refresh always bumps", ViewModel->GetRevision(), BeforeClamp + 1);
-	TestEqual("every bump notifies", Notifies, ViewModel->GetRevision() - Start);
+	TestEqual("a language refresh re-texts every row's label", Notifies.FindRef(TEXT("Contrast.Label")) + Notifies.FindRef(TEXT("Scale.Label")), 2);
+	TestEqual("and values and descriptions", Notifies.FindRef(TEXT("Scale.ValueText")) + Notifies.FindRef(TEXT("Scale.Description")), 2);
 	return true;
 }
 

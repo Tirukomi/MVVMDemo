@@ -23,6 +23,7 @@
 #include "UI/Widgets/MvsPanel.h"
 #include "UI/Widgets/MvsTabList.h"
 #include "ViewModels/MvsMVVM.h"
+#include "ViewModels/SettingRowViewModel.h"
 #include "ViewModels/SettingsViewModel.h"
 
 #define LOCTEXT_NAMESPACE "Mvs.SettingsScreen"
@@ -143,14 +144,17 @@ void USettingsScreen::NativeConstruct()
 			if (WeakSettings.IsValid() && ViewModel)
 			{
 				ViewModel->Sync(WeakSettings->GetSaved(), WeakSettings->GetSettings());
+				// A language switch re-texts the detail pane too.
+				ShowDetail(DetailItem.Get());
 			}
 		});
 		for (int32 i = 0; i < Rows.Num(); ++i)
 		{
-			Rows[i]->Setup(RowSettings[i], ViewModel);
+			Rows[i]->Setup(ViewModel->GetRow(RowSettings[i]));
 		}
+		// Each row binds its own option; the screen only needs "unapplied changes".
 		using FVM = USettingsViewModel::FFieldNotificationClassDescriptor;
-		MvsMVVM::Bind(ViewModel, this, &USettingsScreen::OnViewModelChanged, { FVM::bIsDirty, FVM::Revision });
+		MvsMVVM::Bind(ViewModel, this, &USettingsScreen::OnViewModelChanged, { FVM::bIsDirty });
 	}
 	RefreshDirtyNote();
 	ShowDetail(Rows.IsEmpty() ? nullptr : Rows[0].Get());
@@ -227,10 +231,11 @@ void USettingsScreen::ShowDetail(UWidget* Item)
 	{
 		return;
 	}
-	if (const UMvsOptionRow* Row = Cast<UMvsOptionRow>(Item))
+	const UMvsOptionRow* Row = Cast<UMvsOptionRow>(Item);
+	if (const USettingRowViewModel* RowVM = Row ? Row->GetRow() : nullptr)
 	{
-		DetailTitle->SetText(USettingsViewModel::GetLabel(Row->GetSetting()));
-		DetailBody->SetText(USettingsViewModel::GetDescription(Row->GetSetting()));
+		DetailTitle->SetText(RowVM->GetLabel());
+		DetailBody->SetText(RowVM->GetDescription());
 	}
 	else if (Item && Item == KeyBindingsItem)
 	{
@@ -242,8 +247,6 @@ void USettingsScreen::ShowDetail(UWidget* Item)
 void USettingsScreen::OnViewModelChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId)
 {
 	RefreshDirtyNote();
-	// A language change (a Revision bump) re-texts the detail pane too.
-	ShowDetail(DetailItem.Get());
 }
 
 void USettingsScreen::ApplyTheme(const FMvsTheme& Theme)

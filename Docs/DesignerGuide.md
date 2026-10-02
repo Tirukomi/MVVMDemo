@@ -50,8 +50,9 @@ Never hard-code a colour that means something. Ask the palette for a token (`Goo
    storage, label, description (under the `Mvs.Settings` localization namespace), choice count, whether it wraps,
    and get / set / format functions. Stepping, the selector pips, the value text and the config round trip all come
    from the row.
-3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it, and the row refreshes
-   on the view model's `Revision` like every other.
+3. Put it in a tab in `USettingsViewModel::GetTabs`; the settings screen builds a row for it, bound to the option's
+   own `USettingRowViewModel` (`USettingsViewModel::GetRow`), like every other. A designer-built row binds the same
+   fields.
 4. Read it wherever it matters through `UMvsSettingsSubsystem::Get(this)`. To react to changes, derive a
    widget from `UMvsSettingsAwareWidget` and override `OnSettingsApplied`, or, in any other class, keep an
    `FMvsSettingsListener` member and `Bind` it (it unsubscribes itself).

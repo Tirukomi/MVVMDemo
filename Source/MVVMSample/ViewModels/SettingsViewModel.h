@@ -7,6 +7,8 @@
 #include "MVVMViewModelBase.h"
 #include "SettingsViewModel.generated.h"
 
+class USettingRowViewModel;
+
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSettingsDataEvent, const FMvsSettingsData&);
 
 /** One settings tab: an id, its label and the options it holds, in display order. */
@@ -48,12 +50,14 @@ public:
 	void Revert();
 	void ResetDefaults();
 
-	/** Re-reads every display string, e.g. after the language changed. Broadcasts even if the text object is identical. */
+	/** Re-reads every display string, e.g. after the language changed. Every row's texts notify. */
 	void RefreshTexts();
 
 	const FMvsSettingsData& GetCurrent() const { return Current; }
 	bool GetIsDirty() const { return bIsDirty; }
-	int32 GetRevision() const { return Revision; }
+
+	/** One view model per option, what its row shows (second review 14). Exists once Initialize or Sync has run. */
+	USettingRowViewModel* GetRow(EMvsSetting Setting) const;
 
 	static FText GetLabel(EMvsSetting Setting);
 	/** One or two sentences for the settings screen's detail pane. */
@@ -66,24 +70,16 @@ protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetIsDirty, meta = (AllowPrivateAccess = "true"))
 	bool bIsDirty = false;
 
-	/**
-	 * Bumps whenever any displayed value may have changed: a value stepped, reverted or reset, or the language
-	 * changed (which re-texts everything). Views subscribe to this one field and re-read what they show
-	 * (GetValueText, GetLabel, GetCurrent).
-	 */
-	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter=GetRevision, meta = (AllowPrivateAccess = "true"))
-	int32 Revision = 0;
-
 
 private:
-	void Recompute();
-	void BumpRevision();
+	/** Updates dirty and every row; rows notify only the fields that read differently (all texts when bRetext). */
+	void Recompute(bool bRetext = false);
 
 	FMvsSettingsData Current;
 	FMvsSettingsData Baseline;
-	/** The values the last Revision described. */
-	FMvsSettingsData Shown;
-	bool bHasShown = false;
+	/** Indexed by EMvsSetting. */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<USettingRowViewModel>> Rows;
 	/** The language the display strings were last read in (Sync re-texts when it changes). */
 	FString TextsLanguage;
 };

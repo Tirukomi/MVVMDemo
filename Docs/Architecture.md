@@ -117,7 +117,9 @@ switches are reflected without extra code.
 - `FMvsSettingsData` (plain struct, persisted in GameUserSettings.ini) is owned by `UMvsSettingsSubsystem`, the model:
   it applies side effects and broadcasts, and `Preview`, `Commit` and `Revert` are its calls. It knows no view model.
   The settings screen creates its own `USettingsViewModel` (a working copy with live preview and Apply / Revert /
-  Defaults), hands its edits to those calls, and `Sync`s it whenever the subsystem broadcasts.
+  Defaults), hands its edits to those calls, and `Sync`s it whenever the subsystem broadcasts. The view model owns one
+  `USettingRowViewModel` per option (label, value text, description, choice index and count, all field notify), and
+  each option row binds its own: stepping one option re-reads one row.
   No setting writes engine-global state from UI code: UI scale is a DPI scaler inside the primary layout, and the
   language (process-wide culture) is restored when a preview is reverted, when settings close without applying, and
   when the game instance shuts down (so a play-in-editor session never leaves the editor in another language).

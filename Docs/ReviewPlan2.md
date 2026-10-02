@@ -99,6 +99,16 @@ left is mostly four things:
   - 64 tests (57 editor, 7 functional).
   - Gate: G4 failed once on `hud-wheel` (5.1%): the wheel had followed the real cursor, which the screenshot runs'
     `-MvsIgnoreHover` did not stop [31]. Fixed in `SGadgetWheel`; G4 then passed.
+- **S5 done** (finding 14):
+  - `USettingRowViewModel`, one per option, owned by `USettingsViewModel` (`GetRow`): label, value text, description,
+    choice index, choice count and whether it wraps, each field notify, and `Step`. The coarse `Revision` is gone.
+  - Texts notify when they would read differently (formatted values are new `FText`s every time, so "identical" would
+    notify on every update), and all of them on a language refresh (a localized text is the same object in every
+    language, so comparing would miss the switch).
+  - `UMvsOptionRow` binds only its row's fields; the settings screen binds only `bIsDirty`, and its detail pane reads
+    the focused row's view model. `Mvs.Settings.Rows` replaces `Mvs.Settings.Revision`: a step notifies only the row it
+    touched, and only the fields that changed. 64 tests.
+  - `UControlsViewModel` keeps its own `Revision`: finding 14 is about settings.
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured

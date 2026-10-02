@@ -19,5 +19,6 @@ generated (accents, +40% length) to stress layouts.
   entry is updated (verified). `Scripts/PseudoLocalize.py` still generates the `en-XA` `.po`. Switching produced
   byte-identical `.locres` files for every culture.
 - CJK renders through the engine's fallback font; a shipped title would set an explicit composite font.
-- Widgets re-read text when the language changes (`USettingsViewModel::RefreshTexts` bumps `Revision`, which every
-  settings row and the settings screen follow), so a language switch updates open screens.
+- Widgets re-read text when the language changes (`USettingsViewModel::RefreshTexts` notifies every row view model's
+  texts, which the settings rows and the settings screen's detail pane follow), so a language switch updates open
+  screens.
