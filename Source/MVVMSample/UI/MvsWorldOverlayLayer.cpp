@@ -2,6 +2,8 @@
 
 #include "UI/MvsWorldOverlayLayer.h"
 
+#include "UI/Style/MvsStyle.h"
+
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "GameFramework/PlayerController.h"
 
@@ -32,8 +34,8 @@ TSharedRef<SMvsWorldOverlayBase> UMvsWorldOverlayLayer::MakeOverlayPlaceholder()
 TSharedRef<SWidget> UMvsWorldOverlayLayer::RebuildWidget()
 {
 	Overlay = MakeOverlay();
-	SettingsListener.Bind(this, [this](const FMvsSettingsData&) { ApplyTheme(); });
-	ApplyTheme();
+	SettingsListener.Bind(this, [this](const FMvsSettingsData& Data) { ApplyTheme(FMvsTheme::FromSettings(Data)); });
+	ApplyTheme(MvsStyle::Theme(this));
 	UpdateActive();
 	return Overlay.ToSharedRef();
 }

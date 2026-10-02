@@ -56,18 +56,20 @@ protected:
 
 	/**
 	 * Re-apply what depends on settings that the screen styles by hand (panels it recolours, a wheel's motion).
-	 * Called on construct and whenever settings change. Text made with MakeText and the frame style themselves.
+	 * Called on construct and whenever settings change, with the theme resolved once for the change (second review 13).
+	 * Text made with MakeText and the frame style themselves.
 	 */
-	virtual void ApplyTheme() {}
+	virtual void ApplyTheme(const FMvsTheme& Theme) {}
 
-	/** Whether other screens' keys (the case file's) open those screens on top of this one. Off for modals. */
+	/** Whether other screens' shortcut keys (the case file's) open those screens on top of this one. Off for modals. */
 	bool bOpensScreensByKey = true;
 
 	/**
-	 * The gameplay action that opens this screen (e.g. "ClueLog"). Its keys close the screen again, so the same button
-	 * toggles it, however the player has bound it.
+	 * The gameplay action that opens this screen, from UMvsUISettings::GetShortcuts (None if no key does). Its keys close
+	 * the screen again, so the same button toggles it however the player has bound it; a held key's screen handles its
+	 * release itself.
 	 */
-	FName ToggleActionName;
+	FName GetShortcutAction() const;
 
 	/** A gameplay action by name (from the owning player controller, IMvsActionSource), for screens that bind gameplay keys. */
 	const UInputAction* FindGameplayAction(FName ActionName) const;
@@ -115,8 +117,9 @@ private:
 	FText AcceptLabel;
 
 	FUIActionBindingHandle AcceptHandle;
-	FUIActionBindingHandle ToggleHandle;
-	FUIActionBindingHandle ClueLogHandle;
+	/** The shortcut keys this screen answers (its own, and the ones that open other screens over it). */
+	TArray<FUIActionBindingHandle> ShortcutHandles;
+	bool bShortcutsBound = false;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UVerticalBox> FrameBox;

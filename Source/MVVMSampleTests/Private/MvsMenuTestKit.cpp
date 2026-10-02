@@ -16,6 +16,7 @@
 #include "UI/MvsAccessibility.h"
 #include "UI/MvsUISettings.h"
 #include "UI/Layout/MvsUISubsystem.h"
+#include "UI/Screens/SettingsScreen.h"
 #include "UI/Widgets/MvsActionBar.h"
 #include "UI/Widgets/MvsHintButton.h"
 #include "UI/Widgets/MvsInputGlyph.h"
@@ -40,16 +41,31 @@ namespace MvsMenuTest
 		return LocalPlayer ? LocalPlayer->GetSubsystem<UMvsViewModelSubsystem>() : nullptr;
 	}
 
+	UMvsSettingsSubsystem* FRig::Model() const
+	{
+		return UMvsSettingsSubsystem::Get(PC.Get());
+	}
+
 	USettingsViewModel* FRig::Settings() const
 	{
-		const UMvsSettingsSubsystem* Subsystem = UMvsSettingsSubsystem::Get(PC.Get());
-		return Subsystem ? Subsystem->GetViewModel() : nullptr;
+		const USettingsScreen* Screen = ActiveScreen<USettingsScreen>();
+		return Screen ? Screen->GetViewModel() : nullptr;
+	}
+
+	void FRig::PreviewStep(EMvsSetting Setting, int32 Direction) const
+	{
+		if (UMvsSettingsSubsystem* Subsystem = Model())
+		{
+			FMvsSettingsData Data = Subsystem->GetSettings();
+			Data.Cycle(Setting, Direction);
+			Subsystem->Preview(Data);
+		}
 	}
 
 	int32 FRig::Scale() const
 	{
-		const USettingsViewModel* VM = Settings();
-		return VM ? VM->GetCurrent().UIScaleIndex : -1;
+		const UMvsSettingsSubsystem* Subsystem = Model();
+		return Subsystem ? Subsystem->GetSettings().UIScaleIndex : -1;
 	}
 
 	FMvsScript::FAction FRig::Push(TSoftClassPtr<UCommonActivatableWidget> UMvsUISettings::* Class) const
@@ -96,7 +112,7 @@ namespace MvsMenuTest
 					}
 					return !Rig.UI->PopTopScreen();
 				}, Open, Rule)
-				.Do([Rig]() { if (USettingsViewModel* VM = Rig.Settings()) { VM->Revert(); } });
+				.Do([Rig]() { if (UMvsSettingsSubsystem* Model = Rig.Model()) { Model->Revert(); } });
 		}
 
 		TSharedPtr<FMvsScript> MakeScript(AMvsPlayerController* Controller, FMvsScript::FReporter Reporter, const FString& Name, FBody Body)

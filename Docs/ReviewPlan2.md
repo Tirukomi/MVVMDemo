@@ -74,6 +74,31 @@ left is mostly four things:
   - Gate: the first full run failed G5 on `pause-quit` alone (+0.051 ms against +0.05; rounds -0.065 to +0.089), a
     scenario S3's code does not run in (pause and its quit confirmation; the tab list is in settings). The G5 rerun
     passed (+0.018 ms). `pause-quit` is the noisiest scenario: its pairs spread about twice as wide as the others'.
+- **S4 done** (findings 9, 10, 12, 13, 16):
+  - Screen shortcuts are data [9]: `UMvsUISettings::GetShortcuts` lists action, layer, screen-class setting and key
+    behaviour (open or back, toggle, hold); `UMvsUISubsystem::HandleShortcut` replaces `ToggleClueLog`,
+    `TogglePauseMenu` and `OpenGadgetWheel`; the controller binds every row, and `UMvsScreen` takes its own closing key
+    and the other screens' toggle keys from the table (no more `ToggleActionName` or the hard-coded case-file key).
+    The table points at the screen-class settings rather than copying them, so S6's `WBP_PauseMenu` swap needs no
+    second edit. `Mvs.UI.Shortcuts` checks the table; the functional rules for 7 and 11 still pass.
+  - Settings ownership [10]: `UMvsSettingsSubsystem` is the model (`Preview`, `Commit`, `Revert`, `GetSaved`,
+    `HasUnsavedChanges`) and knows no view model. The settings screen creates its own `USettingsViewModel`, forwards
+    its edits, and `Sync`s it on every broadcast (re-texting when the language changed). The view model stays pure,
+    so its unit tests did not change; `Mvs.Settings.Model` covers the subsystem side. The functional tests' rig reads
+    the model, and previews through it when no settings screen is open.
+  - Theme passed in [13]: screens' and overlays' `ApplyTheme` receive the theme, resolved once from the settings
+    broadcast; `UMvsButton` keeps its theme from the last change, so `ApplyState` (every focus, hover and press) makes
+    no lookups. `MvsStyle::Token(Context)` stays for one-off styling and says what each call costs.
+  - Button metrics [12]: the menu item, tab and button paddings and corners are in `MvsMetrics`. The other half of the
+    finding (an empty `UMvsButtonStyle`, Common UI's style assets bypassed) stays as ADR 0002 decided: code-built.
+  - Reflection [16]: the three engine-property lookups are in `Core/MvsEngineProperties.h` and raise an ensure when a
+    property is gone or retyped; `DisableTick` also ensures on an unexpected property type. `Mvs.Engine.Properties`
+    checks all three.
+  - A HUD precondition (the first gadget ready) was seen false once right after the gadget wheel test, with no gadget
+    used; it is now waited for (up to 3 s) instead of checked in one frame. The cause was not found.
+  - 64 tests (57 editor, 7 functional).
+  - Gate: G4 failed once on `hud-wheel` (5.1%): the wheel had followed the real cursor, which the screenshot runs'
+    `-MvsIgnoreHover` did not stop [31]. Fixed in `SGadgetWheel`; G4 then passed.
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured
@@ -170,7 +195,7 @@ left is mostly four things:
 
 ## S8: Docs (two hours) [22]
 
-- README: one correct test count (61 since S3: 54 in the editor pass, 7 functional).
+- README: one correct test count (64 since S4: 57 in the editor pass, 7 functional).
 - Move the process documents (`ProjectPlan`, `RefactoringPlan`, `RefactoringProposal`, `ReviewFixPlan`, `VisualPlan`)
   into `Docs/History/`, so `Docs/` shows the architecture, ADRs, standards, performance and designer guide first.
 - Fix stale paths, e.g. `MvsScript.h` still points at `Tests/ScriptTests.cpp`.
@@ -273,3 +298,6 @@ About 7 to 9 days. S0, S1 and S2 are cheap and independent, so they go first.
 30. Settings reopened from pause have no tabs: closing them back onto pause destructs the tab list, and Common UI's
     tab list removes its tabs on destruct, while the screen registered them only once. Q / E and the tab prompts did
     nothing. *Found by S3's split; fixed in S3.*
+31. The gadget wheel's segments follow the mouse even under `-MvsIgnoreHover`, so the `hud-wheel` screenshot depends on
+    where the real cursor rests when the game window opens (S4's gate showed the top segment hovered instead of the
+    staged stick choice). *Found by S4's gate; fixed in S4.*

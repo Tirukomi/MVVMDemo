@@ -19,6 +19,7 @@
 #include "Input/CommonUIInputTypes.h"
 #include "Input/MvsUIInput.h"
 #include "Slate/SObjectWidget.h"
+#include "UI/MvsUISettings.h"
 #include "UI/MvsWidgetTick.h"
 #include "UI/Layout/MvsUISubsystem.h"
 #include "UI/Style/MvsMotion.h"
@@ -51,8 +52,8 @@ void UMvsScreen::NativeConstruct()
 {
 	MvsUI::DisableTick(this);
 	Super::NativeConstruct();
-	SettingsListener.Bind(this, [this](const FMvsSettingsData&) { ApplyTheme(); });
-	ApplyTheme();
+	SettingsListener.Bind(this, [this](const FMvsSettingsData& Data) { ApplyTheme(FMvsTheme::FromSettings(Data)); });
+	ApplyTheme(MvsStyle::Theme(this));
 
 	// Bindings outlive the Slate widget (a pooled screen constructs again), so each is registered once.
 	if (!AcceptLabel.IsEmpty() && !AcceptHandle.IsValid())
@@ -61,21 +62,36 @@ void UMvsScreen::NativeConstruct()
 		Args.OverrideDisplayName = AcceptLabel;
 		AcceptHandle = RegisterUIActionBinding(Args);
 	}
-	if (!ToggleActionName.IsNone() && !ToggleHandle.IsValid())
+	if (!bShortcutsBound)
 	{
-		ToggleHandle = BindAction(FindGameplayAction(ToggleActionName), IE_Pressed, FSimpleDelegate::CreateWeakLambda(this, [this]() { DeactivateWidget(); }));
-	}
-	// Another screen's key opens that screen on top (gameplay input is blocked in menus, so the screen answers it).
-	if (bOpensScreensByKey && ToggleActionName != TEXT("ClueLog") && !ClueLogHandle.IsValid())
-	{
-		ClueLogHandle = BindAction(FindGameplayAction(TEXT("ClueLog")), IE_Pressed, FSimpleDelegate::CreateWeakLambda(this, [this]()
+		bShortcutsBound = true;
+		const FMvsScreenShortcut* Own = GetDefault<UMvsUISettings>()->FindShortcutFor(this);
+		// The key that opened this screen closes it.
+		if (Own && Own->Kind != EMvsShortcutKind::Hold)
 		{
-			if (UMvsUISubsystem* UI = GetOwningLocalPlayer() ? GetOwningLocalPlayer()->GetSubsystem<UMvsUISubsystem>() : nullptr)
+			ShortcutHandles.Add(BindAction(FindGameplayAction(Own->Action), IE_Pressed, FSimpleDelegate::CreateWeakLambda(this, [this]() { DeactivateWidget(); })));
+		}
+		// Another screen's toggle key opens that screen on top (gameplay input is blocked in menus, so the screen answers it).
+		for (const FMvsScreenShortcut& Shortcut : UMvsUISettings::GetShortcuts())
+		{
+			if (bOpensScreensByKey && Shortcut.Kind == EMvsShortcutKind::Toggle && &Shortcut != Own)
 			{
-				UI->ToggleClueLog();
+				ShortcutHandles.Add(BindAction(FindGameplayAction(Shortcut.Action), IE_Pressed, FSimpleDelegate::CreateWeakLambda(this, [this, Action = Shortcut.Action]()
+				{
+					if (UMvsUISubsystem* UI = GetOwningLocalPlayer() ? GetOwningLocalPlayer()->GetSubsystem<UMvsUISubsystem>() : nullptr)
+					{
+						UI->HandleShortcut(Action);
+					}
+				})));
 			}
-		}));
+		}
 	}
+}
+
+FName UMvsScreen::GetShortcutAction() const
+{
+	const FMvsScreenShortcut* Own = GetDefault<UMvsUISettings>()->FindShortcutFor(this);
+	return Own ? Own->Action : NAME_None;
 }
 
 void UMvsScreen::NativeDestruct()

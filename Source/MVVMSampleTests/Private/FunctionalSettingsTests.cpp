@@ -4,6 +4,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Accessibility/MvsSettingsSubsystem.h"
 #include "Accessibility/MvsSettingsTypes.h"
 #include "Core/MvsPlayerController.h"
 #include "Engine/LocalPlayer.h"
@@ -205,7 +206,7 @@ namespace MvsSettingsTests
 			.Do([Rig]() { if (USettingsViewModel* VM = Rig.Settings()) { VM->Cycle(EMvsSetting::SubtitleSize, +1); } })
 			.Do(Rig.Push(&UMvsUISettings::ControlsScreenClass))
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UControlsScreen>()); }, Open, TEXT("key bindings open over settings (precondition)"))
-			.Do([Rig]() { Rig.Check(Rig.Settings() && Rig.Settings()->GetIsDirty(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); });
+			.Do([Rig]() { Rig.Check(Rig.Model() && Rig.Model()->HasUnsavedChanges(), TEXT("opening Key bindings keeps unapplied settings (review 1)")); });
 
 		// Review finding 39: "Reset to defaults" asks first; No keeps the bindings, Yes resets them. (Confirming resets this
 		// machine's saved bindings for the sample.)

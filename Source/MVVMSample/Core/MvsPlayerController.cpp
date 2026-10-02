@@ -2,6 +2,8 @@
 
 #include "Core/MvsPlayerController.h"
 
+#include "Core/MvsEngineProperties.h"
+
 #include "CommonActivatableWidget.h"
 #include "Core/MvsCharacter.h"
 #include "Core/MvsDevAids.h"
@@ -44,7 +46,7 @@ namespace
 		UPlayerMappableKeySettings* Settings = NewObject<UPlayerMappableKeySettings>(Action);
 		Settings->Name = Def.Name;
 		Settings->DisplayName = Def.DisplayName;
-		if (FObjectProperty* Property = FindFProperty<FObjectProperty>(UInputAction::StaticClass(), TEXT("PlayerMappableKeySettings")))
+		if (FObjectProperty* Property = MvsEngineProperties::InputActionKeySettings())
 		{
 			Property->SetObjectPropertyValue_InContainer(Action, Settings);
 		}
@@ -158,13 +160,15 @@ void AMvsPlayerController::SetupInputComponent()
 		EIC->BindAction(Action(TEXT("Gadget1")), ETriggerEvent::Started, this, &AMvsPlayerController::OnGadget, 0);
 		EIC->BindAction(Action(TEXT("Gadget2")), ETriggerEvent::Started, this, &AMvsPlayerController::OnGadget, 1);
 		EIC->BindAction(Action(TEXT("Gadget3")), ETriggerEvent::Started, this, &AMvsPlayerController::OnGadget, 2);
-		EIC->BindAction(Action(TEXT("Pause")), ETriggerEvent::Started, this, &AMvsPlayerController::OnPause);
-		EIC->BindAction(Action(TEXT("GadgetWheel")), ETriggerEvent::Started, this, &AMvsPlayerController::OnGadgetWheel);
 		EIC->BindAction(Action(TEXT("Forensic")), ETriggerEvent::Started, this, &AMvsPlayerController::OnForensic);
 		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Started, this, &AMvsPlayerController::OnScan);
 		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Completed, this, &AMvsPlayerController::OnScanReleased);
 		EIC->BindAction(Action(TEXT("Scan")), ETriggerEvent::Canceled, this, &AMvsPlayerController::OnScanReleased);
-		EIC->BindAction(Action(TEXT("ClueLog")), ETriggerEvent::Started, this, &AMvsPlayerController::OnClueLog);
+		// The keys that open screens (pause, the case file, the gadget wheel) are the UI settings' shortcuts.
+		for (const FMvsScreenShortcut& Shortcut : UMvsUISettings::GetShortcuts())
+		{
+			EIC->BindAction(FindAction(Shortcut.Action), ETriggerEvent::Started, this, &AMvsPlayerController::OnShortcut, Shortcut.Action);
+		}
 #if !UE_BUILD_SHIPPING
 		EIC->BindAction(Action(TEXT("DebugDamage")), ETriggerEvent::Started, this, &AMvsPlayerController::OnDebugDamage);
 		EIC->BindAction(Action(TEXT("DebugHeal")), ETriggerEvent::Started, this, &AMvsPlayerController::OnDebugHeal);
@@ -302,11 +306,11 @@ void AMvsPlayerController::OnDebugHeal()
 }
 #endif
 
-void AMvsPlayerController::OnPause()
+void AMvsPlayerController::OnShortcut(FName ShortcutAction)
 {
 	if (auto* UI = GetLocalPlayer()->GetSubsystem<UMvsUISubsystem>())
 	{
-		UI->TogglePauseMenu();
+		UI->HandleShortcut(ShortcutAction);
 	}
 }
 
@@ -342,22 +346,6 @@ void AMvsPlayerController::OnScanReleased()
 	if (AMvsCharacter* Hero = Cast<AMvsCharacter>(GetPawn()))
 	{
 		Hero->GetForensicComponent()->EndAnalyse();
-	}
-}
-
-void AMvsPlayerController::OnClueLog()
-{
-	if (auto* UI = GetLocalPlayer()->GetSubsystem<UMvsUISubsystem>())
-	{
-		UI->ToggleClueLog();
-	}
-}
-
-void AMvsPlayerController::OnGadgetWheel()
-{
-	if (auto* UI = GetLocalPlayer()->GetSubsystem<UMvsUISubsystem>())
-	{
-		UI->OpenGadgetWheel();
 	}
 }
 

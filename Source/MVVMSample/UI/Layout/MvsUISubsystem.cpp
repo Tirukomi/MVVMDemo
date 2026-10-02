@@ -107,12 +107,49 @@ bool UMvsUISubsystem::IsCovered(const UCommonActivatableWidget* Screen) const
 	return false;
 }
 
-void UMvsUISubsystem::TogglePauseMenu()
+bool UMvsUISubsystem::HandleShortcut(FName Action)
 {
-	if (!PopTopScreen())
+	const FMvsScreenShortcut* Shortcut = UMvsUISettings::FindShortcut(Action);
+	if (!Shortcut || !Layout)
 	{
-		PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->PauseMenuClass);
+		return false;
 	}
+	const UMvsUISettings* Settings = GetDefault<UMvsUISettings>();
+	const TSubclassOf<UCommonActivatableWidget> ScreenClass = Settings->ResolveScreen(*Shortcut);
+	switch (Shortcut->Kind)
+	{
+	case EMvsShortcutKind::OpenOrBack:
+		if (!PopTopScreen())
+		{
+			PushScreen(Shortcut->Layer, ScreenClass);
+		}
+		break;
+	case EMvsShortcutKind::Toggle:
+		if (Shortcut->Layer != EMvsUILayer::GameMenu)
+		{
+			// An in-world overlay (the gadget wheel) gives way to a menu.
+			if (UCommonActivatableWidget* Overlay = GetActiveScreen(EMvsUILayer::GameMenu))
+			{
+				Overlay->DeactivateWidget();
+			}
+		}
+		if (UCommonActivatableWidget* Top = GetActiveScreen(Shortcut->Layer); Top && ScreenClass && Top->IsA(ScreenClass))
+		{
+			Top->DeactivateWidget();
+		}
+		else
+		{
+			PushScreen(Shortcut->Layer, ScreenClass);
+		}
+		break;
+	case EMvsShortcutKind::Hold:
+		if (!Tracker.IsMenuOpen() && !Tracker.IsLayerOccupied(Shortcut->Layer))
+		{
+			PushScreen(Shortcut->Layer, ScreenClass);
+		}
+		break;
+	}
+	return true;
 }
 
 void UMvsUISubsystem::SetLayoutVisible(bool bVisible)
@@ -120,34 +157,6 @@ void UMvsUISubsystem::SetLayoutVisible(bool bVisible)
 	if (Layout)
 	{
 		Layout->SetVisibility(bVisible ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
-	}
-}
-
-void UMvsUISubsystem::ToggleClueLog()
-{
-	if (!Layout)
-	{
-		return;
-	}
-	const TSubclassOf<UCommonActivatableWidget> ClueLogClass = UMvsUISettings::Resolve(GetDefault<UMvsUISettings>()->ClueLogClass);
-	if (UCommonActivatableWidget* Wheel = GetActiveScreen(EMvsUILayer::GameMenu))
-	{
-		Wheel->DeactivateWidget();
-	}
-	UCommonActivatableWidget* Top = GetActiveScreen(EMvsUILayer::Menu);
-	if (Top && ClueLogClass && Top->IsA(ClueLogClass))
-	{
-		Top->DeactivateWidget();
-		return;
-	}
-	PushScreen(EMvsUILayer::Menu, ClueLogClass);
-}
-
-void UMvsUISubsystem::OpenGadgetWheel()
-{
-	if (!Tracker.IsMenuOpen() && !Tracker.IsLayerOccupied(EMvsUILayer::GameMenu))
-	{
-		PushScreen(EMvsUILayer::GameMenu, GetDefault<UMvsUISettings>()->GadgetWheelClass);
 	}
 }
 

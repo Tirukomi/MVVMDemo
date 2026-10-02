@@ -8,6 +8,8 @@
 #include "UI/Slate/SMvsWorldOverlay.h"
 #include "MvsWorldOverlayLayer.generated.h"
 
+struct FMvsTheme;
+
 /**
  * UMG side of a world overlay (see SMvsWorldOverlay): owns the Slate layer, switches it on and off from view-model
  * state, and projects world positions into it with the owning player's view. A derived layer builds its Slate widget
@@ -29,8 +31,8 @@ protected:
 	virtual TSharedRef<SMvsWorldOverlayBase> MakeOverlay() PURE_VIRTUAL(UMvsWorldOverlayLayer::MakeOverlay, return MakeOverlayPlaceholder(););
 	virtual bool ShouldBeActive() const PURE_VIRTUAL(UMvsWorldOverlayLayer::ShouldBeActive, return false;);
 
-	/** Push colours and motion from the current theme to the Slate layer. */
-	virtual void ApplyTheme() {}
+	/** Push colours and motion from the theme (resolved once per settings change) to the Slate layer. */
+	virtual void ApplyTheme(const FMvsTheme& Theme) {}
 
 	/** Re-evaluates ShouldBeActive; call from the view-model handlers that feed it. */
 	void UpdateActive();

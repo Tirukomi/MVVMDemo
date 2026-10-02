@@ -32,8 +32,6 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
-		// The key that opened this screen (Pause) closes it again.
-		ToggleActionName = TEXT("Pause");
 		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "MVVM Sample"), LOCTEXT("Title", "Paused"));
 
 		UHorizontalBox* Split = WidgetTree->ConstructWidget<UHorizontalBox>();
@@ -83,14 +81,14 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 	return Super::RebuildWidget();
 }
 
-void UPauseMenuScreen::ApplyTheme()
+void UPauseMenuScreen::ApplyTheme(const FMvsTheme& Theme)
 {
-	Super::ApplyTheme();
+	Super::ApplyTheme(Theme);
 	if (StatusPanel)
 	{
-		StatusPanel->SetColors(MvsStyle::Token(this, EMvsColorToken::Panel, MvsStyle::PanelAlpha(this)),
-			MvsStyle::Token(this, EMvsColorToken::PanelEdge, 0.7f));
-		StatusPanel->SetAccent(MvsStyle::Token(this, EMvsColorToken::Accent), 3.f);
+		StatusPanel->SetColors(Theme.Color(EMvsColorToken::Panel, Theme.PanelAlpha()),
+			Theme.Color(EMvsColorToken::PanelEdge, 0.7f));
+		StatusPanel->SetAccent(Theme.Color(EMvsColorToken::Accent), 3.f);
 	}
 }
 

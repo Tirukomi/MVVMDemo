@@ -18,13 +18,13 @@ namespace MvsCaseFileTests
 	void CaseFile(FMvsScript& Script, const FRig& Rig)
 	{
 		// The case file's own key (J) closes it.
-		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->ToggleClueLog(); } })
+		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->HandleShortcut(TEXT("ClueLog")); } })
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UClueLogScreen>()); }, Open, TEXT("J opens the case file (precondition)"))
 			.Do([]() { SendKey(EKeys::J); })
 			.WaitUntil([Rig]() { return Rig.Closed(ActiveScreen<UClueLogScreen>()); }, Quick, TEXT("J again closes the case file"));
 
 		// Review finding 9: the case file follows a changed list of the same length.
-		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->ToggleClueLog(); } })
+		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->HandleShortcut(TEXT("ClueLog")); } })
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UClueLogScreen>()); }, Open, TEXT("the case file opens again (precondition)"))
 			.Do([Rig]()
 			{

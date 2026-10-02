@@ -3,6 +3,8 @@
 #include "Misc/AutomationTest.h"
 
 #include "InputCoreTypes.h"
+#include "Input/MvsActionTable.h"
+#include "UI/MvsUISettings.h"
 #include "UI/Layout/MvsUITypes.h"
 #include "UI/Widgets/MvsInputGlyph.h"
 
@@ -63,6 +65,31 @@ bool FMvsGlyphLabelTest::RunTest(const FString& Parameters)
 	TestEqual("gamepad right face is B", UMvsInputGlyph::GetKeyLabel(EKeys::Gamepad_FaceButton_Right).ToString(), FString(TEXT("B")));
 	TestEqual("escape is abbreviated", UMvsInputGlyph::GetKeyLabel(EKeys::Escape).ToString(), FString(TEXT("Esc")));
 	TestEqual("unmapped keys use the engine display name", UMvsInputGlyph::GetKeyLabel(EKeys::Q).ToString(), EKeys::Q.GetDisplayName().ToString());
+	return true;
+}
+
+// Second review 9: the screens keys open are data. Each shortcut is a gameplay action the controller creates, opens a
+// screen class the settings name, and appears once; a screen is opened by at most one key.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsUIShortcutsTest, "Mvs.UI.Shortcuts", MvsUITests::Flags)
+bool FMvsUIShortcutsTest::RunTest(const FString& Parameters)
+{
+	const UMvsUISettings* Settings = GetDefault<UMvsUISettings>();
+	TSet<FName> Actions;
+	TSet<const void*> Screens;
+	for (const FMvsScreenShortcut& Shortcut : UMvsUISettings::GetShortcuts())
+	{
+		const FString Name = Shortcut.Action.ToString();
+		TestNotNull(*(Name + TEXT(" is a gameplay action")), MvsActions::Find(Shortcut.Action));
+		TestFalse(*(Name + TEXT(" names a screen class")), (Settings->*Shortcut.Screen).IsNull());
+		TestFalse(*(Name + TEXT(" is listed once")), Actions.Contains(Shortcut.Action));
+		TestFalse(*(Name + TEXT(" opens a screen no other key opens")), Screens.Contains(&(Settings->*Shortcut.Screen)));
+		TestTrue(*(Name + TEXT(" opens a screen above the HUD")), Shortcut.Layer != EMvsUILayer::Game && Shortcut.Layer != EMvsUILayer::Count);
+		Actions.Add(Shortcut.Action);
+		Screens.Add(&(Settings->*Shortcut.Screen));
+		TestTrue(*(Name + TEXT(" is found by name")), UMvsUISettings::FindShortcut(Shortcut.Action) == &Shortcut);
+	}
+	TestTrue("pause, the case file and the gadget wheel open by key", Actions.Includes(TSet<FName>{ TEXT("Pause"), TEXT("ClueLog"), TEXT("GadgetWheel") }));
+	TestNull("an action that opens nothing is not a shortcut", UMvsUISettings::FindShortcut(TEXT("Attack")));
 	return true;
 }
 

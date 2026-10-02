@@ -27,7 +27,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeOnClosed() override;
-	virtual void ApplyTheme() override;
+	virtual void ApplyTheme(const FMvsTheme& Theme) override;
 
 private:
 	void Finish(bool bConfirmed);

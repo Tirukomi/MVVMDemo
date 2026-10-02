@@ -22,14 +22,14 @@ namespace MvsPauseTests
 	void Pause(FMvsScript& Script, const FRig& Rig)
 	{
 		// The pause key on the gamepad (Start) closes pause.
-		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->TogglePauseMenu(); } })
+		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->HandleShortcut(TEXT("Pause")); } })
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("pause opens (precondition)"))
 			.Do([]() { SendKey(EKeys::Gamepad_Special_Right); })
 			.WaitUntil([Rig]() { return Rig.Closed(ActiveScreen<UPauseMenuScreen>()); }, Quick, TEXT("Start closes pause"));
 
 		// Review findings 2 and 7: screens opened from pause keep the game paused, and the case file's key opens the case
 		// file over pause instead of closing pause.
-		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->TogglePauseMenu(); } })
+		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->HandleShortcut(TEXT("Pause")); } })
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("pause opens again (precondition)"))
 			.Do(Rig.Push(&UMvsUISettings::SettingsScreenClass))
 			.WaitUntil([Rig]() { return ActiveScreen<USettingsScreen>() && Rig.UI.IsValid() && !Rig.UI->IsTransitioning(); }, Open, TEXT("settings open over pause (precondition)"))
@@ -64,7 +64,7 @@ namespace MvsPauseTests
 
 		// Review finding 26: one background blur on screen. The quit confirmation over pause blurs; pause stops blurring
 		// under it and blurs again once it closes.
-		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->TogglePauseMenu(); } })
+		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->HandleShortcut(TEXT("Pause")); } })
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("pause opens for the quit confirmation (precondition)"))
 			.Do([]() { if (UPauseMenuScreen* Pause = ActiveScreen<UPauseMenuScreen>()) { Pause->RequestQuit(); } })
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UConfirmModalScreen>()); }, Open, TEXT("the quit confirmation opens (precondition)"))

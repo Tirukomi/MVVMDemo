@@ -315,7 +315,7 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 
 	// 4. Gadget wheel open with a hovered segment sweeping around.
 	Run->Scenarios.Add({ TEXT("gadget-wheel"),
-		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->OpenGadgetWheel(); } },
+		[WeakUI]() { if (WeakUI.IsValid()) { WeakUI->HandleShortcut(TEXT("GadgetWheel")); } },
 		[](float Seconds)
 		{
 			// Sweep the stick around so the hovered segment (and its animation) keeps changing.
@@ -332,7 +332,7 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 		[WeakUI, WeakVMs]()
 		{
 			if (WeakVMs.IsValid()) { WeakVMs->AddDebugClues(500); }
-			if (WeakUI.IsValid()) { WeakUI->ToggleClueLog(); }
+			if (WeakUI.IsValid()) { WeakUI->HandleShortcut(TEXT("ClueLog")); }
 		},
 		[](float Seconds)
 		{

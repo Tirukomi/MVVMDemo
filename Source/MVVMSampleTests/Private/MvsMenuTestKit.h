@@ -22,6 +22,7 @@ class UMvsUISettings;
 class UMvsUISubsystem;
 class UMvsViewModelSubsystem;
 class USettingsViewModel;
+class UMvsSettingsSubsystem;
 class UUserWidget;
 class UWidget;
 enum class EMvsSetting : uint8;
@@ -45,8 +46,13 @@ namespace MvsMenuTest
 
 		void Check(bool bPassed, const FString& Rule) const;
 		UMvsViewModelSubsystem* ViewModels() const;
+		/** The settings model (applies, saves and reverts). */
+		UMvsSettingsSubsystem* Model() const;
+		/** The open settings screen's own view model, or null when settings are not open. */
 		USettingsViewModel* Settings() const;
-		/** The UI scale option's index, or -1 without settings. */
+		/** Previews one option stepped, as a settings row would, without the settings screen. */
+		void PreviewStep(EMvsSetting Setting, int32 Direction) const;
+		/** The UI scale option's index in effect, or -1 without settings. */
 		int32 Scale() const;
 		/** Pushes a screen class from the UI settings onto the menu layer. */
 		FMvsScript::FAction Push(TSoftClassPtr<UCommonActivatableWidget> UMvsUISettings::* Class) const;

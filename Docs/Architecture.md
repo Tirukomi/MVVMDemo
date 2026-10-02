@@ -55,7 +55,10 @@ hit-testing, layer tracking) so the rules are unit-tested without a world.
 
 - **Layer stack.** `UMvsPrimaryLayout` holds four Common UI activatable stacks (Game, GameMenu, Menu, Modal).
   `UMvsUISubsystem` is the only place screens are pushed and popped; `FMvsUIModeTracker` tracks what is open
-  (whether a menu is up).
+  (whether a menu is up). The keys that open screens are data: `UMvsUISettings::GetShortcuts` lists each gameplay
+  action, the layer, the screen-class setting it opens and how its key behaves (pause: open or back; the case file:
+  toggle over any menu; the gadget wheel: hold, from gameplay only). The player controller binds every row to
+  `UMvsUISubsystem::HandleShortcut`, and the generic layer names no feature.
 - **Screens.** Every menu and modal derives `UMvsScreen` (Menu input config, Common UI's back handler, default
   focus, small builders for titles, buttons and the action bar). The HUD is a plain activatable widget in the Game
   layer. `BuildMenuFrame` gives
@@ -63,7 +66,7 @@ hit-testing, layer tracking) so the rules are unit-tested without a world.
   activation; the layer stacks (`UMvsScreenStack`) add a 0.15 s fade on push and pop. Both are off under reduced
   motion.
 - **Prompts and toggles** (ADR 0007). A screen's keys are Common UI bindings it registers: back (the activatable back
-  handler), accept, the key that opened it (`ToggleActionName`), the case file's key, the wheel's press and release, the
+  handler), accept, the key that opened it and the other screens' toggle keys (both from the shortcut table), the wheel's press and release, the
   tab list's tab actions. Only the active screen's bindings fire. The prompt row is a bound action bar
   (`UMvsActionBar`) of `UMvsHintButton`s: not focusable, showing the key of the device in use, and clicking one
   runs its binding. Clicking first restores the item that had focus before the pointer arrived (clicking lets Slate move
@@ -111,8 +114,10 @@ switches are reflected without extra code.
 
 ## Settings, accessibility, localization
 
-- `FMvsSettingsData` (plain struct, persisted in GameUserSettings.ini) is edited via `USettingsViewModel` with live
-  preview and Apply / Revert / Defaults. `UMvsSettingsSubsystem` applies side effects and broadcasts.
+- `FMvsSettingsData` (plain struct, persisted in GameUserSettings.ini) is owned by `UMvsSettingsSubsystem`, the model:
+  it applies side effects and broadcasts, and `Preview`, `Commit` and `Revert` are its calls. It knows no view model.
+  The settings screen creates its own `USettingsViewModel` (a working copy with live preview and Apply / Revert /
+  Defaults), hands its edits to those calls, and `Sync`s it whenever the subsystem broadcasts.
   No setting writes engine-global state from UI code: UI scale is a DPI scaler inside the primary layout, and the
   language (process-wide culture) is restored when a preview is reverted, when settings close without applying, and
   when the game instance shuts down (so a play-in-editor session never leaves the editor in another language).
@@ -125,7 +130,9 @@ switches are reflected without extra code.
   palette, panel opacity, motion, text size. Leaves style themselves from it: `UMvsText` keeps its type style (and
   optionally a colour token) and re-applies both on settings changes, `UMvsSwatch` does the same for flat accent
   blocks, and the world overlays restyle their Slate layers. Anything a widget styles by hand goes in one hook,
-  `ApplyTheme()` (screens, settings-aware widgets, overlays); interaction state (hover, focus, press) is `ApplyState()`.
+  `ApplyTheme` (screens and overlays receive the theme, resolved once per settings change; settings-aware widgets
+  re-read their view models); interaction state (hover, focus, press) is `ApplyState()`, which reads a theme the
+  button keeps from the last settings change rather than resolving one per focus or hover change.
   Layout numbers are named in `UI/Style/MvsMetrics.h`, which the menu-input test reads too.
 - **Text size** (Accessibility tab) multiplies every UMG font on top of UI scale; subtitles keep their own size, and
   the custom-painted Slate layers (wheel, markers) keep the default.

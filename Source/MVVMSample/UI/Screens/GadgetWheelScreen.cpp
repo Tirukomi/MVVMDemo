@@ -66,7 +66,7 @@ void UGadgetWheelScreen::NativeConstruct()
 	if (!bOpenKeyBound)
 	{
 		bOpenKeyBound = true;
-		const UInputAction* OpenAction = FindGameplayAction(TEXT("GadgetWheel"));
+		const UInputAction* OpenAction = FindGameplayAction(GetShortcutAction());
 		BindAction(OpenAction, IE_Pressed, FSimpleDelegate::CreateUObject(this, &UGadgetWheelScreen::HandleOpenKey, IE_Pressed));
 		BindAction(OpenAction, IE_Released, FSimpleDelegate::CreateUObject(this, &UGadgetWheelScreen::HandleOpenKey, IE_Released));
 	}
@@ -128,14 +128,13 @@ void UGadgetWheelScreen::RefreshItems()
 	Wheel->SetItems(Items);
 }
 
-void UGadgetWheelScreen::ApplyTheme()
+void UGadgetWheelScreen::ApplyTheme(const FMvsTheme& Theme)
 {
-	Super::ApplyTheme();
+	Super::ApplyTheme(Theme);
 	// Runs on every settings change, so reduced motion, text size, contrast and the colour modes apply to an open
 	// wheel too (second review 2: the labels were fixed white, at the default text size).
 	if (Wheel)
 	{
-		const FMvsTheme Theme = MvsStyle::Theme(this);
 		Wheel->bReduceMotion = Theme.bReducedMotion;
 		Wheel->WheelStyle.LabelFont = Theme.Font(EMvsTextStyle::Header);
 		Wheel->WheelStyle.LabelColor = Theme.Color(EMvsColorToken::TextPrimary);

@@ -4,6 +4,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Accessibility/MvsSettingsSubsystem.h"
 #include "Accessibility/MvsSettingsTypes.h"
 #include "Core/MvsPlayerController.h"
 #include "Gameplay/MvsFeel.h"
@@ -41,7 +42,7 @@ namespace MvsGadgetWheelTests
 			.Do([Rig]()
 			{
 				MvsFeel::HitStop(Rig.PC.Get(), MvsFeel::HitStopSeconds);
-				if (Rig.UI.IsValid()) { Rig.UI->OpenGadgetWheel(); }
+				if (Rig.UI.IsValid()) { Rig.UI->HandleShortcut(TEXT("GadgetWheel")); }
 			})
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UGadgetWheelScreen>()); }, Open, TEXT("the gadget wheel opens (precondition)"))
 			.Do([Rig]()
@@ -60,13 +61,13 @@ namespace MvsGadgetWheelTests
 			.Do([Rig]()
 			{
 				Rig.Check(Rig.PC.IsValid() && UGameplayStatics::GetGlobalTimeDilation(Rig.PC.Get()) < 0.5f, TEXT("the wheel's slow motion survives a hit-stop (review 6)"));
-				if (USettingsViewModel* VM = Rig.Settings()) { VM->Cycle(EMvsSetting::ReducedMotion, +1); }
+				Rig.PreviewStep(EMvsSetting::ReducedMotion, +1);
 			})
 			.Do([Rig]()
 			{
 				const UGadgetWheel* Wheel = FindIn<UGadgetWheel>(ActiveScreen<UGadgetWheelScreen>());
 				Rig.Check(Wheel && Wheel->bReduceMotion, TEXT("the open wheel follows reduced motion live (review 10)"));
-				if (USettingsViewModel* VM = Rig.Settings()) { VM->Revert(); }
+				if (UMvsSettingsSubsystem* Model = Rig.Model()) { Model->Revert(); }
 				ReleaseKey(EKeys::Z);
 			})
 			.Wait(0.5f)

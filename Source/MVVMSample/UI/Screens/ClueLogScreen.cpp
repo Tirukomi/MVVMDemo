@@ -33,8 +33,6 @@ TSharedRef<SWidget> UClueLogScreen::RebuildWidget()
 {
 	if (!WidgetTree->RootWidget)
 	{
-		// The key that opened this screen (ClueLog) closes it again.
-		ToggleActionName = TEXT("ClueLog");
 		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "Investigation"), LOCTEXT("Title", "Case file"));
 
 		Summary = MakeText(FText::GetEmpty(), EMvsTextStyle::Label, EMvsColorToken::TextMuted);
@@ -121,14 +119,14 @@ void UClueLogScreen::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UClueLogScreen::ApplyTheme()
+void UClueLogScreen::ApplyTheme(const FMvsTheme& Theme)
 {
-	Super::ApplyTheme();
+	Super::ApplyTheme(Theme);
 	if (DetailPanel)
 	{
-		DetailPanel->SetColors(MvsStyle::Token(this, EMvsColorToken::Panel, MvsStyle::PanelAlpha(this)),
-			MvsStyle::Token(this, EMvsColorToken::PanelEdge, 0.7f));
-		DetailPanel->SetAccent(MvsStyle::Token(this, EMvsColorToken::Accent), 3.f);
+		DetailPanel->SetColors(Theme.Color(EMvsColorToken::Panel, Theme.PanelAlpha()),
+			Theme.Color(EMvsColorToken::PanelEdge, 0.7f));
+		DetailPanel->SetAccent(Theme.Color(EMvsColorToken::Accent), 3.f);
 	}
 	RefreshDetail();
 }

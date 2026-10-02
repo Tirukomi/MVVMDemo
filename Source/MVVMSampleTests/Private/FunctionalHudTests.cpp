@@ -67,11 +67,16 @@ namespace MvsHudTests
 		});
 
 		// Review finding 18: views use gadgets through the gadget bar's command, which the gadget binder hands to gameplay.
-		Script.Do([Rig]()
+		// Seen once right after the gadget wheel test: the first gadget not ready yet for a moment (no gadget had been
+		// used). Readiness is the precondition, not the rule, so it is waited for.
+		Script.WaitUntil([Rig]()
 			{
-				UGadgetBarViewModel* Bar = Rig.ViewModels() ? Rig.ViewModels()->GetGadgetBar() : nullptr;
-				Rig.Check(Bar && Bar->GetSlot(0) && Bar->GetSlot(0)->GetIsReady(), TEXT("the first gadget is ready (precondition)"));
-				if (Bar) { Bar->RequestUse(0); }
+				const UGadgetBarViewModel* Bar = Rig.ViewModels() ? Rig.ViewModels()->GetGadgetBar() : nullptr;
+				return Bar && Bar->GetSlot(0) && Bar->GetSlot(0)->GetIsReady();
+			}, Open, TEXT("the first gadget is ready (precondition)"))
+			.Do([Rig]()
+			{
+				if (UGadgetBarViewModel* Bar = Rig.ViewModels() ? Rig.ViewModels()->GetGadgetBar() : nullptr) { Bar->RequestUse(0); }
 			})
 			.WaitUntil([Rig]()
 			{

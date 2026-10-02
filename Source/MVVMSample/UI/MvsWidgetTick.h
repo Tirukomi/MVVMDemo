@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Core/MvsEngineProperties.h"
 #include "UObject/UnrealType.h"
 
 namespace MvsUI
@@ -33,7 +34,7 @@ namespace MvsUI
 #endif
 		if (Widget->GetDesiredTickFrequency() != EWidgetTickFrequency::Never)
 		{
-			FProperty* Property = UUserWidget::StaticClass()->FindPropertyByName(TEXT("TickFrequency"));
+			FProperty* Property = MvsEngineProperties::WidgetTickFrequency();
 			void* Value = Property ? Property->ContainerPtrToValuePtr<void>(Widget) : nullptr;
 			if (!Value)
 			{
@@ -46,6 +47,10 @@ namespace MvsUI
 			else if (FNumericProperty* Numeric = CastField<FNumericProperty>(Property))
 			{
 				Numeric->SetIntPropertyValue(Value, static_cast<int64>(EWidgetTickFrequency::Never));
+			}
+			else
+			{
+				ensureMsgf(false, TEXT("UUserWidget::TickFrequency is neither an enum nor a number; widgets keep ticking."));
 			}
 		}
 		// Always bring the Slate side in line, even if the flag was already Never (pooled widgets are reconstructed

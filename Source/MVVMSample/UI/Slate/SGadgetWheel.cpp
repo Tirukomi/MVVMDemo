@@ -2,6 +2,7 @@
 
 #include "UI/Slate/SGadgetWheel.h"
 #include "UI/MvsAccessibility.h"
+#include "UI/MvsWidgetTick.h"
 
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
@@ -121,6 +122,12 @@ EActiveTimerReturnType SGadgetWheel::TickAnimation(double, float InDeltaTime)
 
 FReply SGadgetWheel::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
+	// Like every menu item: screenshot runs (-MvsIgnoreHover) must not hover whatever the real cursor rests on
+	// (second review 31: the hud-wheel shot showed the top segment instead of the staged stick choice).
+	if (!MvsUI::HoverEnabled())
+	{
+		return FReply::Unhandled();
+	}
 	const FVector2D Offset = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition()) - MyGeometry.GetLocalSize() * 0.5f;
 	SetHovered(MvsWheel::IndexFromOffset(Offset, Items.Num(), Style.InnerRadius));
 	return FReply::Unhandled();

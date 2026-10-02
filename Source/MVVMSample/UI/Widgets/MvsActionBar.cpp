@@ -2,6 +2,7 @@
 
 #include "UI/Widgets/MvsActionBar.h"
 
+#include "Core/MvsEngineProperties.h"
 #include "UI/Style/MvsMetrics.h"
 #include "CommonActivatableWidget.h"
 #include "Input/UIActionBinding.h"
@@ -12,7 +13,7 @@ UMvsActionBar::UMvsActionBar(const FObjectInitializer& ObjectInitializer)
 {
 	// The prompt class is a designer setting with no setter; this bar is built in code, so it is set the way the
 	// designer would set it, through the property.
-	if (FClassProperty* ButtonClass = FindFProperty<FClassProperty>(UCommonBoundActionBar::StaticClass(), TEXT("ActionButtonClass")))
+	if (FClassProperty* ButtonClass = MvsEngineProperties::ActionBarButtonClass())
 	{
 		ButtonClass->SetObjectPropertyValue_InContainer(this, UMvsHintButton::StaticClass());
 	}

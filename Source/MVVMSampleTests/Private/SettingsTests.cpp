@@ -4,6 +4,7 @@
 
 #include "Accessibility/MvsSettingsSubsystem.h"
 #include "Accessibility/MvsSettingsTypes.h"
+#include "Engine/GameInstance.h"
 #include "Input/MvsBindings.h"
 #include "Input/MvsBindingStore.h"
 #include "ViewModels/ControlsViewModel.h"
@@ -160,6 +161,49 @@ bool FMvsSettingsViewModelTest::RunTest(const FString& Parameters)
 	VM->ResetDefaults();
 	TestFalse("defaults reset the value", VM->GetCurrent().bReducedMotion);
 	TestTrue("defaults count as an uncommitted change", VM->GetIsDirty());
+	return true;
+}
+
+// Second review 10: the subsystem is the model (preview, revert as calls) and knows no view model; a view model follows
+// it through Sync. (Commit writes the user's config, so it is not called here.)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMvsSettingsModelTest, "Mvs.Settings.Model", MvsSettingsTests::Flags)
+bool FMvsSettingsModelTest::RunTest(const FString& Parameters)
+{
+	UGameInstance* GameInstance = NewObject<UGameInstance>(GetTransientPackage());
+	UMvsSettingsSubsystem* Model = NewObject<UMvsSettingsSubsystem>(GameInstance);
+	int32 Changes = 0;
+	Model->OnSettingsChanged.AddLambda([&Changes](const FMvsSettingsData&) { ++Changes; });
+	TestFalse("a new model has nothing unsaved", Model->HasUnsavedChanges());
+
+	// Not the language: previewing one sets the process-wide culture.
+	FMvsSettingsData Edited = Model->GetSettings();
+	Edited.Cycle(EMvsSetting::HighContrast, 1);
+	Model->Preview(Edited);
+	TestTrue("a preview is in effect", Model->GetSettings().bHighContrast);
+	TestFalse("a preview is not saved", Model->GetSaved().bHighContrast);
+	TestTrue("a preview counts as unsaved", Model->HasUnsavedChanges());
+	TestEqual("a preview tells widgets to restyle", Changes, 1);
+
+	USettingsViewModel* VM = NewObject<USettingsViewModel>(GetTransientPackage());
+	int32 Previews = 0;
+	VM->OnPreview.AddLambda([&Previews](const FMvsSettingsData&) { ++Previews; });
+	VM->Sync(Model->GetSaved(), Model->GetSettings());
+	TestTrue("a synced view model shows the previewed value", VM->GetCurrent().bHighContrast);
+	TestTrue("and counts it as unapplied", VM->GetIsDirty());
+	TestEqual("syncing previews nothing back", Previews, 0);
+
+	const int32 RevisionBefore = VM->GetRevision();
+	VM->Sync(Model->GetSaved(), Model->GetSettings());
+	TestEqual("syncing the same values changes nothing on screen", VM->GetRevision(), RevisionBefore);
+	FMvsSettingsData OtherLanguage = Model->GetSettings();
+	OtherLanguage.Language = OtherLanguage.Language == TEXT("de") ? TEXT("en") : TEXT("de");
+	VM->Sync(Model->GetSaved(), OtherLanguage);
+	TestTrue("a language change re-texts the view", VM->GetRevision() > RevisionBefore);
+
+	Model->Revert();
+	TestFalse("revert goes back to the saved settings", Model->GetSettings().bHighContrast);
+	TestFalse("and leaves nothing unsaved", Model->HasUnsavedChanges());
+	TestEqual("revert restyles too", Changes, 2);
 	return true;
 }
 

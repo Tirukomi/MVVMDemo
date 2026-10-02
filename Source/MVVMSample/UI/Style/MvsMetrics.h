@@ -37,6 +37,16 @@ namespace MvsMetrics
 	/** The value selector at the right of a settings row (chevrons, value, pips). */
 	inline constexpr float SelectorWidth = 260.f;
 
+	// --- Buttons (UMvsButton) -------------------------------------------------------------------------------------
+	/** A big menu item: indented like list rows, room on the right for the highlight bar's tail. */
+	inline const FMargin MenuItemPadding(ItemIndent, 9.f, 40.f, 9.f);
+	/** A tab and the size of its chamfered corners. */
+	inline const FMargin TabPadding(20.f, 8.f);
+	inline constexpr float TabCorner = 6.f;
+	/** A standard or danger button and its corners. */
+	inline const FMargin StandardButtonPadding(ItemIndent, 9.f);
+	inline constexpr float StandardButtonCorner = 8.f;
+
 	// --- Columns and panels ---------------------------------------------------------------------------------------
 	inline constexpr float SettingsPageWidth = 660.f;
 	inline constexpr float SettingsDetailWidth = 400.f;

@@ -35,11 +35,10 @@ void UClueMarkerLayer::SetViewModels(UClueListViewModel* InClues, UForensicViewM
 	UpdateActive();
 }
 
-void UClueMarkerLayer::ApplyTheme()
+void UClueMarkerLayer::ApplyTheme(const FMvsTheme& Theme)
 {
 	if (SClueMarkerLayer* Layer = GetOverlay<SClueMarkerLayer>())
 	{
-		const FMvsTheme Theme = MvsStyle::Theme(this);
 		Layer->SetColors(Theme.Color(EMvsColorToken::Unscanned), Theme.Color(EMvsColorToken::Scanned),
 			Theme.Color(EMvsColorToken::Accent), Theme.Color(EMvsColorToken::TextMuted));
 	}

@@ -100,17 +100,17 @@ void UConfirmModalScreen::Setup(const FText& InTitle, const FText& InBody, FOnCo
 		CautionText->SetVisibility(bDestructive ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 		YesButton->SetKind(bDestructive ? EMvsButtonKind::Danger : EMvsButtonKind::Standard);
 	}
-	ApplyTheme();
+	ApplyTheme(MvsStyle::Theme(this));
 }
 
-void UConfirmModalScreen::ApplyTheme()
+void UConfirmModalScreen::ApplyTheme(const FMvsTheme& Theme)
 {
-	Super::ApplyTheme();
+	Super::ApplyTheme(Theme);
 	if (Panel)
 	{
 		const EMvsColorToken Accent = bDestructive ? EMvsColorToken::Danger : EMvsColorToken::Accent;
-		Panel->SetColors(MvsStyle::Token(this, EMvsColorToken::Panel, 0.96f), MvsStyle::Token(this, Accent, 0.7f));
-		Panel->SetAccent(MvsStyle::Token(this, Accent), 4.f);
+		Panel->SetColors(Theme.Color(EMvsColorToken::Panel, 0.96f), Theme.Color(Accent, 0.7f));
+		Panel->SetAccent(Theme.Color(Accent), 4.f);
 	}
 }
 

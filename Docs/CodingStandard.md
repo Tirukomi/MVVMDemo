@@ -47,6 +47,8 @@ Follows Epic's Unreal coding standard, plus these project rules.
     Native widget classes have no Blueprint class, so the engine ticks them every frame unless it is `Never`, and the
     `DisableNativeTick` class flag is read only for Blueprint classes. Checked in 5.8: no setter.
   - `UMvsActionBar`'s constructor: the bound action bar's `ActionButtonClass` (ADR 0007).
-  Each names its property, says why there is no alternative, and is re-checked when the engine is upgraded.
+  Each names its property, says why there is no alternative, and is re-checked when the engine is upgraded. The
+  lookups live in `Core/MvsEngineProperties.h`: a missing or retyped property raises an ensure (which the gate's log
+  scan fails on) instead of skipping the write silently, and `Mvs.Engine.Properties` checks all three.
 - Dev-only code sits under `#if !UE_BUILD_SHIPPING` and is enabled by a `-Mvs...` flag, never by default.
 - Measure before optimising; record before/after in `Docs/Performance.md`, including changes that turned out not to help.

@@ -26,7 +26,7 @@ protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
-	virtual void ApplyTheme() override;
+	virtual void ApplyTheme(const FMvsTheme& Theme) override;
 
 private:
 	void RefreshList();

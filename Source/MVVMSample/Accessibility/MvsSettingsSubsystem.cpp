@@ -6,7 +6,6 @@
 #include "Internationalization/Culture.h"
 #include "Internationalization/Internationalization.h"
 #include "Misc/ConfigCacheIni.h"
-#include "ViewModels/SettingsViewModel.h"
 
 namespace
 {
@@ -77,22 +76,14 @@ void UMvsSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Live.bReducedMotion |= FParse::Param(FCommandLine::Get(), TEXT("MvsReducedMotion"));
 #endif
 
+	// The dev overrides count as saved for this run, so leaving settings without applying keeps them.
+	Saved = Live;
 	CultureBeforeGame = FInternationalization::Get().GetCurrentCulture()->GetName();
-	ViewModel = NewObject<USettingsViewModel>(this);
-	ViewModel->Initialize(Live);
-	ViewModel->OnPreview.AddUObject(this, &UMvsSettingsSubsystem::HandlePreview);
-	ViewModel->OnCommitted.AddUObject(this, &UMvsSettingsSubsystem::HandleCommitted);
-
 	ApplyEffects(Live, true);
 }
 
 void UMvsSettingsSubsystem::Deinitialize()
 {
-	if (ViewModel)
-	{
-		ViewModel->OnPreview.RemoveAll(this);
-		ViewModel->OnCommitted.RemoveAll(this);
-	}
 	if (!CultureBeforeGame.IsEmpty() && FInternationalization::Get().GetCurrentCulture()->GetName() != CultureBeforeGame)
 	{
 		FInternationalization::Get().SetCurrentCulture(CultureBeforeGame);
@@ -100,19 +91,23 @@ void UMvsSettingsSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UMvsSettingsSubsystem::HandlePreview(const FMvsSettingsData& Data)
+void UMvsSettingsSubsystem::Preview(const FMvsSettingsData& Data)
 {
 	const bool bLanguageChanged = Data.Language != Live.Language;
 	Live = Data;
 	ApplyEffects(Live, bLanguageChanged);
 }
 
-void UMvsSettingsSubsystem::HandleCommitted(const FMvsSettingsData& Data)
+void UMvsSettingsSubsystem::Commit(const FMvsSettingsData& Data)
 {
-	Live = Data;
+	if (Data != Live)
+	{
+		Preview(Data);
+	}
+	Saved = Data;
 	if (FConfigFile* File = GConfig ? GConfig->FindConfigFile(GGameUserSettingsIni) : nullptr)
 	{
-		Live.SaveToConfig(*File, ConfigSection);
+		Saved.SaveToConfig(*File, ConfigSection);
 		GConfig->Flush(false, GGameUserSettingsIni);
 	}
 }
@@ -122,12 +117,9 @@ void UMvsSettingsSubsystem::ApplyEffects(const FMvsSettingsData& Data, bool bLan
 	if (bLanguageChanged)
 	{
 		FInternationalization::Get().SetCurrentCulture(Data.Language);
-		if (ViewModel)
-		{
-			ViewModel->RefreshTexts();
-		}
 	}
 	// UI scale is applied by the primary layout (a DPI scaler around every layer), from this broadcast. It used to be
-	// written to UUserInterfaceSettings' class default object, which outlived a play-in-editor session.
+	// written to UUserInterfaceSettings' class default object, which outlived a play-in-editor session. Views re-read
+	// their texts from it too when the language changed.
 	OnSettingsChanged.Broadcast(Live);
 }

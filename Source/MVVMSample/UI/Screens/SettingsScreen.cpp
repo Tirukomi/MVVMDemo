@@ -129,7 +129,22 @@ void USettingsScreen::NativeConstruct()
 
 	if (UMvsSettingsSubsystem* Settings = UMvsSettingsSubsystem::Get(this))
 	{
-		ViewModel = Settings->GetViewModel();
+		const TWeakObjectPtr<UMvsSettingsSubsystem> WeakSettings(Settings);
+		if (!ViewModel)
+		{
+			// The screen's own view model edits a working copy; the subsystem applies and saves it.
+			ViewModel = NewObject<USettingsViewModel>(this);
+			ViewModel->OnPreview.AddWeakLambda(this, [WeakSettings](const FMvsSettingsData& Data) { if (WeakSettings.IsValid()) { WeakSettings->Preview(Data); } });
+			ViewModel->OnCommitted.AddWeakLambda(this, [WeakSettings](const FMvsSettingsData& Data) { if (WeakSettings.IsValid()) { WeakSettings->Commit(Data); } });
+		}
+		ViewModel->Sync(Settings->GetSaved(), Settings->GetSettings());
+		ModelListener.Bind(Settings, this, [this, WeakSettings](const FMvsSettingsData&)
+		{
+			if (WeakSettings.IsValid() && ViewModel)
+			{
+				ViewModel->Sync(WeakSettings->GetSaved(), WeakSettings->GetSettings());
+			}
+		});
 		for (int32 i = 0; i < Rows.Num(); ++i)
 		{
 			Rows[i]->Setup(RowSettings[i], ViewModel);
@@ -160,6 +175,7 @@ void USettingsScreen::NativeConstruct()
 
 void USettingsScreen::NativeDestruct()
 {
+	ModelListener.Reset();
 	MvsMVVM::Unbind(ViewModel, this);
 	Super::NativeDestruct();
 }
@@ -230,14 +246,14 @@ void USettingsScreen::OnViewModelChanged(UObject* Source, UE::FieldNotification:
 	ShowDetail(DetailItem.Get());
 }
 
-void USettingsScreen::ApplyTheme()
+void USettingsScreen::ApplyTheme(const FMvsTheme& Theme)
 {
-	Super::ApplyTheme();
+	Super::ApplyTheme(Theme);
 	if (DetailPanel)
 	{
-		DetailPanel->SetColors(MvsStyle::Token(this, EMvsColorToken::Panel, MvsStyle::PanelAlpha(this)),
-			MvsStyle::Token(this, EMvsColorToken::PanelEdge, 0.7f));
-		DetailPanel->SetAccent(MvsStyle::Token(this, EMvsColorToken::Accent), 3.f);
+		DetailPanel->SetColors(Theme.Color(EMvsColorToken::Panel, Theme.PanelAlpha()),
+			Theme.Color(EMvsColorToken::PanelEdge, 0.7f));
+		DetailPanel->SetAccent(Theme.Color(EMvsColorToken::Accent), 3.f);
 	}
 }
 

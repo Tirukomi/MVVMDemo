@@ -48,12 +48,11 @@ private:
 	void OnDebugDamage();
 	void OnDebugHeal();
 #endif
-	void OnPause();
-	void OnGadgetWheel();
+	/** A screen shortcut's key (UMvsUISettings::GetShortcuts). */
+	void OnShortcut(FName ShortcutAction);
 	void OnForensic();
 	void OnScan();
 	void OnScanReleased();
-	void OnClueLog();
 
 	/** Always on. While a menu is open, Common UI's Menu input mode keeps its keys from reaching the game. */
 	UPROPERTY(Transient)

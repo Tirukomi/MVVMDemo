@@ -189,7 +189,7 @@ namespace MvsDevAidsPrivate
 	{
 		if (F.bPause)
 		{
-			UI->TogglePauseMenu();
+			UI->HandleShortcut(TEXT("Pause"));
 		}
 		if (F.bQuit)
 		{
@@ -207,7 +207,7 @@ namespace MvsDevAidsPrivate
 		}
 		if (F.bWheel)
 		{
-			UI->OpenGadgetWheel();
+			UI->HandleShortcut(TEXT("GadgetWheel"));
 		}
 		if (F.bSettings)
 		{
@@ -266,7 +266,7 @@ namespace MvsDevAidsPrivate
 						ViewModels->AddDebugClues(F.StressCount);
 					}
 				}
-				WeakUI->ToggleClueLog();
+				WeakUI->HandleShortcut(TEXT("ClueLog"));
 			}
 		});
 	}
@@ -405,7 +405,10 @@ namespace MvsDevAidsPrivate
 		{
 			if (UMvsSettingsSubsystem* Settings = WeakPC.IsValid() ? UMvsSettingsSubsystem::Get(WeakPC.Get()) : nullptr)
 			{
-				Settings->GetViewModel()->Cycle(EMvsSetting::Language, 1);
+				// A preview, as the settings screen's language row makes (an open screen shows it unapplied).
+				FMvsSettingsData Data = Settings->GetSettings();
+				Data.Cycle(EMvsSetting::Language, 1);
+				Settings->Preview(Data);
 			}
 		});
 	}

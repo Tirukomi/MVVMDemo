@@ -20,6 +20,9 @@ struct FMvsSettingsTab
 /**
  * Working copy of the settings for the settings screen. Edits take effect live (preview) through OnPreview;
  * Apply commits them, Revert returns to the last committed values. Pure data plus text: no world or widgets.
+ *
+ * The settings screen creates one over UMvsSettingsSubsystem: it hands OnPreview / OnCommitted to the subsystem's
+ * Preview / Commit, and Syncs the view model whenever the subsystem's settings change.
  */
 UCLASS(BlueprintType)
 class MVVMSAMPLE_API USettingsViewModel : public UMVVMViewModelBase
@@ -32,6 +35,11 @@ public:
 
 	/** Sets both the working copy and the committed baseline (used at start-up). */
 	void Initialize(const FMvsSettingsData& Saved);
+	/**
+	 * Follows the model: Live is the working copy, Saved the baseline. No preview is broadcast. Re-texts everything
+	 * when the language differs from the one the texts were last read in.
+	 */
+	void Sync(const FMvsSettingsData& Saved, const FMvsSettingsData& Live);
 
 	/** Steps one option. Previews immediately. */
 	void Cycle(EMvsSetting Setting, int32 Direction);
@@ -76,4 +84,6 @@ private:
 	/** The values the last Revision described. */
 	FMvsSettingsData Shown;
 	bool bHasShown = false;
+	/** The language the display strings were last read in (Sync re-texts when it changes). */
+	FString TextsLanguage;
 };

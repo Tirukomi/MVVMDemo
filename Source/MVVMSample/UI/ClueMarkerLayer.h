@@ -29,7 +29,7 @@ public:
 protected:
 	virtual TSharedRef<SMvsWorldOverlayBase> MakeOverlay() override;
 	virtual bool ShouldBeActive() const override;
-	virtual void ApplyTheme() override;
+	virtual void ApplyTheme(const FMvsTheme& Theme) override;
 
 private:
 	void OnForensicChanged(UObject* Source, UE::FieldNotification::FFieldId FieldId);

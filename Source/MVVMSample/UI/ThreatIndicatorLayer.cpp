@@ -26,11 +26,10 @@ void UThreatIndicatorLayer::SetViewModel(UThreatViewModel* InViewModel)
 	UpdateActive();
 }
 
-void UThreatIndicatorLayer::ApplyTheme()
+void UThreatIndicatorLayer::ApplyTheme(const FMvsTheme& Theme)
 {
 	if (SThreatIndicatorLayer* Layer = GetOverlay<SThreatIndicatorLayer>())
 	{
-		const FMvsTheme Theme = MvsStyle::Theme(this);
 		Layer->SetColors(Theme.Color(EMvsColorToken::Danger), Theme.Color(EMvsColorToken::TextMuted),
 			Theme.Color(EMvsColorToken::Panel), Theme.Color(EMvsColorToken::TextPrimary));
 		Layer->SetReducedMotion(Theme.bReducedMotion);

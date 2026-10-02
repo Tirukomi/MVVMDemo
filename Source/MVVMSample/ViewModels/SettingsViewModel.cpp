@@ -10,7 +10,23 @@ void USettingsViewModel::Initialize(const FMvsSettingsData& Saved)
 {
 	Current = Saved;
 	Baseline = Saved;
+	TextsLanguage = Saved.Language;
 	Recompute();
+}
+
+void USettingsViewModel::Sync(const FMvsSettingsData& Saved, const FMvsSettingsData& Live)
+{
+	Current = Live;
+	Baseline = Saved;
+	if (Live.Language != TextsLanguage)
+	{
+		TextsLanguage = Live.Language;
+		RefreshTexts();
+	}
+	else
+	{
+		Recompute();
+	}
 }
 
 void USettingsViewModel::Cycle(EMvsSetting Setting, int32 Direction)

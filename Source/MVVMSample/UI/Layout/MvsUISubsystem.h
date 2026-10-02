@@ -49,23 +49,18 @@ public:
 	/** Dismisses whatever is topmost above the HUD. Returns false if only the HUD is showing. */
 	bool PopTopScreen();
 
-	/** Opens the pause menu, or closes the topmost menu if one is already up. */
-	void TogglePauseMenu();
+	/**
+	 * What a screen shortcut's key does (UMvsUISettings::GetShortcuts): pause opens, or closes the topmost menu; the case
+	 * file opens over any menu (an open gadget wheel gives way first) or closes when it is the top menu; the gadget wheel
+	 * opens from gameplay only. A key only ever closes its own screen. Returns false if Action is not a shortcut.
+	 */
+	bool HandleShortcut(FName Action);
 
 	bool IsMenuOpen() const { return Tracker.IsMenuOpen(); }
 	bool IsLayerOccupied(EMvsUILayer Layer) const { return Tracker.IsLayerOccupied(Layer); }
 
 	/** Dev aid for profiling: hides or shows the entire UI layer. */
 	void SetLayoutVisible(bool bVisible);
-
-	/**
-	 * The case file's key: closes the case file if it is the top menu, otherwise opens it on top of whatever menu is
-	 * open (an open gadget wheel gives way first). A key only ever closes its own screen.
-	 */
-	void ToggleClueLog();
-
-	/** Opens the hold-to-use gadget wheel unless it (or a menu) is already up. */
-	void OpenGadgetWheel();
 
 	/**
 	 * True if Screen is in a layer stack with another screen pushed above it. Common UI deactivates a screen both when

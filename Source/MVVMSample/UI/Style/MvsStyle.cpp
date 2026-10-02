@@ -162,7 +162,7 @@ namespace MvsStyle
 
 	FLinearColor ItemText(const UObject* Context, bool bHot)
 	{
-		return Token(Context, bHot ? EMvsColorToken::TextPrimary : EMvsColorToken::TextMuted);
+		return Theme(Context).ItemText(bHot);
 	}
 
 	float PanelAlpha(const UObject* Context)

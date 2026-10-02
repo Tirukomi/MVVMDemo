@@ -41,6 +41,8 @@ struct MVVMSAMPLE_API FMvsTheme
 	}
 
 	FLinearColor Color(EMvsColorToken Token, float Alpha = 1.f) const;
+	/** The label colour every menu item shares: primary while focused or hovered ("hot"), muted otherwise. */
+	FLinearColor ItemText(bool bHot) const { return Color(bHot ? EMvsColorToken::TextPrimary : EMvsColorToken::TextMuted); }
 	/** Panel fill alpha under the contrast setting. */
 	float PanelAlpha() const;
 	/** A type-scale font at this theme's text size. */
@@ -72,7 +74,11 @@ namespace MvsStyle
 	 */
 	MVVMSAMPLE_API void ApplyText(UTextBlock* Text, EMvsTextStyle Style, const FLinearColor& Color);
 
-	/** A palette token under the player's current colour and contrast settings (defaults without a game instance). */
+	/**
+	 * A palette token under the player's current colour and contrast settings (defaults without a game instance). Each
+	 * call resolves the theme through the world and the settings subsystem: code that styles often (per state change)
+	 * keeps an FMvsTheme instead.
+	 */
 	MVVMSAMPLE_API FLinearColor Token(const UObject* Context, EMvsColorToken InToken, float Alpha = 1.f);
 	/** The label colour every menu item shares: primary while focused or hovered ("hot"), muted otherwise. */
 	MVVMSAMPLE_API FLinearColor ItemText(const UObject* Context, bool bHot);

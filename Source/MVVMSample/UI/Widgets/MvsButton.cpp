@@ -2,6 +2,8 @@
 
 #include "UI/Widgets/MvsButton.h"
 
+#include "UI/Style/MvsMetrics.h"
+
 #include "Blueprint/WidgetTree.h"
 #include "Components/TextBlock.h"
 #include "UI/MvsAccessibility.h"
@@ -56,7 +58,9 @@ void UMvsButton::NativeConstruct()
 {
 	MvsUI::DisableTick(this);
 	Super::NativeConstruct();
-	SettingsListener.Bind(this, [this](const FMvsSettingsData&) { ApplyState(); });
+	// The theme is resolved once per settings change, not on every focus or hover change (second review 13).
+	SettingsListener.Bind(this, [this](const FMvsSettingsData& Data) { Theme = FMvsTheme::FromSettings(Data); ApplyState(); });
+	Theme = MvsStyle::Theme(this);
 	ApplyState();
 	// The label as written (not the capitals the style may show), so readers do not spell it out.
 	MvsAccessibility::SetText(MvsAccessibility::FindButton(*this), TAttribute<FText>::CreateWeakLambda(this, [this]()
@@ -104,21 +108,21 @@ void UMvsButton::ApplyKind()
 		MvsStyle::SetTextStyle(Label, EMvsTextStyle::Header);
 		MvsText::SetUpperCase(Label, true);
 		Label->SetJustification(ETextJustify::Left);
-		Frame->SetPanelPadding(FMargin(22.f, 9.f, 40.f, 9.f));
+		Frame->SetPanelPadding(MvsMetrics::MenuItemPadding);
 		break;
 	case EMvsButtonKind::Tab:
 		MvsStyle::SetTextStyle(Label, EMvsTextStyle::Label);
 		MvsText::SetUpperCase(Label, true);
 		Label->SetJustification(ETextJustify::Center);
-		Frame->SetPanelPadding(FMargin(20.f, 8.f));
-		Frame->SetShape(6.f, EMvsChamfer::Opposite);
+		Frame->SetPanelPadding(MvsMetrics::TabPadding);
+		Frame->SetShape(MvsMetrics::TabCorner, EMvsChamfer::Opposite);
 		break;
 	default:
 		MvsStyle::SetTextStyle(Label, EMvsTextStyle::BodyStrong);
 		MvsText::SetUpperCase(Label, false);
 		Label->SetJustification(ETextJustify::Center);
-		Frame->SetPanelPadding(FMargin(22.f, 9.f));
-		Frame->SetShape(8.f, EMvsChamfer::Opposite);
+		Frame->SetPanelPadding(MvsMetrics::StandardButtonPadding);
+		Frame->SetShape(MvsMetrics::StandardButtonCorner, EMvsChamfer::Opposite);
 		break;
 	}
 }
@@ -129,10 +133,9 @@ void UMvsButton::ApplyState()
 	{
 		return;
 	}
-	using namespace MvsStyle;
 	const bool bHot = bFocused || bHoveredNow;
 	const bool bSelectedNow = GetSelected();
-	const FLinearColor Accent = Token(this, Kind == EMvsButtonKind::Danger ? EMvsColorToken::Danger : EMvsColorToken::Accent);
+	const FLinearColor Accent = Theme.Color(Kind == EMvsButtonKind::Danger ? EMvsColorToken::Danger : EMvsColorToken::Accent);
 	const FLinearColor Clear = FLinearColor::Transparent;
 
 	switch (Kind)
@@ -142,23 +145,23 @@ void UMvsButton::ApplyState()
 		Frame->SetColors(Clear, Clear, 0.f);
 		Frame->SetAccent(Clear, 0.f);
 		Frame->SetGlow(Clear, 0.f);
-		Label->SetColorAndOpacity(ItemText(this, bHot));
+		Label->SetColorAndOpacity(Theme.ItemText(bHot));
 		break;
 
 	case EMvsButtonKind::Tab:
 		Frame->SetColors(bSelectedNow ? FLinearColor(Accent.R, Accent.G, Accent.B, 0.92f) : Clear,
-			bHot && !bSelectedNow ? Token(this, EMvsColorToken::PanelEdge, 0.8f) : Clear, 1.f);
+			bHot && !bSelectedNow ? Theme.Color(EMvsColorToken::PanelEdge, 0.8f) : Clear, 1.f);
 		Frame->SetAccent(Clear, 0.f);
 		Frame->SetGlow(Clear, 0.f);
 		// Dark text on the selected (accent) tab, so selection never relies on colour alone: it is also a filled block.
-		Label->SetColorAndOpacity(bSelectedNow ? Token(this, EMvsColorToken::Panel)
-			: ItemText(this, bHot));
+		Label->SetColorAndOpacity(bSelectedNow ? Theme.Color(EMvsColorToken::Panel)
+			: Theme.ItemText(bHot));
 		break;
 
 	default:
 	{
-		const float PanelA = PanelAlpha(this);
-		FLinearColor Fill = Token(this, EMvsColorToken::Panel, PanelA);
+		const float PanelA = Theme.PanelAlpha();
+		FLinearColor Fill = Theme.Color(EMvsColorToken::Panel, PanelA);
 		if (bPressedNow)
 		{
 			Fill = FLinearColor::LerpUsingHSV(Fill, Accent, 0.35f);
@@ -170,11 +173,11 @@ void UMvsButton::ApplyState()
 		}
 		const FLinearColor Edge = bHot ? Accent
 			: Kind == EMvsButtonKind::Danger ? FLinearColor(Accent.R, Accent.G, Accent.B, 0.55f)
-			: Token(this, EMvsColorToken::PanelEdge, 0.6f);
+			: Theme.Color(EMvsColorToken::PanelEdge, 0.6f);
 		Frame->SetColors(Fill, Edge, bHot ? 1.5f : 1.f);
 		Frame->SetAccent(Accent, bHot ? 3.f : 0.f);
 		Frame->SetGlow(FLinearColor(Accent.R, Accent.G, Accent.B, 0.3f), bHot ? 6.f : 0.f);
-		Label->SetColorAndOpacity(ItemText(this, bHot));
+		Label->SetColorAndOpacity(Theme.ItemText(bHot));
 		break;
 	}
 	}

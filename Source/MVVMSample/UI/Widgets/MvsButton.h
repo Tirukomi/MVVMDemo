@@ -90,4 +90,6 @@ private:
 	bool bHoveredNow = false;
 	bool bPressedNow = false;
 	FMvsSettingsListener SettingsListener;
+	/** The player's theme, kept from the last settings change; ApplyState reads it on every state change. */
+	FMvsTheme Theme;
 };

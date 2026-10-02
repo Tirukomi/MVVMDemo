@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Accessibility/MvsSettingsTypes.h"
+#include "Accessibility/MvsSettingsListener.h"
 #include "UI/Screens/MvsScreen.h"
 #include "SettingsScreen.generated.h"
 
@@ -26,13 +27,17 @@ class MVVMSAMPLE_API USettingsScreen : public UMvsScreen
 {
 	GENERATED_BODY()
 
+public:
+	/** The screen's own view model over the settings subsystem (null before the screen is first constructed). */
+	USettingsViewModel* GetViewModel() const { return ViewModel; }
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual void NativeOnClosed() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual void ApplyTheme() override;
+	virtual void ApplyTheme(const FMvsTheme& Theme) override;
 
 private:
 	void RefreshDirtyNote();
@@ -75,4 +80,7 @@ private:
 	TObjectPtr<UTextBlock> DirtyNote;
 
 	TWeakObjectPtr<UWidget> DetailItem;
+
+	/** Keeps the view model in step with the subsystem (a change made elsewhere, a language switch). */
+	FMvsSettingsListener ModelListener;
 };
