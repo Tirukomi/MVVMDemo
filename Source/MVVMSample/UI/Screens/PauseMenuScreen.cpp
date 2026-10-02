@@ -30,8 +30,17 @@
 
 TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 {
-	if (!WidgetTree->RootWidget)
+	// In the widget designer a subclass shows only what its designer authored (the status content).
+	if (IsDesignTime())
 	{
+		return Super::RebuildWidget();
+	}
+	if (!StatusPanel)
+	{
+		// A designer subclass (WBP_PauseMenu, second review 11) authors the status panel's content in its widget tree,
+		// bound to the view models through MVVM View Bindings; the frame, the menu and the panel stay code-built.
+		UWidget* DesignerStatus = WidgetTree->RootWidget;
+		WidgetTree->RootWidget = nullptr;
 		UVerticalBox* Column = BuildMenuFrame(LOCTEXT("Section", "MVVM Sample"), LOCTEXT("Title", "Paused"));
 
 		UHorizontalBox* Split = WidgetTree->ConstructWidget<UHorizontalBox>();
@@ -66,6 +75,20 @@ TSharedRef<SWidget> UPauseMenuScreen::RebuildWidget()
 		StatusPanel->SetShape(12.f, EMvsChamfer::Opposite);
 		StatusWidth->SetContent(StatusPanel);
 
+		if (DesignerStatus)
+		{
+			StatusPanel->SetContent(DesignerStatus);
+			if (ObjectiveLabel)
+			{
+				ObjectiveLabel->SetText(LOCTEXT("ObjectiveLabel", "Objective"));
+			}
+			if (EvidenceLabel)
+			{
+				EvidenceLabel->SetText(LOCTEXT("EvidenceLabel", "Evidence"));
+			}
+			AddFooter(MakeActionBar(LOCTEXT("Select", "Select"), LOCTEXT("Back", "Resume")));
+			return Super::RebuildWidget();
+		}
 		UVerticalBox* Status = WidgetTree->ConstructWidget<UVerticalBox>();
 		StatusPanel->SetContent(Status);
 		Status->AddChildToVerticalBox(MakeText(LOCTEXT("ObjectiveLabel", "Objective"), EMvsTextStyle::Label, EMvsColorToken::TextMuted));
@@ -112,7 +135,7 @@ void UPauseMenuScreen::NativeConstruct()
 	Clues = ViewModels->GetClues();
 	using FClues = UClueListViewModel::FFieldNotificationClassDescriptor;
 	MvsMVVM::Bind(Objectives, this, &UPauseMenuScreen::OnStatusChanged, { UObjectivesViewModel::FFieldNotificationClassDescriptor::ObjectiveTitle });
-	MvsMVVM::Bind(Clues, this, &UPauseMenuScreen::OnStatusChanged, { FClues::Entries, FClues::DiscoveredCount });
+	MvsMVVM::Bind(Clues, this, &UPauseMenuScreen::OnStatusChanged, { FClues::ProgressText });
 	RefreshStatus();
 }
 
@@ -137,8 +160,7 @@ void UPauseMenuScreen::RefreshStatus()
 		return;
 	}
 	ObjectiveText->SetText(Objectives ? Objectives->GetObjectiveTitle() : FText::GetEmpty());
-	EvidenceText->SetText(Clues ? FText::Format(LOCTEXT("EvidenceFmt", "{0} / {1}"),
-		FText::AsNumber(Clues->GetDiscoveredCount()), FText::AsNumber(Clues->GetTotalCount())) : FText::GetEmpty());
+	EvidenceText->SetText(Clues ? Clues->GetProgressText() : FText::GetEmpty());
 }
 
 void UPauseMenuScreen::OnResume()

@@ -13,17 +13,54 @@
 #include "UI/Screens/PauseMenuScreen.h"
 #include "UI/Screens/SettingsScreen.h"
 #include "UI/Widgets/MvsTabList.h"
+#include "UI/Widgets/MvsText.h"
+#include "Components/TextBlock.h"
+#include "MvsTestDesignerPause.h"
+#include "Components/VerticalBox.h"
+#include "UI/Widgets/MvsPanel.h"
+#include "ViewModels/ClueViewModels.h"
+#include "ViewModels/MvsViewModelSubsystem.h"
+#include "ViewModels/ObjectivesViewModel.h"
 #include "ViewModels/SettingsViewModel.h"
 
 namespace MvsPauseTests
 {
 	using namespace MvsMenuTest;
 
+	/** Whether a visible text inside Screen reads Text (as set: before a UMvsText's capitals). */
+	bool ShowsText(const UObject* Screen, const FString& Text)
+	{
+		for (TObjectIterator<UTextBlock> It; It && Screen; ++It)
+		{
+			if (!It->HasAnyFlags(RF_ClassDefaultObject) && It->IsIn(Screen) && It->IsVisible())
+			{
+				const UMvsText* Mvs = Cast<UMvsText>(*It);
+				if ((Mvs ? Mvs->GetSourceText() : It->GetText()).ToString() == Text)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	void Pause(FMvsScript& Script, const FRig& Rig)
 	{
 		// The pause key on the gamepad (Start) closes pause.
 		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->HandleShortcut(TEXT("Pause")); } })
 			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UPauseMenuScreen>()); }, Open, TEXT("pause opens (precondition)"))
+			// Second review 11: whichever pause class is configured (code-built, or a designer's WBP_PauseMenu filled by
+			// MVVM View Bindings), the status panel reads the view models.
+			.Do([Rig]()
+			{
+				const UPauseMenuScreen* Pause = ActiveScreen<UPauseMenuScreen>();
+				const UObjectivesViewModel* Objectives = Rig.ViewModels() ? Rig.ViewModels()->GetObjectives() : nullptr;
+				const UClueListViewModel* Clues = Rig.ViewModels() ? Rig.ViewModels()->GetClues() : nullptr;
+				Rig.Check(Objectives && ShowsText(Pause, Objectives->GetObjectiveTitle().ToString()),
+					FString::Printf(TEXT("pause shows the current objective (%s, second review 11)"), *GetNameSafe(Pause ? Pause->GetClass() : nullptr)));
+				Rig.Check(Clues && ShowsText(Pause, Clues->GetProgressText().ToString()),
+					FString::Printf(TEXT("pause shows the evidence found (%s, second review 11)"), *GetNameSafe(Pause ? Pause->GetClass() : nullptr)));
+			})
 			.Do([]() { SendKey(EKeys::Gamepad_Special_Right); })
 			.WaitUntil([Rig]() { return Rig.Closed(ActiveScreen<UPauseMenuScreen>()); }, Quick, TEXT("Start closes pause"));
 
@@ -86,6 +123,28 @@ namespace MvsPauseTests
 			.Do([]() { if (UPauseMenuScreen* Pause = ActiveScreen<UPauseMenuScreen>()) { Pause->DeactivateWidget(); } })
 			.WaitUntil([Rig]() { return Rig.Closed(ActiveScreen<UPauseMenuScreen>()); }, Quick, TEXT("pause closes"))
 			.Do([Rig]() { Rig.Check(Rig.PC.IsValid() && !UGameplayStatics::IsGamePaused(Rig.PC.Get()), TEXT("closing pause resumes the game")); });
+
+		// Second review 11, the C++ half of the designer path: a pause class whose widget tree already has a root (as a
+		// Widget Blueprint's does) gets that tree as its status panel's content, inside the code-built frame and menu,
+		// and a designer's UMvsText takes its style from the Mvs settings in the Details panel.
+		Script.Do([Rig]() { if (Rig.UI.IsValid()) { Rig.UI->PushScreen(EMvsUILayer::Menu, TSubclassOf<UCommonActivatableWidget>(UMvsTestDesignerPause::StaticClass())); } })
+			.WaitUntil([Rig]() { return Rig.Settled(ActiveScreen<UMvsTestDesignerPause>()); }, Open, TEXT("a pause class with a designer's tree opens, focused (precondition)"))
+			.Do([Rig]()
+			{
+				const UMvsTestDesignerPause* Pause = ActiveScreen<UMvsTestDesignerPause>();
+				const UWidget* Panel = Pause ? Pause->GetStatusPanel() : nullptr;
+				Rig.Check(Panel && Pause->DesignerRoot && Pause->DesignerRoot->GetParent() == Panel,
+					TEXT("a designer's tree becomes the pause status panel's content (second review 11)"));
+				Rig.Check(Pause && ShowsText(Pause, NSLOCTEXT("Mvs.PauseMenu", "Resume", "Resume").ToString()),
+					TEXT("and the code-built menu is still there (second review 11)"));
+				const FMvsTheme Theme = MvsStyle::Theme(Pause);
+				const UMvsText* Label = Pause ? Pause->DesignerLabel.Get() : nullptr;
+				Rig.Check(Label && Label->GetFont().Size == Theme.Font(EMvsTextStyle::Label).Size && Label->IsUpperCase()
+					&& Label->GetColorAndOpacity().GetSpecifiedColor().Equals(Theme.Color(EMvsColorToken::TextMuted)),
+					TEXT("a designer's text takes the style, capitals and colour set under Mvs (second review 11)"));
+			})
+			.Do([]() { if (UMvsTestDesignerPause* Pause = ActiveScreen<UMvsTestDesignerPause>()) { Pause->DeactivateWidget(); } })
+			.WaitUntil([Rig]() { return Rig.Closed(ActiveScreen<UMvsTestDesignerPause>()); }, Quick, TEXT("it closes (cleanup)"));
 	}
 }
 

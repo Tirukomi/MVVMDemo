@@ -75,6 +75,19 @@ void UClueListViewModel::SetEntries(TArray<TObjectPtr<UClueEntryViewModel>> InEn
 	}
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(Entries);
 	UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(DiscoveredCount);
+	UpdateProgressText();
+}
+
+void UClueListViewModel::UpdateProgressText()
+{
+	// The pause menu's key, so the existing translations carry over.
+	const FText Progress = FText::Format(NSLOCTEXT("Mvs.PauseMenu", "EvidenceFmt", "{0} / {1}"),
+		FText::AsNumber(DiscoveredCount), FText::AsNumber(GetTotalCount()));
+	if (!Progress.ToString().Equals(ProgressText.ToString(), ESearchCase::CaseSensitive))
+	{
+		ProgressText = Progress;
+		UE_MVVM_BROADCAST_FIELD_VALUE_CHANGED(ProgressText);
+	}
 }
 
 bool UClueListViewModel::MarkDiscovered(FName ClueId)
@@ -89,6 +102,7 @@ bool UClueListViewModel::MarkDiscovered(FName ClueId)
 			}
 			Entry->SetDiscovered(true);
 			UE_MVVM_SET_PROPERTY_VALUE(DiscoveredCount, DiscoveredCount + 1);
+			UpdateProgressText();
 			return true;
 		}
 	}

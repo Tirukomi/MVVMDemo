@@ -8,6 +8,39 @@
 #include "UI/Style/MvsStyle.h"
 #include "MvsText.generated.h"
 
+/** EMvsTextStyle for the widget designer (that enum is not reflected), with "None" for "leave the font as set". */
+UENUM()
+enum class EMvsDesignerTextStyle : uint8
+{
+	None,
+	Display,
+	Title,
+	Header,
+	Label,
+	Numeric,
+	Body,
+	BodyStrong,
+	Key,
+};
+
+/** EMvsColorToken for the widget designer, with "None" for "leave the colour as set". */
+UENUM()
+enum class EMvsDesignerColor : uint8
+{
+	None,
+	Good,
+	Danger,
+	Info,
+	Warning,
+	Unscanned,
+	Scanned,
+	Panel,
+	PanelEdge,
+	TextPrimary,
+	TextMuted,
+	Accent,
+};
+
 /**
  * A text block that can show its text in capitals. Slate's ETextTransformPolicy::ToUpper assumes upper-casing never
  * changes a string's length, which is false in German ("ß" becomes "SS"): it ensures and leaves the text in mixed
@@ -18,6 +51,8 @@
  * size and its colour in the current palette, re-applying both when settings change. Nothing has to recolour it.
  *
  * Code-built widgets construct this instead of UTextBlock; members can stay UTextBlock* because SetText is virtual.
+ * In the widget designer, Style and Color under "Mvs" do the same (second review 11): a designer-built text then
+ * looks and restyles exactly like a code-built one, capitals included where the style uses them.
  */
 UCLASS()
 class MVVMSAMPLE_API UMvsText : public UTextBlock
@@ -38,8 +73,20 @@ public:
 	/** Keeps the colour at a palette token. Code that sets the colour itself does not call this. */
 	void SetColorToken(EMvsColorToken InToken, float InAlpha = 1.f);
 
+	/** Designer setting: the type style the text keeps (and its capitals). None leaves the font as set. */
+	UPROPERTY(EditAnywhere, Category = "Mvs")
+	EMvsDesignerTextStyle Style = EMvsDesignerTextStyle::None;
+
+	/** Designer setting: the palette colour the text keeps. None leaves the colour as set. */
+	UPROPERTY(EditAnywhere, Category = "Mvs")
+	EMvsDesignerColor Color = EMvsDesignerColor::None;
+
+	UPROPERTY(EditAnywhere, Category = "Mvs", meta = (ClampMin = "0", ClampMax = "1", EditCondition = "Color != EMvsDesignerColor::None"))
+	float ColorOpacity = 1.f;
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void SynchronizeProperties() override;
 
 private:
 	void ApplyText();

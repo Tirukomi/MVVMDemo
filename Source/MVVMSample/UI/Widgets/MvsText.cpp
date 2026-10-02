@@ -75,6 +75,23 @@ void UMvsText::ApplyTheme(bool bForce)
 	}
 }
 
+void UMvsText::SynchronizeProperties()
+{
+	Super::SynchronizeProperties();
+	static_assert(static_cast<int32>(EMvsDesignerTextStyle::Key) == static_cast<int32>(EMvsTextStyle::Key) + 1, "EMvsDesignerTextStyle mirrors EMvsTextStyle");
+	static_assert(static_cast<int32>(EMvsDesignerColor::Accent) == static_cast<int32>(EMvsColorToken::Accent) + 1, "EMvsDesignerColor mirrors EMvsColorToken");
+	if (Style != EMvsDesignerTextStyle::None)
+	{
+		const EMvsTextStyle TypeStyle = static_cast<EMvsTextStyle>(static_cast<uint8>(Style) - 1);
+		SetTextStyle(TypeStyle);
+		SetUpperCase(MvsStyle::IsUpperCase(TypeStyle));
+	}
+	if (Color != EMvsDesignerColor::None)
+	{
+		SetColorToken(static_cast<EMvsColorToken>(static_cast<uint8>(Color) - 1), ColorOpacity);
+	}
+}
+
 TSharedRef<SWidget> UMvsText::RebuildWidget()
 {
 	// Subscribed once the text is first built (the world, and with it the settings, is known by now). The subscription

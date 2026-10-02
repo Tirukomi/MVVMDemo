@@ -84,3 +84,42 @@ model with `MvsMVVM::Bind(ViewModel, this, &UMyWidget::OnFieldChanged, { FVM::He
 `MvsMVVM::Unbind(ViewModel, this)` before swapping or dropping it), and call `MvsUI::DisableTick(this)` if it has no widget animations
 (`UMvsSettingsAwareWidget` already does). Place it in `UMvsHudWidget::RebuildWidget` and hand it its view model
 in `NativeConstruct`. Add the view model to `UMvsViewModelSubsystem`. Do not read gameplay components from a widget.
+
+## Build a screen's content in the widget designer (WBP_PauseMenu)
+
+The pause menu's status panel (objective and evidence) can be authored as a Widget Blueprint and filled through MVVM
+View Bindings, while the frame, the menu and the panel itself stay code-built. Second review S6 does this once to prove
+the path; the steps below are the whole job. Close the editor whenever the gate runs (`Scripts/Verify.ps1`).
+
+1. Build the editor target (or let the editor compile on open), then open `MVVMSample.uproject`.
+2. Content Browser, `Content/UI`: right-click, **User Interface > Widget Blueprint**, pick **PauseMenuScreen** as the
+   parent class, and name it `WBP_PauseMenu`.
+3. Designer tab: the tree must have one root, a **Vertical Box** (delete a Canvas Panel if one was added). Everything
+   under it becomes the status panel's content. Under the Vertical Box add four **Mvs Text** widgets (search the
+   Palette for "Mvs Text"), in this order, with these names and Details settings:
+
+   | Name | Mvs: Style | Mvs: Color | Slot padding (L, T, R, B) | Other |
+   |---|---|---|---|---|
+   | `ObjectiveLabel` | Label | TextMuted | 0, 0, 0, 0 | |
+   | `ObjectiveText` | Header | TextPrimary | 0, 2, 0, 14 | Auto Wrap Text on; Is Variable on |
+   | `EvidenceLabel` | Label | TextMuted | 0, 0, 0, 0 | |
+   | `EvidenceText` | Numeric | Accent | 0, 2, 0, 0 | Is Variable on |
+
+   Leave each slot's alignment at Fill and size at Auto. For the Text of each, type a preview ("Objective",
+   "Find the clues", "Evidence", "0 / 5") and open the small arrow next to the Text box and untick **Localize**:
+   the game fills all four at run time, and a localized text typed here would get a key of its own that no
+   translation has (the translation check fails on it). The two labels must keep the names `ObjectiveLabel` and
+   `EvidenceLabel`: the screen finds them by name and gives them the game's translated captions.
+4. **Window > Viewmodels**: add **ObjectivesViewModel** and **ClueListViewModel**. For each, in Details set
+   **Creation Type** to *Resolver* and **View Model Resolver** to *MvsViewModelResolver* (it hands the widget the
+   owning player's view model).
+5. **Window > View Bindings**: add two bindings, each *One Way To Widget*:
+   - `ObjectiveText` **Text** from `ObjectivesViewModel` **ObjectiveTitle**
+   - `EvidenceText` **Text** from `ClueListViewModel` **ProgressText**
+6. Compile and save. Then **Project Settings > Game > Mvs UI > Screens > Pause Menu Class**: `WBP_PauseMenu`. This
+   writes `Config/DefaultGame.ini`.
+7. Play: Esc opens pause, and the right-hand panel shows the objective and "found / total" as before.
+
+What checks it (the gate): `Mvs.Functional.Pause` reads the objective and the evidence count from whichever pause
+class is configured, and the `pause` and `pause-quit` screenshots must stay pixel-identical to the code-built ones.
+If a screenshot differs, the usual cause is a Style, Color or padding in the table above.

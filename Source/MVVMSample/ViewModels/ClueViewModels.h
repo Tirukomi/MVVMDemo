@@ -84,6 +84,8 @@ public:
 	const TArray<TObjectPtr<UClueEntryViewModel>>& GetEntries() const { return Entries; }
 	int32 GetDiscoveredCount() const { return DiscoveredCount; }
 	int32 GetTotalCount() const { return Entries.Num(); }
+	/** "Found / total" (e.g. "2 / 5"), ready to bind to a text without a conversion function. */
+	const FText& GetProgressText() const { return ProgressText; }
 
 protected:
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
@@ -91,4 +93,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
 	int32 DiscoveredCount = 0;
+
+	UPROPERTY(BlueprintReadOnly, FieldNotify, Getter, meta = (AllowPrivateAccess = "true"))
+	FText ProgressText;
+
+private:
+	void UpdateProgressText();
 };
