@@ -37,7 +37,8 @@ More: [pause](Docs/img/pause.png), [quit confirmation](Docs/img/pause-quit.png),
 | **Performance and memory** | Measured harness, budgets, before/after numbers. [Docs/Performance.md](Docs/Performance.md) |
 | **Engineering standards** | 65 automation tests (58 in the editor, 7 in the running game) in their own module (`Source/MVVMSampleTests`), ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
 
-Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). The latest review and what came of it:
+New to the code: start with [Docs/Onboarding.md](Docs/Onboarding.md) (setup, a tour of the code, common changes, the
+gate). Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). The latest review and what came of it:
 [Docs/ReviewPlan2.md](Docs/ReviewPlan2.md). How the project got here (the build plan, the visual pass, the first review and the
 refactoring passes): [Docs/History](Docs/History/).
 
