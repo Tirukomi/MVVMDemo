@@ -129,6 +129,17 @@ left is mostly four things:
   - World overlays repaint only when their items change or they animate [29], with a test.
   - Findings 24 and 25 do not show in the capture, so they are not done; 26 was out of date (the components already
     stop ticking when idle).
+- **S8 done** (finding 22): one test count in the README (65: 58 editor, 7 functional); `ProjectPlan`,
+  `RefactoringPlan`, `RefactoringProposal`, `ReviewFixPlan` and `VisualPlan` are in `Docs/History/` (with an index),
+  and every path to them is updated; no other stale paths found in the docs, source or scripts.
+
+**Open after the second review:**
+- The case file scrolls at about 0.55 ms of UI against a 0.3 ms target (budget 0.75 ms): reaching the target needs a
+  grid that moves its tiles instead of `UTileView` re-adding them every frame (S7). A decision, not a defect.
+- With `WBP_PauseMenu`, the live user-widget count in the pause-quit perf run was 61 against 48 before (S6), not
+  explained.
+- Navigation in a windowed game searches at an offset equal to the window's position (finding 4, seen in R8): not
+  reproduced in fullscreen.
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master
   (G5: the game's code, config, content, project file; G4: those plus the screenshot baselines and capture scripts;
   test-only code counts for neither). The gate prints the decision and the files behind it first. From the measured
@@ -257,7 +268,7 @@ About 7 to 9 days. S0, S1 and S2 are cheap and independent, so they go first.
 3. The "clue found" subtitle hides on a real-time core ticker, so it can run out while the game is paused.
    *Checked in code; may be intended.*
 4. Arrow and d-pad navigation in a windowed game away from the desktop origin searched at an offset equal to the
-   window's position (seen in R8, `Docs/ReviewFixPlan.md`). *Not reproduced in fullscreen yet; may be the engine.*
+   window's position (seen in R8, `Docs/History/ReviewFixPlan.md`). *Not reproduced in fullscreen yet; may be the engine.*
 
 **Shipping hygiene**
 

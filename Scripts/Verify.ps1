@@ -1,5 +1,5 @@
 # Copyright IG. All Rights Reserved.
-# The refactoring gate (Docs/RefactoringPlan.md). Runs every check, prints one PASS / FAIL line per check, writes a
+# The refactoring gate (its origin: Docs/History/RefactoringPlan.md). Runs every check, prints one PASS / FAIL line per check, writes a
 # report to Saved/Verify/<timestamp>.md and exits non-zero if anything failed. Close the editor first.
 #
 #   .\Scripts\Verify.ps1                         # the full gate, about 30 minutes: 6 without G5, 2 without G4 either

@@ -1,7 +1,7 @@
 // Copyright IG. All Rights Reserved.
 
 // Characterization tests (refactoring pass P0). They pin today's observable behaviour and on-disk formats so the
-// refactoring passes (see Docs/RefactoringPlan.md) can change structure without changing results. If one of these
+// refactoring passes (see Docs/History/RefactoringPlan.md) can change structure without changing results. If one of these
 // fails after a refactor, the refactor changed behaviour.
 
 #include "Misc/AutomationTest.h"

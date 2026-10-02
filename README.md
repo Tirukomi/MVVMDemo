@@ -35,10 +35,11 @@ More: [pause](Docs/img/pause.png), [quit confirmation](Docs/img/pause-quit.png),
 | **Accessibility** | Colour-blind presets, high contrast, reduced motion, hold/toggle wheel, subtitles, gamepad-navigable menus, no colour-only information |
 | **Localization** | English, German, Japanese and a pseudo-locale via UE's gather/compile pipeline, live switching. [ADR 0006](Docs/ADR/0006-localization-pipeline.md) |
 | **Performance and memory** | Measured harness, budgets, before/after numbers. [Docs/Performance.md](Docs/Performance.md) |
-| **Engineering standards** | 54 automation tests in their own module (`Source/MVVMSampleTests`), ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
+| **Engineering standards** | 65 automation tests (58 in the editor, 7 in the running game) in their own module (`Source/MVVMSampleTests`), ADRs, [coding standard](Docs/CodingStandard.md), [designer guide](Docs/DesignerGuide.md) |
 
-Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). Refactoring ideas: [Docs/RefactoringProposal.md](Docs/RefactoringProposal.md), plan: [Docs/RefactoringPlan.md](Docs/RefactoringPlan.md). Plan and per-milestone notes:
-[Docs/ProjectPlan.md](Docs/ProjectPlan.md).
+Architecture overview: [Docs/Architecture.md](Docs/Architecture.md). The latest review and what came of it:
+[Docs/ReviewPlan2.md](Docs/ReviewPlan2.md). How the project got here (the build plan, the visual pass, the first review and the
+refactoring passes): [Docs/History](Docs/History/).
 
 ## Run it
 
@@ -72,8 +73,9 @@ for pause).
 python Scripts/run_tests.py          # editor pass (headless) + game pass (Mvs.Functional, small window); exit code reflects failures
 ```
 
-Before merging a refactor, run the whole gate (build, tests, menu input test, screenshot diff, perf versus baseline
-and per-scenario budgets, log scan, translation check). See [Docs/RefactoringPlan.md](Docs/RefactoringPlan.md):
+Before merging a change, run the whole gate (build, tests, screenshot diff, perf versus master and per-scenario budgets,
+log scan, translation check). What each check does, and when the screenshot and perf checks are skipped, is at the top
+of [Scripts/Verify.ps1](Scripts/Verify.ps1):
 
 ```bash
 powershell -ExecutionPolicy Bypass -File Scripts/Verify.ps1
@@ -82,7 +84,7 @@ powershell -ExecutionPolicy Bypass -File Scripts/Verify.ps1
 `Scripts/ProfileUI.ps1` breaks the perf scenarios down timer by timer with Unreal Insights (see
 [Docs/Performance.md](Docs/Performance.md)).
 
-45 automation tests cover view models, component logic, wheel hit-testing, layer/input-context rules, settings
+The editor tests cover view models, component logic, wheel hit-testing, layer/input-context rules, settings
 persistence and grouping, palette legibility, rebinding conflicts, subtitles, HUD motion and ghost timing, Forensic
 pulse and analysis timing, the menu highlight's slide, and the combat rules (thug attack cycle, attack director,
 edge-arrow math, combo milestones, camera trauma). Visual behaviour is verified with dev flags and
