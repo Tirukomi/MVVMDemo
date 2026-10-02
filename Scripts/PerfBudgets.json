@@ -1,5 +1,5 @@
 {
-    "_comment": "G5 budgets: UI cost per scenario (game thread minus no-ui, or minus no-ui-paused for a scenario that pauses the world; median over the rounds), in ms at 1920x1080. Set in review S0 (2026-10-01) from the R8 gate and two S0 runs: the worst run plus about 0.05 ms, rounded up. Raise one only with a reason in Docs/Performance.md. case-file-browse added after S8 (one session: 0.06 ms).",
+    "_comment": "G5 budgets: UI cost per scenario (game thread minus no-ui, or minus no-ui-paused for a scenario that pauses the world; median over the rounds), in ms at 1920x1080. Set in review S0 (2026-10-01) from the R8 gate and two S0 runs: the worst run plus about 0.05 ms, rounded up. Raise one only with a reason in Docs/Performance.md. case-file-browse added after S8 (gate: 0.09 ms).",
     "hud-idle": 0.25,
     "hud-animating": 0.30,
     "forensic": 0.25,

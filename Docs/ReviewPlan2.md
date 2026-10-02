@@ -135,7 +135,7 @@ left is mostly four things:
 
 **Open after the second review:**
 - (Decided after S8) The case file keeps `UTileView`: continuous scrolling costs about 0.55 ms (budget 0.75 ms), and
-  browsing it the way a player does costs about 0.06 ms, measured by the new `case-file-browse` scenario (budget
+  browsing it the way a player does costs about 0.09 ms, measured by the new `case-file-browse` scenario (budget
   0.15 ms). A custom grid for the 0.3 ms target is not worth re-doing the tile view's input handling.
 - (Resolved after S8) The pause-quit user-widget count "61 against 48" was a wrong comparison: 48 came from the S6 gate
   runs where pause never opened. Every valid run shows 61, and both pause classes give the same widgets class for class.

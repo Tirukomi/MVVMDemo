@@ -244,9 +244,19 @@ Result: about 0.55 ms against 0.60 to 0.63 ms in recent gates; the `case-file` s
 scrolling would need a grid that moves its tiles instead of re-adding them, and re-doing the tile view's navigation,
 selection, mouse and scrollbar handling. The cost is paid only on frames where the offset moves, so a second scenario
 measures normal use: `case-file-browse` steps one row every 0.15 s (a held d-pad's repeat), down 30 rows and back,
-through the list's own navigation, which snaps the row into view. One session: 0.06 ms of UI against 0.55 ms for the
-continuous scroll; in the trace the tile view's tick is 0.026 ms a frame against 0.19 ms, with 0.6 tile removals a
+through the list's own navigation, which snaps the row into view. Six gate rounds: 0.09 ms of UI against 0.54 ms for
+the continuous scroll; in the trace the tile view's tick is 0.026 ms a frame against 0.19 ms, with 0.6 tile removals a
 frame against 16. Budgets: `case-file-505` 0.75 ms (the worst case), `case-file-browse` 0.15 ms (normal use).
+
+Adding that scenario taught two things about the harness, now written into it:
+- **Order matters, because the world keeps running under menus.** With `case-file-browse` inserted before `settings`,
+  every later scenario sampled a later moment of the scene: `settings` read 0.1 ms dearer (in `SceneRender`, the
+  world) and `combat` 0.1 ms cheaper, in every round, with neither changed. New scenarios go at the end, before the
+  paused reference.
+- **A screen pushed while the same screen is still closing is a second instance**, which here kept the other's 500
+  fake clues alive. The harness now also collects garbage halfway through each warm-up, so no scenario's sampled frames
+  include another's garbage. That change was measured on both sides (a local reference of master plus the harness
+  change): every scenario within 0.035 ms.
 
 **World overlays (finding 29).** They repainted every frame while active. Now the active timer still fetches items
 each frame (cheap: projecting a few positions) but repaints only when the items differ or the layer animates (a
@@ -261,7 +271,7 @@ already switch their tick off when idle (none ticks in `hud-idle`; finding 26 wa
 
 | Budget | Target | Status |
 |---|---|---|
-| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met in use: browsing the 505-clue case file costs about 0.06 ms. Scrolling it continuously costs about 0.55 ms, the tile view re-adding every visible tile each frame the offset moves (accepted after S8, budget 0.75 ms; see "Second review S7"). Others up to +0.23 ms (combat). Gated per scenario by `Scripts/PerfBudgets.json` |
+| UI game-thread cost, any single screen | <= 0.3 ms at 60 fps (under 2% of a 16.6 ms frame) | Met in use: browsing the 505-clue case file costs about 0.09 ms. Scrolling it continuously costs about 0.55 ms, the tile view re-adding every visible tile each frame the offset moves (accepted after S8, budget 0.75 ms; see "Second review S7"). Others up to +0.23 ms (combat). Gated per scenario by `Scripts/PerfBudgets.json` |
 | Ticking widgets while idle | 0 | Met for the HUD and menus; the case file's tiles tick (the list view requires it) |
 | Row widgets for any list | bounded by viewport, not item count | Met (case-file tile view: 20 tiles for 205 clues) |
 | Widget objects, all screens | no unbounded growth | Steady: 9 (HUD) to 38 (tabbed settings) |
