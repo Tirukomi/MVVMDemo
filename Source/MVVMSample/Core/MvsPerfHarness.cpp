@@ -206,8 +206,7 @@ namespace
 				while (FPlatformTime::Seconds() < Until) {}
 			}
 			// Halfway through the warm-up, collect what the scenario before left behind (its screen has finished closing by
-			// then), so no scenario pays for another's garbage: a second case-file scenario moved a collection from combat
-			// into settings, +0.1 ms on one and -0.1 ms on the other, with neither screen changed.
+			// then), so no scenario's sampled frames include another's garbage or its collection.
 			if (!bCollected && Elapsed > WarmupSeconds * 0.5f)
 			{
 				bCollected = true;
@@ -342,9 +341,7 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 	const TFunction<void()> OpenCaseFile = [WeakUI, WeakVMs]()
 	{
 		if (WeakVMs.IsValid()) { WeakVMs->AddDebugClues(500); }
-		// Pushed, not toggled: right after the other case-file scenario, its screen is still on the stack for its outro,
-		// and the key would close that instead of opening one (as with pause-quit, found by the Valid check).
-		if (WeakUI.IsValid()) { WeakUI->PushScreen(EMvsUILayer::Menu, GetDefault<UMvsUISettings>()->ClueLogClass); }
+		if (WeakUI.IsValid()) { WeakUI->HandleShortcut(TEXT("ClueLog")); }
 	};
 	const TFunction<void()> CloseCaseFile = [WeakUI, WeakVMs]()
 	{
@@ -368,24 +365,11 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 		return false;
 	};
 
-	// 5. Case file scrolled continuously, at up to 120 rows a second: the worst case for the pooled list. The tile view
-	// re-adds every visible tile on each frame its offset moves, so this is the per-frame cost of any scrolling.
-	Run->Scenarios.Add({ TEXT("case-file-505"),
-		OpenCaseFile,
-		[](float Seconds)
-		{
-			// Scroll back and forth across the whole board (offset is in rows of 4 tiles); the pool must keep rebinding tiles.
-			for (TObjectIterator<UMvsClueTileView> It; It; ++It)
-			{
-				It->SetScrollOffset(62.f + 60.f * FMath::Sin(Seconds * 2.f));
-			}
-		},
-		CloseCaseFile,
-		CaseFileFull });
-
-	// 5b. The same case file browsed the way a player does: one row every 0.15 s (a held d-pad's repeat), down 30 rows
-	// and back, through the list's own navigation (it selects the tile and scrolls it into view). Most frames are still
-	// between steps, so this is what browsing costs on average, next to the worst case above.
+	// 5. The case file with 505 clues, browsed the way a player does: one row every 0.15 s (a held d-pad's repeat), down
+	// 30 rows and back, through the list's own navigation (it selects the tile and scrolls it into view). Most frames are
+	// still between steps, so this is what browsing costs on average. It leaves the case file open for the next scenario:
+	// opening a second one while the first is still closing made the stack create another screen, which kept the 500
+	// fake clues alive and cost the scenarios after it.
 	Run->Scenarios.Add({ TEXT("case-file-browse"),
 		OpenCaseFile,
 		[LastRow = MakeShared<int32>(INDEX_NONE)](float Seconds)
@@ -404,6 +388,22 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 				{
 					It->NavigateToIndex(Row * 4);
 				}
+			}
+		},
+		nullptr,
+		CaseFileFull });
+
+	// 5b. The same case file (still open) scrolled continuously, at up to 120 rows a second: the worst case for the pooled
+	// list. The tile view re-adds every visible tile on each frame its offset moves, so this is the per-frame cost of any
+	// scrolling. It closes the case file.
+	Run->Scenarios.Add({ TEXT("case-file-505"),
+		nullptr,
+		[](float Seconds)
+		{
+			// Scroll back and forth across the whole board (offset is in rows of 4 tiles); the pool must keep rebinding tiles.
+			for (TObjectIterator<UMvsClueTileView> It; It; ++It)
+			{
+				It->SetScrollOffset(62.f + 60.f * FMath::Sin(Seconds * 2.f));
 			}
 		},
 		CloseCaseFile,
