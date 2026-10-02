@@ -365,39 +365,10 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 		return false;
 	};
 
-	// 5. The case file with 505 clues, browsed the way a player does: one row every 0.15 s (a held d-pad's repeat), down
-	// 30 rows and back, through the list's own navigation (it selects the tile and scrolls it into view). Most frames are
-	// still between steps, so this is what browsing costs on average. It leaves the case file open for the next scenario:
-	// opening a second one while the first is still closing made the stack create another screen, which kept the 500
-	// fake clues alive and cost the scenarios after it.
-	Run->Scenarios.Add({ TEXT("case-file-browse"),
-		OpenCaseFile,
-		[LastRow = MakeShared<int32>(INDEX_NONE)](float Seconds)
-		{
-			constexpr int32 Rows = 30;
-			const int32 Step = FMath::FloorToInt(Seconds / 0.15f) % (2 * Rows);
-			const int32 Row = Step < Rows ? Step : 2 * Rows - Step;
-			if (Row == *LastRow)
-			{
-				return;
-			}
-			*LastRow = Row;
-			for (TObjectIterator<UMvsClueTileView> It; It; ++It)
-			{
-				if (!It->HasAnyFlags(RF_ClassDefaultObject))
-				{
-					It->NavigateToIndex(Row * 4);
-				}
-			}
-		},
-		nullptr,
-		CaseFileFull });
-
-	// 5b. The same case file (still open) scrolled continuously, at up to 120 rows a second: the worst case for the pooled
-	// list. The tile view re-adds every visible tile on each frame its offset moves, so this is the per-frame cost of any
-	// scrolling. It closes the case file.
+	// 5. The case file scrolled continuously, at up to 120 rows a second: the worst case for the pooled list. The tile
+	// view re-adds every visible tile on each frame its offset moves, so this is the per-frame cost of any scrolling.
 	Run->Scenarios.Add({ TEXT("case-file-505"),
-		nullptr,
+		OpenCaseFile,
 		[](float Seconds)
 		{
 			// Scroll back and forth across the whole board (offset is in rows of 4 tiles); the pool must keep rebinding tiles.
@@ -476,7 +447,36 @@ void FMvsPerfHarness::Start(AMvsPlayerController* Controller, const FString& Lab
 		},
 		nullptr, HudShowing });
 
-	// 9. The no-ui reference with the world paused, for scenarios that pause it (pause-quit). A paused world does far less
+	// 9. The case file with 505 clues, browsed the way a player does: one row every 0.15 s (a held d-pad's repeat), down
+	// 30 rows and back, through the list's own navigation (it selects the tile and scrolls it into view). Most frames are
+	// still between steps, so this is what browsing costs on average. Added after S8, at the end: the world keeps running
+	// under menus, so a scenario added earlier would shift every later one onto a different moment of the scene (settings
+	// read 0.1 ms dearer in SceneRender, combat 0.1 ms cheaper, with neither changed). And far from case-file-505, whose
+	// screen must have finished closing (a second case file pushed during its outro was another screen instance).
+	Run->Scenarios.Add({ TEXT("case-file-browse"),
+		OpenCaseFile,
+		[LastRow = MakeShared<int32>(INDEX_NONE)](float Seconds)
+		{
+			constexpr int32 Rows = 30;
+			const int32 Step = FMath::FloorToInt(Seconds / 0.15f) % (2 * Rows);
+			const int32 Row = Step < Rows ? Step : 2 * Rows - Step;
+			if (Row == *LastRow)
+			{
+				return;
+			}
+			*LastRow = Row;
+			for (TObjectIterator<UMvsClueTileView> It; It; ++It)
+			{
+				if (!It->HasAnyFlags(RF_ClassDefaultObject))
+				{
+					It->NavigateToIndex(Row * 4);
+				}
+			}
+		},
+		CloseCaseFile,
+		CaseFileFull });
+
+	// 10. The no-ui reference with the world paused, for scenarios that pause it (pause-quit). A paused world does far less
 	// game-thread work, so against no-ui those scenarios would read as negative UI cost. Last, so the scenarios before it
 	// run at the same point of the session as in builds without it (G5 compares with those).
 	Run->Scenarios.Add({ TEXT("no-ui-paused"),
