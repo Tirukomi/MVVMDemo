@@ -136,8 +136,8 @@ left is mostly four things:
 **Open after the second review:**
 - The case file scrolls at about 0.55 ms of UI against a 0.3 ms target (budget 0.75 ms): reaching the target needs a
   grid that moves its tiles instead of `UTileView` re-adding them every frame (S7). A decision, not a defect.
-- With `WBP_PauseMenu`, the live user-widget count in the pause-quit perf run was 61 against 48 before (S6), not
-  explained.
+- (Resolved after S8) The pause-quit user-widget count "61 against 48" was a wrong comparison: 48 came from the S6 gate
+  runs where pause never opened. Every valid run shows 61, and both pause classes give the same widgets class for class.
 - Navigation in a windowed game searches at an offset equal to the window's position (finding 4, seen in R8): not
   reproduced in fullscreen.
 - **Gate skip rule** (after S1): G4 and G5 run only when something that can change their result differs from master

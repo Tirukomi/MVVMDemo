@@ -49,8 +49,10 @@ What they cost:
 - Mistakes surface late and in the editor: binding a widget instead of its Text fails to compile, and a missed Style or
   padding showed only as a screenshot diff.
 - Run time, one session (pause-quit's UI cost, game thread over the paused reference): 0.073 ms, against 0.04 to 0.05 ms
-  for the code-built screen in recent gates and a 0.15 ms budget; not separable from noise with one session. The live
-  user-widget count in that run was 61 against 48 in earlier runs, not explained yet.
+  for the code-built screen in recent gates and a 0.15 ms budget; not separable from noise with one session. The
+  Widget Blueprint adds no widgets: the harness counts the same user widgets, class for class, with either pause class
+  (61 at pause-quit in every valid run). An earlier note here compared against 48, which came from the S6 gate runs
+  where pause never opened.
 
 Decision unchanged: code-built views keep `MvsMVVM::Bind`; a screen whose layout a designer owns moves its bindings into
 the asset, as this one did.
